@@ -263,7 +263,7 @@ git config --global user.name "USERNAME"
 ```
 Gitで利用するユーザーのEメールを設定する。USERNAME@EXAMPLE.comは自身のメールアドレスに置き換えるて実行する。
 ```bash
-$ git config --global user.email "USERNAME@EXAMPLE.com"
+git config --global user.email "USERNAME@EXAMPLE.com"
 ```
 
 CSRに資材を転送(プッシュ)する
