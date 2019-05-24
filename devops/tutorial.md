@@ -233,8 +233,7 @@ gcloud projects get-iam-policy $GOOGLE_CLOUD_PROJECT | grep cloudbuild.gservicea
 Cloud Buildを実行する際に利用されるサービスアカウントにKubernetes 管理者の権限を与える。
 FIXMEの値を、上記コマンドで書く確認したサービスアカウントに置き換えてコマンドを実行する。
 ```bash
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:FIXME --role roles/
-container.admin
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:FIXME --role roles/container.admin
 ```
 
 ## Cloud Source Repository(CSR)でGitレポジトリを作成する
@@ -242,14 +241,13 @@ container.admin
 Cloud ConsoleからもSource Repositoryにアクセスし、新しいレポジトリを作成します。作成時、レポジトリ名に “devops-handson” を設定する。
 
 ## Cloud Buildトリガーの設定
+Cloud ConsoleからもCloud Build -> トリガーにアクセスし、トリガーの追加を行なう。トリガー追加時は以下の内容の設定を行なう。
 * [ソースを選択] ソースを選択 -> Cloud Source Repositories を選択
 * [リポジトリを選択] devops-handson を選択
-* [トリガーを選択] ビルド設定 -> /devops/cloudbuild.yaml
+* [トリガーを選択] ビルド設定 -> Cloud Build 構成ファイル（yaml または json）
+* [トリガーを選択] ビルド設定 -> Cloud Build 構成ファイルの場所 -> /devops/cloudbuild.yaml
 
 ## Gitレポジトリに資材を登録する
-```bash
-cd ~/cloud-ai-handson/devops
-```
 
 GitクライアントでCSRと認証するための設定を行なう
 ```bash
@@ -261,13 +259,13 @@ CSRをGitのリモートレポジトリとして登録する。
 git remote add google https://source.developers.google.com/p/$GOOGLE_CLOUD_PROJECT/r/devops-handson
 ```
 
-Gitで利用するユーザー名を登録する
+Gitで利用するユーザー名を登録する。USERNAMEは自身のユーザ名に置き換えるて実行する。
 ```bash
-git config --global user.name "USERNAME" # 自身のユーザ名を設定
+git config --global user.name "USERNAME"
 ```
-Gitで利用するユーザーのEメールを設定する
+Gitで利用するユーザーのEメールを設定する。USERNAME@EXAMPLE.comは自身のメールアドレスに置き換えるて実行する。
 ```bash
-$ git config --global user.email "USERNAME@EXAMPLE.com" # 自身のメールアドレスを設定
+$ git config --global user.email "USERNAME@EXAMPLE.com"
 ```
 
 CSRに資材を転送(プッシュ)する
@@ -276,8 +274,24 @@ git push google master
 ```
 
 ## Cloud Buildが自動的に実行されることの確認
-Cloub Build -> 履歴　を選択し、git pushコマンドを実行した時間にビルドが実行されていることを確認する。
+Cloud Build -> 履歴　を選択し、git pushコマンドを実行した時間にビルドが実行されていることを確認する。
 
+ビルド完了後、以下コマンドを実行し、Cloud Buildで作成したコンテナがデプロイされていることを確認する。
+```bash
+kubectl describe deployment/devops-handson-deployment
+```
+
+コマンド実行結果の例。Cloud Build実行前はImageがgcr.io/PROJECTID/devops-handson:v1となっているが、実行後はgcr.io/PROJECTID/devops-handson:COMMITHASHになっている事が分かる。実際はPROJECTIDはGCPのプロジェクトID、COMMITHASHはGitのコミットハッシュが表示される。
+
+```
+...
+Pod Template:
+  Labels:  app=devops-handson
+  Containers:
+   myapp:
+    Image:        gcr.io/PROJECTID/devops-handson:COMMITHASH
+...
+```
 
 # Congraturations!
 
