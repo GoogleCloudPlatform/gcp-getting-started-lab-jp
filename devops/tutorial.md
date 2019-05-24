@@ -103,6 +103,18 @@ gcloud container clusters get-credentials k8s-devops-handson --zone asia-northea
 
 # コンテナの作成と動作確認
 
+## ハンズオン用の設定ファイルを修正する
+
+デモ用アプリケーションの設定ファイルにGCPプロジェクトIDを設定する
+```bash
+sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" conf/app.conf
+```
+
+Kubernetesのデプロイ用設定ファイルにGCPプロジェクトIDを設定する
+```bash
+sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" gke-config/deployment.yaml
+```
+
 ## コンテナを作成する
 ```bash
 docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1 .
@@ -131,7 +143,7 @@ docker push gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 
 ## 登録したコンテナをKubernetesクラスターへデプロイする
 ```bash
-kubectl create -f gke-config/deployment.yaml
+kubectl apply -f gke-config/deployment.yaml
 ```
 
 ## デプロイしたコンテナへアクセスし動作確認を行なう
@@ -155,7 +167,6 @@ http://<INGESS-IP>/
 ```
 
 ![BrowserAccessToMainController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToMainController.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 後のステップで確認するStackdriver Profilerのサンプル数を稼ぐため、
 Apache Benchを使い複数回、/bench1へのアクセスを行う。
@@ -178,7 +189,6 @@ http://<INGESS-IP>/bench1
 ```
 
 ![BrowserAccessToSlowBenchController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToSlowBenchController.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 ## Stackdriverを利用した分析
 
@@ -189,18 +199,15 @@ http://<INGESS-IP>/bench1
 4. “I” と表示されるアイコンをクリックして、連携されたStackdriver loggingのログを確認する
 
 ![StackdriverTrace](https://storage.googleapis.com/devops-handson-for-github/StackdriverTrace.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 ### Stackdrier Loggingによるログの確認
 
 Traceのページで /bench1 のトレースを表示し、Logの横に表示されている View リンクをクリックする。
 
 ![StackdriverTraceToStackdriverLogging](https://storage.googleapis.com/devops-handson-for-github/StackdriverTraceToStackdriverLogging.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 Stackdrier Loggingのページに遷移し、関連するログが表示されていることを確認する。
 ![StackdriverLogging](https://storage.googleapis.com/devops-handson-for-github/StackdriverLogging.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 ### Stackdriver Profilerによるアプリケーションのプロファイリング
 
@@ -208,7 +215,6 @@ Stackdrier Loggingのページに遷移し、関連するログが表示され�
 閲覧時は、ゾーンに “asia-northeast1-c”、バージョンに “1.0.0” を設定する。
 
 ![StackdriverProfiler](https://storage.googleapis.com/devops-handson-for-github/StackdriverProfiler.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 # Cloud Buildによるビルド・デプロイの自動化
 
