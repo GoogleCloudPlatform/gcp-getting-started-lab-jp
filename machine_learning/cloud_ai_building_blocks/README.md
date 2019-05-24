@@ -22,7 +22,7 @@ Cloud AI Building Block とは機械学習を専門としないエンジニア�
 ![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)
 
 クリックすると Colaboratory が開かれ、サンプルコードを実行できるようになります。
-サンプルコードを実行するにあたっては、 GCP の API キーが必要になります。API キーを作成する手順については[こちら](https://cloud.google.com/docs/authentication/api-keys?hl=ja#creating_an_api_key)を参照ください。
+サンプルコードを実行するにあたっては、各種機械学習 API の有効化 (例 Cloud Vision API の [API 有効化手順](https://cloud.google.com/vision/docs/before-you-begin?hl=ja) を参考にしてください) と GCP の API キーが必要になります。API キーを作成する手順については[こちら](https://cloud.google.com/docs/authentication/api-keys?hl=ja#creating_an_api_key)を参照ください。
 
 ## サンプルコードを実行する際の注意点
 Colaboratory 自体は無料で利用できますが、機械学習 API の利用に関しては課金されるので注意してください。また、sight_ja.ipynb には Cloud Vision API のサンプルコードが入っていますが、その中で利用する画像は別途アップロードする必要があります。もし手元にちょうどいい写真がない場合には、ウェブ上の適切なサイト (例 https://unsplash.com) から写真をダウンロードして試してください。
