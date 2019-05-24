@@ -129,10 +129,8 @@ docker run -d -p 8080:8080 --name devops-handson gcr.io/$GOOGLE_CLOUD_PROJECT/de
 
 画面右上にあるアイコンをクリックし、"プレビューのポート: 8080"を選択する。これにより新しい画面が表示され、Cloud Shell上で起動しているコンテナにアクセスできる。
 ![PreviewOnCloudShell](https://storage.googleapis.com/devops-handson-for-github/PreviewOnCloudShell.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 ![BrowserAccessToMainController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToMainController.png)
-@TODO samuraitaiga@ will fix this path from GCS to Github because filepath on Github is not finalized after published
 
 # 作成したコンテナをKubernetesクラスターに配置する
 
