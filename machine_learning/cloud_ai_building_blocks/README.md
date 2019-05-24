@@ -7,7 +7,7 @@ GCP (Google Cloud Platform) には Google Cloud AI と呼ばれる 機械学習�
 ## Cloud AI Building Blocks
 Cloud AI Building Blocks とは機械学習を専門としないエンジニアでも、簡単に使い始められる Google Cloud AI のプロダクト群です。Cloud AI Building Blocks は更に機械学習 API と Cloud AutoML というプロダクト群に分けられます。**機械学習 API** を使えば、 Google の高性能な機械学習モデルを API 経由で利用できます。一方、 **Cloud AutoML** を使えば、ユーザが用意した学習データを元に高性能なカスタムモデルを簡単に構築・デプロイすることができ、API 経由ですぐに利用し始めることができます。どちらのプロダクトを使った場合でもバックエンドが自動的に伸縮するため、ユーザ側で負荷対策をする必要はありません。次の表は Cloud AI Building Blocks の各プロダクトを、用途別に分類したものです。
 
-|視覚 (sight)                 |言語 (language)              |会話 (conversation)        |構造化データ (unstructured)|
+|視覚 (sight)                 |言語 (language)              |会話 (conversation)        |構造化データ (structured)  |
 | -------------------------- | --------------------------- | ------------------------ | ----------------------- |
 |Cloud Vision API            |Cloud Natural Language API   | Cloud Speech-to-Text API |Cloud AutoML Table       |
 |Cloud Video Intelligence API|Cloud Translation API        | Cloud Text-to-Speech API |Recommendations AI       |
