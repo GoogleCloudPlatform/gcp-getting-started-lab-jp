@@ -15,7 +15,7 @@
  */
 
 /*
- * This file is for handson.
+ * This file is used for GCP handson.
  */
 
 var http = require('http');
