@@ -42,5 +42,5 @@ gsutil cat gs://${BUCKET}/img/flower_photos/all_data.csv | sed "s:cloud-ml-data:
 前の手順で保存したファイルを Cloud AutoML Vision 用のバケットにアップロードします。
 
 ```bash
-gsutil -m cp -R gs://cloud-ml-data/img/flower_photos/ gs://${BUCKET}/img/
+gsutil cp all_data.csv gs://${BUCKET}/csv/
 ```
