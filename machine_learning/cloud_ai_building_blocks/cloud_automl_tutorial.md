@@ -33,9 +33,14 @@ export BUCKET="${PROJECT_ID}-vcm"
 gsutil -m cp -R gs://cloud-ml-data/img/flower_photos/ gs://${BUCKET}/img/
 ```
 
-ラベルデータを置換した結果をアップロードします。
+ラベルデータを置換した結果をローカルファイルに保存します。
 
 ```bash
 gsutil cat gs://${BUCKET}/img/flower_photos/all_data.csv | sed "s:cloud-ml-data:${BUCKET}:" > all_data.csv
+```
+
+前の手順で保存したファイルを Cloud AutoML Vision 用のバケットにアップロードします。
+
+```bash
 gsutil -m cp -R gs://cloud-ml-data/img/flower_photos/ gs://${BUCKET}/img/
 ```
