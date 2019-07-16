@@ -1,13 +1,9 @@
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/Youki/gcp-getting-started-lab-jp&tutorial=machine_learning/cloud_ai_building_blocks/cloud_automl_tutorial.md)
 
-
 # Cloud AutoML: 画像データとラベルデータをコピーする
 
-画像データとラベルデータをコピーする手順を解説します。なお、この手順では、事前に
-AutoML Vision が利用するバケット (gs://${PROJECT_ID}-vcm) が作成されていること、
-またそのバケットに対して適切なアクセス設定が行われていることを前提としています。
-この前提は[こちら](https://cloud.google.com/vision/automl/docs/quickstart) をご
-確認下さい。
+画像データとラベルデータをコピーする手順を解説します。この手順では Cloud AutoML Vision 用のバケット "gs://${PROJECT_ID}-vcm" が作成されていること、
+Cloud AutoML Vision 用のバケットに対する適切なアクセス権限設定が完了していることを前提にしています。この前提条件に関する詳細は[こちら](https://cloud.google.com/vision/automl/docs/quickstart) のドキュメントをご確認下さい。
 
 ## 画像データとラベルデータの保存先バケット名を設定する
 
