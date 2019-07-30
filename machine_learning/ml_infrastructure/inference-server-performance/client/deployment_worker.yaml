@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: locust-worker
+  labels:
+    name: locust-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: locust-worker
+  template:
+    metadata:
+      labels:
+        app: locust-worker
+    spec:
+      containers:
+      - name: locust-worker
+        image: gcr.io/sandbox-kathryn-ml/locust_tester
+        command: ["locust","-f","locust/trtis_grpc_client.py"]
+        args: ["--slave", "--master-host=34.83.21.102"]

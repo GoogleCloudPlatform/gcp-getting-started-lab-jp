@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: inference-server
+  name: inference-server
+  namespace: default
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http-inference-server
+    nodePort: 30282
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  - name: grpc-inference-server
+    nodePort: 31393
+    port: 8001
+    protocol: TCP
+    targetPort: 8001
+  - name: metrics-inference-server
+    nodePort: 31458
+    port: 8002
+    protocol: TCP
+    targetPort: 8002
+  selector:
+    app: inference-server
+  sessionAffinity: None
+  type: LoadBalancer
