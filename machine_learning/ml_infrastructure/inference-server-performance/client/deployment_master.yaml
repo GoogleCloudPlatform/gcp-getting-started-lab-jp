@@ -28,4 +28,4 @@ spec:
             containerPort: 5558
             protocol: TCP
         command: ["locust","-f","locust/trtis_grpc_client.py"]
-        args: ["--host", "34.83.205.121", "--master"]
+        args: ["--host", "YOUR-TRTIS-ENDPOINT-ADDRESS", "--master"]

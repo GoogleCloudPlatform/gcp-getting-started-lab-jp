@@ -15,6 +15,7 @@
 import grpc
 import inspect
 import numpy
+import time
 
 from locust import Locust
 from locust import TaskSet
@@ -26,7 +27,6 @@ import tensorrtserver.api.model_config_pb2 as model_config
 from tensorrtserver.api import api_pb2
 from tensorrtserver.api import grpc_service_pb2
 from tensorrtserver.api import grpc_service_pb2_grpc
-from util import set_up_custom_handler
 
 from PIL import Image
 
@@ -46,7 +46,7 @@ def get_request_message():
   img = numpy.array(img).astype(numpy.float32)
   input_bytes = img.tobytes()
   request = grpc_service_pb2.InferRequest()
-  request.model_name = 'resnet_plan_fp32'
+  request.model_name = 'original'
   request.model_version = -1
   request.meta_data.batch_size = 1
   output_message = api_pb2.InferRequestHeader.Output()
@@ -56,10 +56,6 @@ def get_request_message():
   request.meta_data.input.add(name='Placeholder')
   request.raw_input.extend([input_bytes])
   return request
-
-# custom handler for storing latency and error code data
-set_up_custom_handler('trtis')
-
 
 def stopwatch(func):
   def wrapper(*args, **kwargs):
