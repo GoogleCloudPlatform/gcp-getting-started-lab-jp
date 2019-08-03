@@ -40,80 +40,85 @@ MAX_WAIT_MSEC = 1200
 TIMEOUT_MSEC = 2000
 
 def get_request_message():
-  image_id = numpy.random.randint(DATA_SIZE) + 1
-  image_file = '{}/{:0>5}.jpg'.format(DATA_DIR, image_id)
-  img = Image.open(image_file).convert('RGB').resize((224, 224), Image.BILINEAR)
-  img = numpy.array(img).astype(numpy.float32)
-  input_bytes = img.tobytes()
-  request = grpc_service_pb2.InferRequest()
-  request.model_name = 'original'
-  request.model_version = -1
-  request.meta_data.batch_size = 1
-  output_message = api_pb2.InferRequestHeader.Output()
-  output_message.name = 'softmax_tensor'
-  output_message.cls.count = 1
-  request.meta_data.output.extend([output_message])
-  request.meta_data.input.add(name='Placeholder')
-  request.raw_input.extend([input_bytes])
-  return request
+    image_id = numpy.random.randint(DATA_SIZE) + 1
+    image_file = '{}/{:0>5}.jpg'.format(DATA_DIR, image_id)
+    img = Image.open(image_file).convert('RGB').resize((224, 224), Image.BILINEAR)
+    img = numpy.array(img).astype(numpy.float32)
+    
+    input_bytes = img.tobytes()
+    request = grpc_service_pb2.InferRequest()
+
+    request.model_name = 'original'
+    request.model_version = -1
+    request.meta_data.batch_size = 1
+    
+    output_message = api_pb2.InferRequestHeader.Output()
+    output_message.name = 'probabilities'
+    output_message.cls.count = 1
+    
+    request.meta_data.output.extend([output_message])
+    request.meta_data.input.add(name='input')
+    request.raw_input.extend([input_bytes])
+    return request
 
 def stopwatch(func):
-  def wrapper(*args, **kwargs):
-    previous_frame = inspect.currentframe().f_back
-    _, _, name, _, _ = inspect.getframeinfo(previous_frame)
+    def wrapper(*args, **kwargs):
+        previous_frame = inspect.currentframe().f_back
+        _, _, name, _, _ = inspect.getframeinfo(previous_frame)
 
-    start = time.time()
-    result = None
+        start = time.time()
+        result = None
 
-    try:
-      result = func(*args, **kwargs)
-    except Exception as e:
-      total = int((time.time() - start) * 1000)
-      events.request_failure.fire(
-          request_type="grpc", name=name, response_time=total,
-          exception=e)
-    else:
-      total = int((time.time() - start) * 1000)
-      events.request_success.fire(
-          request_type="grpc", name=name, response_time=total,
-          response_length=0)
-    return result
-  return wrapper
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            total = int((time.time() - start) * 1000)
+            events.request_failure.fire(
+                request_type="grpc", name=name, response_time=total,
+                exception=e)
+        else:
+            total = int((time.time() - start) * 1000)
+            events.request_success.fire(
+                request_type="grpc", name=name, response_time=total,
+                response_length=0)
+        # print(result)
+        return result
+    return wrapper
 
 class ProtocolClient():
-  def __init__(self, host):
-    self.host = host
-    self.stub = None
-    self.channel = None
+    def __init__(self, host):
+        self.host = host
+        self.stub = None
+        self.channel = None
 
-  def new_connection(self):
-    server_address = "{}:8001".format(self.host)
-    self.channel = grpc.insecure_channel(server_address)
-    self.stub = grpc_service_pb2_grpc.GRPCServiceStub(
-        self.channel)
+    def new_connection(self):
+        server_address = "{}:8001".format(self.host)
+        self.channel = grpc.insecure_channel(server_address)
+        self.stub = grpc_service_pb2_grpc.GRPCServiceStub(
+            self.channel)
 
-  def close_connection(self):
-    self.channel.close()
+    def close_connection(self):
+        self.channel.close()
 
-  @stopwatch
-  def predict(self, request):
-    result = self.stub.Infer(request, TIMEOUT_MSEC)
-    return True
+    @stopwatch
+    def predict(self, request):
+        result = self.stub.Infer(request, TIMEOUT_MSEC)
+        return result
 
 class ProtocolLocust(Locust):
-  def __init__(self):
-    super(ProtocolLocust, self).__init__()
-    self.client = ProtocolClient(self.host)
+    def __init__(self):
+        super(ProtocolLocust, self).__init__()
+        self.client = ProtocolClient(self.host)
 
 class ProtocolTasks(TaskSet):
-  @task
-  def invocations(self):
-    request = get_request_message()
-    self.client.new_connection()
-    self.client.predict(request)
-    self.client.close_connection()
+    @task
+    def invocations(self):
+        request = get_request_message()
+        self.client.new_connection()
+        self.client.predict(request)
+        self.client.close_connection()
 
 class ProtocolUser(ProtocolLocust):
-  task_set = ProtocolTasks
-  min_wait = MIN_WAIT_MSEC
-  max_wait = MAX_WAIT_MSEC
+    task_set = ProtocolTasks
+    min_wait = MIN_WAIT_MSEC
+    max_wait = MAX_WAIT_MSEC
