@@ -1,21 +1,25 @@
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: locust-worker
+  name: locust-slave
   labels:
-    name: locust-worker
+    name: locust-slave
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: locust-worker
+      app: locust-slave
   template:
     metadata:
       labels:
-        app: locust-worker
+        app: locust-slave
     spec:
       containers:
-      - name: locust-worker
+      - name: locust-slave
         image: gcr.io/sandbox-kathryn-ml/locust_tester
         command: ["locust","-f","locust/trtis_grpc_client.py"]
-        args: ["--slave", "--master-host=YOUR-MASTER-ENDPOINT-ADDRESS"]
+        args: ["--slave", "--master-host=CLUSTER_IP_LOCUST_MASTER"]
+        resources:
+          requests:
+            cpu: 100m

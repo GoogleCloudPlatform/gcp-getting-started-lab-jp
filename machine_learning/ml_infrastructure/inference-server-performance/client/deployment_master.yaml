@@ -1,3 +1,4 @@
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -28,4 +29,7 @@ spec:
             containerPort: 5558
             protocol: TCP
         command: ["locust","-f","locust/trtis_grpc_client.py"]
-        args: ["--host", "YOUR-TRTIS-ENDPOINT-ADDRESS", "--master"]
+        args: ["--host", "CLUSTER_IP_TRTIS", "--master"]
+        resources:
+          requests:
+            cpu: 200m

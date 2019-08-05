@@ -1,0 +1,21 @@
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  namespace: monitoring
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: grafana-server
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          #args:
+          #  - "--config.file=/root/prometheus.yml"
+          #  - "--storage.tsdb.path=/prometheus/"
+          ports:
+            - containerPort: 3000
