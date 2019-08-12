@@ -39,27 +39,25 @@ MIN_WAIT_MSEC = 800
 MAX_WAIT_MSEC = 1200
 TIMEOUT_MSEC = 2000
 
-def get_request_message():
-    image_id = numpy.random.randint(DATA_SIZE) + 1
-    image_file = '{}/{:0>5}.jpg'.format(DATA_DIR, image_id)
-    img = Image.open(image_file).convert('RGB').resize((224, 224), Image.BILINEAR)
-    img = numpy.array(img).astype(numpy.float32)
+image_id = numpy.random.randint(DATA_SIZE) + 1
+image_file = '{}/{:0>5}.jpg'.format(DATA_DIR, image_id)
+img = Image.open(image_file).convert('RGB').resize((224, 224), Image.BILINEAR)
+img = numpy.array(img).astype(numpy.float32)
     
-    input_bytes = img.tobytes()
-    request = grpc_service_pb2.InferRequest()
+input_bytes = img.tobytes()
+request = grpc_service_pb2.InferRequest()
 
-    request.model_name = 'original'
-    request.model_version = -1
-    request.meta_data.batch_size = 1
+request.model_name = 'tftrt_int8_bs8_count4'
+request.model_version = -1
+request.meta_data.batch_size = 1
     
-    output_message = api_pb2.InferRequestHeader.Output()
-    output_message.name = 'probabilities'
-    output_message.cls.count = 1
+output_message = api_pb2.InferRequestHeader.Output()
+output_message.name = 'probabilities'
+output_message.cls.count = 1
     
-    request.meta_data.output.extend([output_message])
-    request.meta_data.input.add(name='input')
-    request.raw_input.extend([input_bytes])
-    return request
+request.meta_data.output.extend([output_message])
+request.meta_data.input.add(name='input')
+request.raw_input.extend([input_bytes])
 
 def stopwatch(func):
     def wrapper(*args, **kwargs):
@@ -113,7 +111,6 @@ class ProtocolLocust(Locust):
 class ProtocolTasks(TaskSet):
     @task
     def invocations(self):
-        request = get_request_message()
         self.client.new_connection()
         self.client.predict(request)
         self.client.close_connection()
