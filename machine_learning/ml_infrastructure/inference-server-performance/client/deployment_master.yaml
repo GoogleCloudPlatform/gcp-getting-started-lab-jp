@@ -29,7 +29,7 @@ spec:
             containerPort: 5558
             protocol: TCP
         command: ["locust","-f","locust/trtis_grpc_client.py"]
-        args: ["--host", "CLUSTER_IP_TRTIS", "--master"]
+        args: ["--host", "CLUSTER-IP-TRTIS", "--master"]
         resources:
           requests:
             cpu: 200m
