@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: locust-master
-        image: gcr.io/sandbox-kathryn-ml/locust_tester
+        image: gcr.io/YOUR-PROJECT-ID/locust_tester
         ports:
           - name: loc-master
             containerPort: 8089
@@ -33,3 +33,9 @@ spec:
         resources:
           requests:
             cpu: 200m
+        env:
+          - name: MODEL_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: locust-config
+                key: model

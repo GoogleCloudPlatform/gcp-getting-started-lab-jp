@@ -17,9 +17,15 @@ spec:
     spec:
       containers:
       - name: locust-slave
-        image: gcr.io/sandbox-kathryn-ml/locust_tester
+        image: gcr.io/YOUR-PROJECT-ID/locust_tester
         command: ["locust","-f","locust/trtis_grpc_client.py"]
-        args: ["--slave", "--master-host=CLUSTER_IP_LOCUST_MASTER"]
+        args: ["--slave", "--master-host=CLUSTER-IP-LOCUST-MASTER"]
         resources:
           requests:
             cpu: 100m
+        env:
+          - name: MODEL_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: locust-config
+                key: model

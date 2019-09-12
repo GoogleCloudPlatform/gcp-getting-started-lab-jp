@@ -15,6 +15,7 @@
 import grpc
 import inspect
 import numpy
+import os
 import time
 
 from locust import Locust
@@ -43,18 +44,18 @@ image_id = numpy.random.randint(DATA_SIZE) + 1
 image_file = '{}/{:0>5}.jpg'.format(DATA_DIR, image_id)
 img = Image.open(image_file).convert('RGB').resize((224, 224), Image.BILINEAR)
 img = numpy.array(img).astype(numpy.float32)
-    
+
 input_bytes = img.tobytes()
 request = grpc_service_pb2.InferRequest()
 
-request.model_name = 'tftrt_int8_bs8_count4'
+request.model_name = os.environ['MODEL_NAME']
 request.model_version = -1
 request.meta_data.batch_size = 1
-    
+
 output_message = api_pb2.InferRequestHeader.Output()
 output_message.name = 'probabilities'
 output_message.cls.count = 1
-    
+
 request.meta_data.output.extend([output_message])
 request.meta_data.input.add(name='input')
 request.raw_input.extend([input_bytes])
@@ -79,7 +80,6 @@ def stopwatch(func):
             events.request_success.fire(
                 request_type="grpc", name=name, response_time=total,
                 response_length=0)
-        # print(result)
         return result
     return wrapper
 

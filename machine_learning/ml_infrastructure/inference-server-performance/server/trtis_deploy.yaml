@@ -28,7 +28,7 @@ spec:
       containers:
       - args:
         - trtserver
-        - --model-store=gs://${BUCKET_NAME}/resnet/
+        - --model-store=gs://YOUR-BUCKET-NAME/resnet/
         image: nvcr.io/nvidia/tensorrtserver:19.05-py3
         imagePullPolicy: IfNotPresent
         livenessProbe:

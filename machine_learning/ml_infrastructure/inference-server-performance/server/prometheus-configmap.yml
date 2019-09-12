@@ -36,4 +36,4 @@ data:
         # scheme defaults to 'http'.
 
         static_configs:
-        - targets: ['CLUSTER_IP:8002']
+        - targets: ['CLUSTER-IP:8002']
