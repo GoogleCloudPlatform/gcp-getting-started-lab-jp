@@ -187,6 +187,25 @@ http://<INGRESS-IP>/
 
 ![BrowserAccessToMainController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToMainController.png)
 
+Ingress 以外にも、Loadbalancer を作成して動作確認することができる。※ Ingress の作成に時間を要している場合は試してみましょう。
+
+```bash
+kubectl apply -f gke-config/loadbalancer.yaml
+```
+
+以下のコマンドで Loadbalancer のグローバル IP を確認し、アクセス。
+
+```bash
+kubectl get service/devops-handson-loadbalancer
+```
+```
+NAME                          TYPE           CLUSTER-IP    EXTERNAL-IP    PORT(S)        AGE
+devops-handson-loadbalancer   LoadBalancer   10.x.x.x      xx.xx.xx.xx    80:30090/TCP   1m
+```
+
+
+
+## Apache Bench で /bench1 へ複数回アクセスをする
 後のステップで確認する Stackdriver Profiler のサンプル数を稼ぐため、Apache Bench を使い複数回、/bench1 へのアクセスを行う。
 Timeout エラーが出た場合は -t の値を増やしてみてください。（Timeout値）
 
