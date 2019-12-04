@@ -25,6 +25,12 @@ export PROJECT_ID=your-project-id
 export BUCKET="${PROJECT_ID}-vcm"
 ```
 
+バケットを作成します。
+
+```bash
+gsutil mb -p ${PROJECT_ID} -c regional -l us-central1 gs://${BUCKET}
+```
+
 ## サンプル画像とラベルデータをコピーする
 
 画像データをコピーします。このコマンドが完了するまでに 20 分程度かかります。
