@@ -137,7 +137,7 @@ docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1 .
 ## コンテナを起動する
 
 ```bash
-docker run -d -p 8080:8080 --name devops-handson gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
+docker run -d -p 8080:8080 --name devops-handson -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/auth.json -v ${PWD}/auth.json:/tmp/keys/auth.json:ro gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 ```
 
 ## CloudShell の機能を利用し、起動したアプリケーションにアクセスする
