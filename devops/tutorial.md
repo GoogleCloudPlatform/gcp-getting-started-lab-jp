@@ -78,12 +78,6 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/clouddebugger.agent
 ```
 
-# ダウンロードしたサービスアカウントの鍵をハンズオン用のディレクトリに配置する
-
-```bash
-mv auth.json gcp-credentials/auth.json
-```
-
 # GKE の準備
 
 ## クラスターを作成する
@@ -147,6 +141,12 @@ docker run -d -p 8080:8080 --name devops-handson gcr.io/$GOOGLE_CLOUD_PROJECT/de
 ![PreviewOnCloudShell](https://storage.googleapis.com/devops-handson-for-github/PreviewOnCloudShell.png)
 
 ![BrowserAccessToMainController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToMainController.png)
+
+# Kubernetes クラスターに、ダウンロード済みのサービスアカウントの鍵情報を Secret として登録する
+
+```bash
+kubectl create secret generic dohandson-key --from-file=key.json=auth.json
+```
 
 # 作成したコンテナを Kubernetes クラスターに配置する
 
