@@ -1,16 +1,28 @@
-FROM amd64/debian:9.8 as builder
-RUN apt-get update && apt-get -y upgrade && apt-get -y install git curl wget gcc
-RUN git clone https://github.com/syndbg/goenv.git ~/.goenv
-ENV GOENV_ROOT=/root/.goenv
-ENV PATH /root/.goenv/bin:/root/.goenv/shims:$PATH
-RUN goenv install 1.11.2
-RUN goenv global 1.11.2
-RUN go get -u cloud.google.com/go/cmd/go-cloud-debug-agent github.com/astaxie/beego github.com/astaxie/beego/context github.com/beego/bee go.opencensus.io/trace contrib.go.opencensus.io/exporter/stackdriver cloud.google.com/go/profiler github.com/sirupsen/logrus
-COPY . /root/go/1.11.2/src/devops
-RUN cd /root/go/1.11.2/src/devops && go build -gcflags=all='-N -l' -ldflags=-compressdwarf=false ./main.go
+# Use golang image as a builder
+FROM golang:1.12-alpine as builder
 
-FROM amd64/debian:9.8 as production
-RUN apt-get update && apt-get -y upgrade && apt-get -y install ca-certificates
-COPY --from=builder /root/go/1.11.2/src/devops /root/devops
+# Create and set workdir
+WORKDIR /app
+
+# Copy `go.mod` for definitions and `go.sum` to invalidate the next layer
+# in case of a change in the dependencies
+COPY go.mod go.sum ./
+
+# Install git to be used "go mod download"
+RUN apk add --no-cache git
+
+# Download dependencies
+RUN go mod download
+
+# Copy all files and build an executable
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o devops_handson
+
+# Use a Docker multi-stage build to create a lean production image
+FROM alpine:3.10.2
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /app/devops_handson ./
+COPY --from=builder /app/static ./static
+COPY --from=builder /app/template ./template
 EXPOSE 8080
-CMD cd /root/devops && GOOGLE_APPLICATION_CREDENTIALS=./gcp-credentials/auth.json ./main
+ENTRYPOINT ["/devops_handson"]
