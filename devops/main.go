@@ -80,7 +80,7 @@ func mainHandler() http.Handler {
 		logRequest(r, s.TraceID.String(), s.SpanID.String(), "Hello from mainHandler")
 
 		iv := &IndexVariables{
-			WebsiteTitle: "Main",
+			WebsiteTitle: "MainController",
 			RandomNumber: strconv.Itoa(rand.Intn(100)),
 		}
 
@@ -103,7 +103,7 @@ func benchHandler() http.Handler {
 		fibonacci(ctx, rand.Intn(3000000000))
 
 		iv := &IndexVariables{
-			WebsiteTitle: "Bench",
+			WebsiteTitle: "BenchController",
 			RandomNumber: strconv.Itoa(rand.Intn(100)),
 		}
 		renderTemplate(w, iv)
