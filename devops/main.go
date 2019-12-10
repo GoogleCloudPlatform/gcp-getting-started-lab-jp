@@ -37,7 +37,7 @@ var projectID = ""
 
 const (
 	service        = "devops-demo"
-	serviceVersion = "1.0.1"
+	serviceVersion = "1.0.0"
 	metricPrefix   = "devops-"
 )
 
