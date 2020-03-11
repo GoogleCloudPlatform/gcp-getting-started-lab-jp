@@ -1,5 +1,5 @@
 # Use golang image as a builder
-FROM golang:1.12-alpine as builder
+FROM golang:1.14.0-alpine3.11 as builder
 
 # Create and set workdir
 WORKDIR /app
@@ -19,7 +19,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o devops_handson
 
 # Use a Docker multi-stage build to create a lean production image
-FROM alpine:3.10.2
+FROM alpine:3.11.3
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/devops_handson ./
 COPY --from=builder /app/static ./static
