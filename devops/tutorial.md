@@ -116,12 +116,6 @@ gcloud container clusters get-credentials k8s-devops-handson --zone asia-northea
 
 ## ハンズオン用の設定ファイルを修正する
 
-デモ用アプリケーションの設定ファイルに GCP プロジェクト ID を設定する
-
-```bash
-sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" conf/app.conf
-```
-
 Kubernetesのデプロイ用設定ファイルに GCP プロジェクト ID を設定する
 
 ```bash
