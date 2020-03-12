@@ -96,6 +96,7 @@ func benchHandler() http.Handler {
 
 		addAttributesToSpan(span, r)
 		logRequest(r, s.TraceID.String(), s.SpanID.String(), "Hello from benchHandler")
+		log.Printf("context: %v\n", ctx)
 
 		// Stress
 		fibonacci(ctx, rand.Intn(3000000000))
