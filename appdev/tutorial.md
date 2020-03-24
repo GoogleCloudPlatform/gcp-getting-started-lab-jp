@@ -441,7 +441,7 @@ gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2 --f
 
 
 ```bash
-gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
+gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1 --force-delete-tags
 ```
 
 ### Spanner データベース削除
