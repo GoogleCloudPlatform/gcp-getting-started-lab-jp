@@ -1,0 +1,10 @@
+{{ define "text_coupons" }}
+{{if ne 0 .DiscountPercentage}}
+<div class="container">
+    <div class="alert alert-light" role="alert">
+        <strong>Special Coupon: {{.DiscountPercentage}}% OFF</strong>
+        by {{.ExpiredBy}}
+    </div>
+</div>
+{{ end }}
+{{ end }}
