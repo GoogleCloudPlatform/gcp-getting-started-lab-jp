@@ -1,0 +1,13 @@
+*.iml
+*.ipr
+*.iws
+*.class
+.project
+.classpath
+.DS_Store
+**.DS_Store
+.gradle/**
+.idea/**
+build/**
+org.eclipse.buildship.core.prefs
+
