@@ -413,38 +413,35 @@ CouponService に 有効なクーポンだけを返却する機能を追加す�
 
 フルマネージド Kubernetes サービス「Kubernetes Engine」や、フルマネージド リレーショナル データベースサービス「Cloud Spanner」 をはじめとした、GCP 開発者向けサービスを使用したマイクロサービス アプリケーションの開発について学ぶハンズオンは完了です。
 
-@TODO Survey のリンク追加
-
 必要な方はデモで使った資材が不要な方はクリーンアップを行って下さい。
 
 # クリーンアップ
-
-## GCP のデフォルトプロジェクト設定の削除
-
-```bash
-gcloud config unset project
-```
 
 ## ハンズオンで利用した資材の削除
 
 ### GKE クラスター（k8s-appdev-handson）削除
 ```bash
-gcloud container clusters delete k8s-appdev-handson
+gcloud container clusters delete k8s-appdev-handson --zone asia-northeast1-c
 ```
 
 ### IAM アカウント（appdev-handson@xxx）削除
 
 ```bash
-gcloud iam service-accounts delete appdev-handson
+gcloud iam service-accounts delete appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com 
 ```
 
 ### Container Registry のコンテナイメージ削除
 ```bash
-gcloud container image delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice
+gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1 --force-delete-tags
 ```
 
 ```bash
-gcloud container image delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontendservice
+gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2 --force-delete-tags
+```
+
+
+```bash
+gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1 --force-delete-tags
 ```
 
 ### Spanner データベース削除
@@ -455,4 +452,10 @@ gcloud spanner databases delete appdev-db --instance=appdev-handson-instance --p
 ### Spanner インスタンス削除
 ```
 gcloud spanner instances delete appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT
+```
+
+## GCP のデフォルトプロジェクト設定の削除
+
+```bash
+gcloud config unset project
 ```
