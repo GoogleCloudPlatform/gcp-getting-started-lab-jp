@@ -319,7 +319,7 @@ Spannerを使ってクーポンの払い出しに関するデータを永続化�
 
 ## ソースコードの修正
 
-appdev/microservices-demo/src/couponservice/CouponService.java
+appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponService.java
 
 * `Collection<Coupon> coupons = service.getCouponsBySessionId(req.getSessionId());`をコメントアウトする。
 * `Collection<Coupon> coupons = service.getCouponsBySessionIdWithSpanner(req.getSessionId());`をコメントアウトする。
