@@ -188,7 +188,7 @@ gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance
 
 ### Spanner サンプルデータ作成
 
-```bash
+```
 export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
 ```
 
@@ -234,11 +234,11 @@ kubectl apply -f microservices-demo-0.1.4/release/kubernetes-manifests.yaml --na
 以下コマンドでKubernetesにクーポンサービスをデプロイする為の定義ファイルへGCPプロジェクト固有の情報を設定する。(FIXMEという文字列をGCPプロジェクトIDに置き換える)
 
 ```bash
-sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml
+sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml
 ```
 
 ```bash
-sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml
+sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml
 ```
 
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
@@ -272,12 +272,12 @@ appdev/microservices-demo
 
 v1 というタグをつけてコンテナをビルドする。
 ```bash
-cd ~/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
+cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
 ```
 
 ## couponservice のデプロイ
 ```bash
-kubectl apply -f ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
+kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
 # 3. クーポンサービスの組み込み
@@ -303,12 +303,12 @@ kubectl apply -f ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernet
 
 v1 というタグをつけてコンテナをビルドする。
 ```bash
-cd ~/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
+cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
 ```
 
 ## frontend のデプロイ
 ```bash
-kubectl apply -f ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
+kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
 ```
 
 ## 動作確認
@@ -344,14 +344,14 @@ appdev/microservices-demo/src/couponservice/CouponService.java
 
 v2というタグをつけてコンテナをビルドする。
 ```bash
-cd ~/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2
+cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2
 ```
 
 ## Spanner へのクーポンデータ追加
 
 ### クーポン期限の設定
 
-```bash
+```
 export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
 ```
 
@@ -396,7 +396,7 @@ image: gcr.io/xxxxx/couponservice:v2
 
 ### 新しいアプリケーションをデプロイする
 ```bash
-kubectl apply -f ~/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
+kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
 ## 動作確認
