@@ -97,8 +97,6 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ### クラスターを作成する
 
-Google Cloud SDK 284.0.0
-
 ```bash
 gcloud container clusters create "k8s-appdev-handson"  \
 --zone "asia-northeast1-c" \
