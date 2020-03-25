@@ -173,13 +173,13 @@ gcloud spanner databases create appdev-db --instance=appdev-handson-instance --p
 ### Spanner テーブルの作成
 
 Visitors
-```
+```bash
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT\
   --ddl='CREATE TABLE Visitors ( SessionId STRING(1024) NOT NULL, LatestCouponUsed INT64 ) PRIMARY KEY (SessionId)'
 ```
 
 Coupons
-```
+```bash
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT\
   --ddl='CREATE TABLE Coupons ( SessionId STRING(1024) NOT NULL, CouponId STRING(1024) NOT NULL, DiscountPercentage INT64 NOT NULL, IsUsed BOOL NOT NULL, ExpiredBy INT64 NOT NULL) PRIMARY KEY (SessionId, CouponId), INTERLEAVE IN PARENT Visitors ON DELETE CASCADE'
 ```
@@ -367,13 +367,13 @@ export USER_SESSION_ID=42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
 サンプルデータの挿入
-```
+```bash
 gcloud spanner rows insert --database=appdev-db \
       --table=Visitors \
       --data=SessionId=$USER_SESSION_ID
 ```
 
-```
+```bash
 gcloud spanner rows insert --database=appdev-db \
       --table=Coupons \
       --data=SessionId=$USER_SESSION_ID,CouponId=xxxxxxxx-1111-yyyy-2222-zzzzzzzzzzzz,DiscountPercentage=40,IsUsed=false,ExpiredBy=$COUPON_EXPIREDBY
@@ -443,12 +443,12 @@ gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1 --force-
 ```
 
 ### Spanner データベース削除
-```
+```bash
 gcloud spanner databases delete appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Spanner インスタンス削除
-```
+```bash
 gcloud spanner instances delete appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT
 ```
 
