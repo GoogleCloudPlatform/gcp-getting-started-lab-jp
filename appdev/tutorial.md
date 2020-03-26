@@ -173,14 +173,14 @@ gcloud spanner databases create appdev-db --instance=appdev-handson-instance --p
 ### Spanner テーブルの作成
 
 Visitors
-```bash
-gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT\
+```
+gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Visitors ( SessionId STRING(1024) NOT NULL, LatestCouponUsed INT64 ) PRIMARY KEY (SessionId)'
 ```
 
 Coupons
-```bash
-gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT\
+```
+gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Coupons ( SessionId STRING(1024) NOT NULL, CouponId STRING(1024) NOT NULL, DiscountPercentage INT64 NOT NULL, IsUsed BOOL NOT NULL, ExpiredBy INT64 NOT NULL) PRIMARY KEY (SessionId, CouponId), INTERLEAVE IN PARENT Visitors ON DELETE CASCADE'
 ```
 
@@ -320,7 +320,7 @@ Spannerを使ってクーポンの払い出しに関するデータを永続化�
 appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponService.java
 
 * `Collection<Coupon> coupons = service.getCouponsBySessionId(req.getSessionId());`をコメントアウトする。
-* `Collection<Coupon> coupons = service.getCouponsBySessionIdWithSpanner(req.getSessionId());`をコメントアウトする。
+* `Collection<Coupon> coupons = service.getCouponsBySessionIdWithSpanner(req.getSessionId());`をコメントインする。
 
 ```java
 修正前
@@ -425,7 +425,7 @@ gcloud container clusters delete k8s-appdev-handson --zone asia-northeast1-c
 ### IAM アカウント（appdev-handson@xxx）削除
 
 ```bash
-gcloud iam service-accounts delete appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com 
+gcloud iam service-accounts delete appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 ```
 
 ### Container Registry のコンテナイメージ削除
