@@ -19,19 +19,29 @@
 
 - [App Engine (GAE)](https://cloud.google.com/appengine) を用いたアプリケーション開発：60 分
   - app.yaml の作成
-  - 静的ホスティング
   - アプリケーションコードの作成
+  - アプリケーションのデプロイ
   - Firestore の準備
   - Firestore を操作するコードの作成
-  - Cloud SQL の準備
-  - Cloud SQL の
-  - Memorystore for Redis の準備
+  - アプリケーションのデプロイ
   - サーバーレス VPC アクセスの設定
+  - Cloud SQL の準備
+  - Cloud SQL に接続するコードの作成
+  - アプリケーションのデプロイ
+  - Memorystore for Redis の準備
   - Memorystore for Redis に接続するコードの作成
+  - アプリケーションのデプロイ
+  - チャレンジ問題
+    - Cloud Build でデプロイを自動化
+    - Operations を使ってメトリクスをみてみる、デバッグをする
+    - 負荷かけてみる
 
 - クリーンアップ：10 分
   - プロジェクトごと削除
   - （オプション）個別リソースの削除
+    - Cloud SQL の削除
+    - Firestore の削除
+    - Memorystore の削除
 
 
 ## 環境準備
@@ -93,6 +103,14 @@ gcloud config set project $GOOGLE_CLOUD_PROJECT
 
 GCP では利用したい機能ごとに、有効化を行う必要があります。
 ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
+
+### App Engine を有効にする
+
+App Engine はロケーションを指定できますが、1プロジェクトにつき1ロケーションになります。最初に作ったロケーションにしたがい、そのプロジェクトは動きます。
+
+```bash
+gcloud app create 
+```
 
 ### ハンズオンで利用する GCP の API を有効化する
 
