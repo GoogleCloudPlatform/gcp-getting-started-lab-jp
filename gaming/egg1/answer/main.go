@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 )
 
-func main()  {
+func main() {
 	http.HandleFunc("/", indexHandler)
 
 	port := os.Getenv("PORT")
@@ -17,4 +20,12 @@ func main()  {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	fmt.Fprint(w, "Hello, Egg!")
 }
