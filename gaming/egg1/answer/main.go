@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"cloud.google.com/go/firestore"
 	"encoding/json"
@@ -16,6 +17,7 @@ import (
 func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/firestore", firestoreHandler)
+	http.HandleFunc("/firestore/", firestoreHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -51,8 +53,8 @@ func getUserBody(r *http.Request) (u Users, err error) {
 	if err != nil {
 		return u, err
 	}
-    log.Print(u)
-    return u, nil
+	log.Print(u)
+	return u, nil
 }
 func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -65,15 +67,15 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
-	if r.Method == http.MethodPost {
-        // 追加処理
-
-        u, err := getUserBody(r)
-        if err != nil {
-            log.Fatal(err)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
-        }
+	switch r.Method {
+	// 追加処理
+	case http.MethodPost:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		// 書き込み
 		ref, _, err := client.Collection("users").Add(ctx, u)
 		if err != nil {
@@ -83,9 +85,8 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Print("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
-
-	} else if r.Method == http.MethodGet {
-		// データ取得
+	// 取得処理
+	case http.MethodGet:
 		iter := client.Collection("users").Documents(ctx)
 		var u []Users
 
@@ -116,13 +117,34 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			w.Write(json)
 		}
+		// 更新処理
+	case http.MethodPut:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	} else if r.Method == http.MethodPut {
-		// Firestore データの更新
+		_, err = client.Collection("users").Doc(u.Id).Set(ctx, u)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	} else if r.Method == http.MethodDelete {
-
-	} else {
+		fmt.Fprintln(w, "success updating")
+	// 削除処理
+	case http.MethodDelete:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		_, err := client.Collection("users").Doc(id).Delete(ctx)
+		if err != nil {
+            log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+        fmt.Fprintln(w, "success deleting")
+	// それ以外のHTTPメソッド
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

@@ -123,7 +123,7 @@ gcloud app create --region=us-central
 - Google Cloud Memorystore for Redis API
 
 ```bash
-gcloud services enable sql-component.googleapis.com vpcaccess.googleapis.com
+gcloud services enable sql-component.googleapis.com vpcaccess.googleapis.com servicenetworking.googleapis.com
 ```
 
 <walkthrough-spotlight-pointer console-nav-menu="">API ライブラリ</walkthrough-spotlight-pointer>
@@ -161,7 +161,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/dev-key.json
 
 今回のハンズオンでは Firestore のネイティブモードを使用します。
 
-GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATICE MODE] をクリックしてください。
+GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。
 
 ![switch1](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native1.png)
 ![switch2](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native2.png)
@@ -311,7 +311,17 @@ gcloud app browse
 GAE はプロジェクト、サービス、バージョンから構成される `appspot.com` のサブドメインでアクセスできます。デフォルトのサービス、デフォルトのバージョンについては `{プロジェクトID}.appspot.com` でアクセスができます。
 サービス、バージョンを指定する場合は以下のような形式のドメインになります。
 
-WIP
+```
+https://VERSION_ID-dot-SERVICE_ID-dot-PROJECT_ID.REGION_ID.r.appspot.com
+```
+
+- `VERSION_ID` : App Engine にデプロイしたアプリケーションのバージョンIDになります。
+- `SERVICE_ID` : App Engine にデプロイしたアプリケーションのサービスIDになります。デフォルトサービスの場合、 `default` になります。
+- `PROJECT_ID` : App Engine を使っているプロジェクトIDになります。
+- `REGION_ID` : 最初に選択したリージョンIDになります。（現在は省略可能です。）
+- `-dot-` : 各要素は `-dot-` で連結されます。
+
+上記を組み合わせて指定することで、トラフィックを0%にしているアプリケーションでもアクセスして確認が可能です。
 
 ### こぼれ話2
 
@@ -339,7 +349,7 @@ gcloud app deploy
 
 ## Firestore を使う
 
-次にFirestoreを使うようにアプリケーションを編集していきます。
+次にFirestoreを使うようにアプリケーションを編集していきます。基本的な CRUD 処理を実装します。
 
 ### 依存関係の追加
 
@@ -379,27 +389,6 @@ require (
 
 ```go
 
-func getUserBody(r *http.Request) (u Users, err error) {
-	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
-	if err != nil {
-		return u, err
-	}
-
-	body := make([]byte, length)
-	length, err = r.Body.Read(body)
-	if err != nil && err != io.EOF {
-		return u, err
-	}
-
-	//parse json
-	err = json.Unmarshal(body[:length], &u)
-	if err != nil {
-		return u, err
-	}
-    log.Print(u)
-    return u, nil
-}
-
 func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Firestore クライアント作成
@@ -411,15 +400,15 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
-	if r.Method == http.MethodPost {
-        // 追加処理
-
-        u, err := getUserBody(r)
-        if err != nil {
-            log.Fatal(err)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
-        }
+	switch r.Method {
+	// 追加処理
+	case http.MethodPost:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		// 書き込み
 		ref, _, err := client.Collection("users").Add(ctx, u)
 		if err != nil {
@@ -429,7 +418,8 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Print("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
-	} else {
+    // それ以外のHTTPメソッド
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -473,18 +463,21 @@ curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localho
 	"google.golang.org/api/iterator"
 ```
 
-次にデータを取得するコードを書いていきます。POSTのifブロックとelseブロックの間に以下を追記してください。**コードのネストに注意しましょう**
+リクエストデータを
+```go
+```
+
+次にデータを取得するコードを書いていきます。POSTの case 句の後に以下の case 句を追記しましょう。
 
 ```go
-	} else if r.Method == http.MethodGet {
-        // Firestore データ取得 （全件取得）
+	// 取得処理
+	case http.MethodGet:
 		iter := client.Collection("users").Documents(ctx)
 		var u []Users
 
 		for {
 			doc, err := iter.Next()
 			if err == iterator.Done {
-                // データが無ければ終了
 				break
 			}
 			if err != nil {
@@ -495,6 +488,7 @@ curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localho
 			if err != nil {
 				log.Fatal(err)
 			}
+			user.Id = doc.Ref.ID
 			log.Print(user)
 			u = append(u, user)
 		}
@@ -508,7 +502,6 @@ curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localho
 			}
 			w.Write(json)
 		}
-    } else { // ここは既存の行なのでコピーしない
 ```
 
 編集が終わったら動かして確認してみましょう。
@@ -529,31 +522,352 @@ curl localhost:8080/firestore
 次に、そのIDを使って、データを更新する処理を追加します。
 
 ```go
+	// 更新処理
+	case http.MethodPut:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		_, err = client.Collection("users").Doc(u.Id).Set(ctx, u)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintln(w, "success updating")
+```
+
+編集が終わったら動かして確認してみましょう。
+
+```bash
+go run main.go
+```
+
+Doc にIDの値をセットすることで一意なユーザーデータを対象にし、Setメソッドで受け取ったリクエストの内容で更新します。
+
+id の値はコンソールなどで確認した値をセットしてください。
+
+![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
+
+```bash
+curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' localhost:8080/firestore
 ```
 
 ### データの削除処理
+
+最後に、データの削除処理を行います。
+
+削除APIはパスパラメータでIDを指定する形式にしましょう。
+`main.go` の import の中に以下を追記してください。
+
+```go
+  "strings"
+```
+
+main 関数の HandleFunc に以下を追加します。
+
+```go
+	http.HandleFunc("/firestore/", firestoreHandler)
+```
+
+次にデータを削除するコードを書いていきます。PUTの case 句の後に以下の case 句を追記しましょう。
+
+```go
+	// 削除処理
+	case http.MethodDelete:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		_, err := client.Collection("users").Doc(id).Delete(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+        fmt.Fprintln(w, "success deleting")
+```
+
+編集が終わったら確認します。
+
+```bash
+go run main.go
+```
+
+削除対象のIDは何でも構いません。先程更新したIDでもいいでしょう。
+
+```bash
+curl -X DELETE localhost:8080/firebase/<削除対象のID>
+```
 
 ### デプロイする
 
 最終的な `main.go` は以下のようになっているはずです。
 
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"cloud.google.com/go/firestore"
+	"encoding/json"
+	"google.golang.org/api/iterator"
+	"io"
+	"strconv"
+)
+
+func main() {
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/firestore", firestoreHandler)
+	http.HandleFunc("/firestore/", firestoreHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
+	log.Printf("Listening on port %s", port)
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Hello, Egg!")
+}
+
+func getUserBody(r *http.Request) (u Users, err error) {
+	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
+	if err != nil {
+		return u, err
+	}
+
+	body := make([]byte, length)
+	length, err = r.Body.Read(body)
+	if err != nil && err != io.EOF {
+		return u, err
+	}
+
+	//parse json
+	err = json.Unmarshal(body[:length], &u)
+	if err != nil {
+		return u, err
+	}
+	log.Print(u)
+	return u, nil
+}
+func firestoreHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Firestore クライアント作成
+	pid := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	ctx := r.Context()
+	client, err := firestore.NewClient(ctx, pid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	switch r.Method {
+	// 追加処理
+	case http.MethodPost:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		// 書き込み
+		ref, _, err := client.Collection("users").Add(ctx, u)
+		if err != nil {
+			log.Fatalf("Failed adding data: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		log.Print("success: id is %v", ref.ID)
+		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
+	// 取得処理
+	case http.MethodGet:
+		iter := client.Collection("users").Documents(ctx)
+		var u []Users
+
+		for {
+			doc, err := iter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+			var user Users
+			err = doc.DataTo(&user)
+			if err != nil {
+				log.Fatal(err)
+			}
+			user.Id = doc.Ref.ID
+			log.Print(user)
+			u = append(u, user)
+		}
+		if len(u) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			json, err := json.Marshal(u)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Write(json)
+		}
+		// 更新処理
+	case http.MethodPut:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		_, err = client.Collection("users").Doc(u.Id).Set(ctx, u)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintln(w, "success updating")
+	// 削除処理
+	case http.MethodDelete:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		_, err := client.Collection("users").Doc(id).Delete(ctx)
+		if err != nil {
+            log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+        fmt.Fprintln(w, "success deleting")
+	// それ以外のHTTPメソッド
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+type Users struct {
+	Id    string `firestore:id, json:id`
+	Email string `firestore:email, json:email`
+	Name  string `firestore:name, json:name`
+}
+
 ```
-WIP
+
+これらをデプロイします。
+
+```bash
+gcloud app deploy
 ```
+
+先程までに試した操作を App Engine に向けていくつか実行してみてください。（ローカルでも App Engine と同じ Firestore を使っているため、データはすでにあると思います。）
 
 ## チャレンジ問題
 
-WIP
+### 色んなデプロイメントをしてみよう
 
-### ブルーグリーンデプロイメントをしてみよう
+GAE では、バージョンを用いることでブルーグリーンデプロイメントを簡単に実施できます。 先程デプロイで使っていた `gcloud app deploy` はオプションを指定しないと常に最新が有効になります。  
+最新をデプロイしておいて任意のタイミングで切り替えるブルーグリーンデプロイメントなどが App Engine ではデプロイ時のオプションとその後の設定で可能になります。
 
-GAE では、バージョンを用いることでブルーグリーンデプロイメントを簡単に実施できます。
+```bash
+gcloud app deploy --no-promote
+```
+
+`--no-promote` オプションを指定することでアプリケーションをデプロイするけどトラフィックはデプロイしたアプリケーションに流さない、ということができます。確認するには、前述のこぼれ話に書いた URL に直接アクセスするか、GCP コンソールからでもリンクを取得できます。
+
+例えば、最新のデプロイを確認後に以下のコマンドで切り替えることができます。
+
+```bash
+gcloud app versions migrate $VERSION_ID
+```
 
 ### オートスケールさせてみよう
 
+[vegeta](https://github.com/tsenart/vegeta) を使って App Engine にアクセスを大量に発生させてみましょう。（vegeta でなくても、使い慣れたものを使えばOKです。）
+
+インストール
+
+```bash
+go get -u github.com/tsenart/vegeta
+```
+
+アタック (Cloud Shell で実行すると送信する側のリソースが足りなくて時間がかかるかもしれません。可能だったらお手元の PC で実行することをオススメします。)
+
+```bash
+echo "GET https://{{project-id}}.appspot.com/firestore" | vegeta attack -rate=1000 -duration=10s | tee /tmp/result.bin
+```
+
+レポート
+```bash
+vegeta report /tmp/result.bin
+```
+
+リクエストに応じてインスタンスがスケールすることを [GCP コンソール](https://console.cloud.google.com/appengine/instances?project={{project-id}}) で確認しましょう。
+
 ### アプリケーションのモニタリングをしてみよう
 
+[Cloud Monitoring](https://console.cloud.google.com/monitoring?project={{project-id}})を使うことでコンソールよりも詳細な情報な確認することができます。（初回アクセス時は最初の表示までに時間がかかるかもしれません。）
+
+[App Engine ダッシュボード](https://console.cloud.google.com/monitoring/dashboards/resourceDetail/gae_application,project_id:{{project-id}}?project={{project-id}}&timeDomain=1h)で App Engine の状態を監視することができます。
+
+[Cloud Trace](https://console.cloud.google.com/traces/list?project={{project-id}}) で時間のかかったリクエストを分析することもできます。
+
+### デプロイしたアプリケーションをデバッグする
+
+[Cloud Debug](https://cloud.google.com/debugger) は、デプロイされた App Engine アプリケーションのコードを確認でき、本番環境のリクエストをデバッグすることができます。今回はGo言語で開発していたため未対応ですが、Java, Pythonでは利用できます。
+
 ### サービスを分割してみよう
+
+## Cloud SQL を設定する
+
+### Serverless VPC Access のコネクタを作成する
+
+まずは VPC ネットワークを作成します。
+
+```bash
+gcloud compute networks create eggvpc --subnet-mode=custom
+gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-central1 --range=10.128.0.0/20
+```
+
+```bash
+gcloud compute networks vpc-access connectors create egg-vpc-connector \
+--network eggvpc \
+--region us-central1 \
+--range 10.129.0.0/28
+```
+
+### Cloud SQL インスタンスの作成
+
+今回は MySQL を利用します。
+
+```bash
+gcloud beta sql instances create --no-assign-ip --network=eggvpc --region=us-central1 eggsql
+```
+
+## App Engne に Cloud SQL を使うように修正する
+
+### 接続情報を定義する
+
+`app.yaml` を編集して、接続情報を定義します。以下の内容をファイルの末尾に追記してください。
+
+```yaml
+vpc_access_connector:
+  name: "projects/{{project-id}}/locations/us-central1/connectors/egg-vpc-connector"
+```
+
+### 
+
+## Memorystore for Redis を使う
 
 ## Congraturations!
 
