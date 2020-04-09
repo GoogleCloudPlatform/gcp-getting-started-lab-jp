@@ -123,7 +123,7 @@ gcloud app create --region=us-central
 - Google Cloud Memorystore for Redis API
 
 ```bash
-gcloud services enable sql-component.googleapis.com vpcaccess.googleapis.com servicenetworking.googleapis.com
+gcloud services enable sql-component.googleapis.com vpcaccess.googleapis.com servicenetworking.googleapis.com sqladmin.googleapis.com
 ```
 
 <walkthrough-spotlight-pointer console-nav-menu="">API ライブラリ</walkthrough-spotlight-pointer>
@@ -843,7 +843,8 @@ gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-ce
 gcloud compute networks vpc-access connectors create egg-vpc-connector \
 --network eggvpc \
 --region us-central1 \
---range 10.129.0.0/28
+--range 10.129.0.0/28 \
+--root-password eggpassword
 ```
 
 ### Cloud SQL インスタンスの作成
@@ -851,10 +852,27 @@ gcloud compute networks vpc-access connectors create egg-vpc-connector \
 今回は MySQL を利用します。
 
 ```bash
-gcloud beta sql instances create --no-assign-ip --network=eggvpc --region=us-central1 eggsql
+gcloud beta sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword eggsql
+```
+
+### データベース作成
+
+Cloud SQL のインスタンスに接続します。パスワードを尋ねられるので、作成時に指定したパスワードを入力します。
+
+```bash
+gcloud sql connect eggsql
+```
+
+接続できたら、データベースとテーブルを作成します。
+
+```bash
+create database egg;
+create table egg.user (id varchar(10), email varchar(255), name varchar(255));
 ```
 
 ## App Engne に Cloud SQL を使うように修正する
+
+MySQL は慣れてる方も多いと思うので、登録と取得のみを実装します。
 
 ### 接続情報を定義する
 
@@ -863,9 +881,146 @@ gcloud beta sql instances create --no-assign-ip --network=eggvpc --region=us-cen
 ```yaml
 vpc_access_connector:
   name: "projects/{{project-id}}/locations/us-central1/connectors/egg-vpc-connector"
+
+env_variables:
+  DB_INSTANCE: "{{project-id}}:us-central1:eggsql"
+  DB_USER: root
+  DB_PASS: eggpassword
 ```
 
-### 
+### データベースアクセスをアプリケーションに実装する
+
+`main.go` の import に以下の依存関係を追加します。
+
+```go
+	"database/sql"
+    _ "github.com/go-sql-driver/mysql"
+```
+
+`main.go` に以下のコードを追記します。
+
+```go
+
+var db *sql.DB
+func initConnectionPool() (*sql.DB, error) {
+
+    var (
+        dbUser     = os.Getenv("DB_USER")
+        dbPwd      = os.Getenv("DB_PASS")
+        dbInstance = os.Getenv("DB_INSTANCE")
+        dbName = "egg"
+    )
+    dbURI := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, dbInstance, dbName)
+    dbPool, err := sql.Open("mysql", dbURI)
+    if err != nil {
+        return nil, fmt.Errorf("sql.Open: %v", err)
+    }
+    dbPool.SetMaxIdleConns(5)
+    dbPool.SetMaxOpenConns(5)
+    dbPool.SetConnMaxLifetime(1800)
+
+    return dbPool, nil
+}
+
+```
+
+main 関数の頭のところに以下のコードを追加します。
+
+```go
+    // DB
+    db, err := initConnectionPool()
+    if err != nil {
+        log.Fatalf("unable to connect: %s", err)
+    }
+
+```
+
+main 関数に sqlHandler を追加します。
+```go
+	http.HandleFunc("/sql", sqlHandler)
+```
+
+sqlHandler 関数を追加します。
+
+```go
+func sqlHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case http.MethodPost:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+
+        ins, err := db.Prepare("INSERT INTO user(id, email, name) VALUES(?,?,?)")
+        if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+        defer ins.Close()
+        _, err = ins.Exec(u.Id, u.Email, u.Name)
+        if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+		log.Print("success: id is %v", u.Id)
+		fmt.Fprintf(w, "success: id is %v \n", u.Id)
+        
+	case http.MethodGet:
+		rows, err := db.Query(`SELECT id, email, name FROM user`)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		var users []Users
+		for rows.Next() {
+			var u Users
+			err = rows.Scan(&u.Id, &u.Email, &u.Name)
+			if err != nil {
+			    log.Fatal(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			users = append(users, u)
+		}
+		if len(users) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			json, err := json.Marshal(users)
+			if err != nil {
+			    log.Fatal(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Write(json)
+		}
+	// それ以外のHTTPメソッド
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+}
+```
+
+これをデプロイして実際に試してみましょう。
+
+まずは登録。
+
+```bash
+curl -X POST '{"id": "00001", "email":"test@example.com", "name":"テスト1"}' https://{{project-id}}.appspot.com/sql
+```
+
+そして取得。
+
+```bash
+curl https://{{project-id}}/sql
+```
 
 ## Memorystore for Redis を使う
 

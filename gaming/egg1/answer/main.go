@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
+
 	"fmt"
 	"log"
 	"net/http"
@@ -14,10 +17,21 @@ import (
 	"strconv"
 )
 
+var db *sql.DB
+
 func main() {
+	var err error
+
+	// DB
+	db, err = initConnectionPool()
+	if err != nil {
+		log.Fatalf("unable to connect: %s", err)
+	}
+
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/firestore", firestoreHandler)
 	http.HandleFunc("/firestore/", firestoreHandler)
+	http.HandleFunc("/sql", sqlHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -138,11 +152,11 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
 		_, err := client.Collection("users").Doc(id).Delete(ctx)
 		if err != nil {
-            log.Fatal(err)
+			log.Fatal(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-        }
-        fmt.Fprintln(w, "success deleting")
+		}
+		fmt.Fprintln(w, "success deleting")
 	// それ以外のHTTPメソッド
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -151,7 +165,91 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Users struct {
-	Id    string `firestore:id, json:id`
-	Email string `firestore:email, json:email`
-	Name  string `firestore:name, json:name`
+	Id    string `firestore:id, json:id, db:id`
+	Email string `firestore:email, json:email, db:email`
+	Name  string `firestore:name, json:name, db:name`
+}
+
+func initConnectionPool() (*sql.DB, error) {
+
+	var (
+		dbUser     = os.Getenv("DB_USER")
+		dbPwd      = os.Getenv("DB_PASS")
+		dbInstance = os.Getenv("DB_INSTANCE")
+		dbName     = "egg"
+	)
+	dbURI := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, dbInstance, dbName)
+	dbPool, err := sql.Open("mysql", dbURI)
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open: %v", err)
+	}
+	dbPool.SetMaxIdleConns(5)
+	dbPool.SetMaxOpenConns(5)
+	dbPool.SetConnMaxLifetime(1800)
+
+	return dbPool, nil
+}
+
+func sqlHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case http.MethodPost:
+		u, err := getUserBody(r)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+
+        ins, err := db.Prepare("INSERT INTO user(id, email, name) VALUES(?,?,?)")
+        if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+        defer ins.Close()
+        _, err = ins.Exec(u.Id, u.Email, u.Name)
+        if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+        }
+		log.Print("success: id is %v", u.Id)
+		fmt.Fprintf(w, "success: id is %v \n", u.Id)
+        
+	case http.MethodGet:
+		rows, err := db.Query(`SELECT id, email, name FROM user`)
+		if err != nil {
+			log.Fatal(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		var users []Users
+		for rows.Next() {
+			var u Users
+			err = rows.Scan(&u.Id, &u.Email, &u.Name)
+			if err != nil {
+			    log.Fatal(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			users = append(users, u)
+		}
+		if len(users) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			json, err := json.Marshal(users)
+			if err != nil {
+			    log.Fatal(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Write(json)
+		}
+	// それ以外のHTTPメソッド
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
 }
