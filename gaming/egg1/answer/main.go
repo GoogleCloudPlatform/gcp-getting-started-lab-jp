@@ -15,6 +15,8 @@ import (
 	"google.golang.org/api/iterator"
 	"io"
 	"strconv"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 var db *sql.DB
@@ -27,6 +29,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to connect: %s", err)
 	}
+
+	// Redis
+	initRedis()
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/firestore", firestoreHandler)
@@ -81,6 +86,10 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
+	// Redis クライアント作成
+	conn := pool.Get()
+	defer conn.Close()
+
 	switch r.Method {
 	// 追加処理
 	case http.MethodPost:
@@ -101,35 +110,71 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
 	// 取得処理
 	case http.MethodGet:
-		iter := client.Collection("users").Documents(ctx)
-		var u []Users
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		log.Printf("id=%v", id)
+		if id == "/firestore" || id == "" {
+			iter := client.Collection("users").Documents(ctx)
+			var u []Users
 
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
+			for {
+				doc, err := iter.Next()
+				if err == iterator.Done {
+					break
+				}
+				if err != nil {
+					log.Fatal(err)
+				}
+				var user Users
+				err = doc.DataTo(&user)
+				if err != nil {
+					log.Fatal(err)
+				}
+				user.Id = doc.Ref.ID
+				log.Print(user)
+				u = append(u, user)
 			}
-			if err != nil {
-				log.Fatal(err)
+			if len(u) == 0 {
+				w.WriteHeader(http.StatusNoContent)
+			} else {
+				json, err := json.Marshal(u)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Write(json)
 			}
-			var user Users
-			err = doc.DataTo(&user)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user.Id = doc.Ref.ID
-			log.Print(user)
-			u = append(u, user)
-		}
-		if len(u) == 0 {
-			w.WriteHeader(http.StatusNoContent)
 		} else {
-			json, err := json.Marshal(u)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
+            cache, _ := redis.String(conn.Do("GET", id))
+            log.Printf("cache : %v", cache)
+
+            if cache != "" {
+                json, err := json.Marshal(cache)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                w.Write(json)
+                log.Printf("find cache")
+            } else {
+                doc, err := client.Collection("users").Doc(id).Get(ctx)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                var u Users
+                err = doc.DataTo(&u)
+                if err != nil {
+                    log.Fatal(err)
+                }
+                u.Id = doc.Ref.ID
+                json, err := json.Marshal(u)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                conn.Do("SET", id, string(json))
+			    w.Write(json)
+            }
 		}
 		// 更新処理
 	case http.MethodPut:
@@ -199,24 +244,24 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-        }
+		}
 
-        ins, err := db.Prepare("INSERT INTO user(id, email, name) VALUES(?,?,?)")
-        if err != nil {
+		ins, err := db.Prepare("INSERT INTO user(id, email, name) VALUES(?,?,?)")
+		if err != nil {
 			log.Fatal(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-        }
-        defer ins.Close()
-        _, err = ins.Exec(u.Id, u.Email, u.Name)
-        if err != nil {
+		}
+		defer ins.Close()
+		_, err = ins.Exec(u.Id, u.Email, u.Name)
+		if err != nil {
 			log.Fatal(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-        }
+		}
 		log.Print("success: id is %v", u.Id)
 		fmt.Fprintf(w, "success: id is %v \n", u.Id)
-        
+
 	case http.MethodGet:
 		rows, err := db.Query(`SELECT id, email, name FROM user`)
 		if err != nil {
@@ -230,7 +275,7 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 			var u Users
 			err = rows.Scan(&u.Id, &u.Email, &u.Name)
 			if err != nil {
-			    log.Fatal(err)
+				log.Fatal(err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -241,7 +286,7 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			json, err := json.Marshal(users)
 			if err != nil {
-			    log.Fatal(err)
+				log.Fatal(err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -252,4 +297,17 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+var pool *redis.Pool
+
+func initRedis() {
+	var (
+		host = os.Getenv("REDIS_HOST")
+		port = os.Getenv("REDIS_PORT")
+		addr = fmt.Sprintf("%s:%s", host, port)
+	)
+	pool = redis.NewPool(func() (redis.Conn, error) {
+		return redis.Dial("tcp", addr)
+	}, 10)
 }

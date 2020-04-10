@@ -123,7 +123,11 @@ gcloud app create --region=us-central
 - Google Cloud Memorystore for Redis API
 
 ```bash
-gcloud services enable sql-component.googleapis.com vpcaccess.googleapis.com servicenetworking.googleapis.com sqladmin.googleapis.com
+gcloud services enable sql-component.googleapis.com \
+                       vpcaccess.googleapis.com \
+                       servicenetworking.googleapis.com \
+                       sqladmin.googleapis.com \
+                       redis.googleapis.com
 ```
 
 <walkthrough-spotlight-pointer console-nav-menu="">API ライブラリ</walkthrough-spotlight-pointer>
@@ -814,6 +818,11 @@ vegeta report /tmp/result.bin
 
 リクエストに応じてインスタンスがスケールすることを [GCP コンソール](https://console.cloud.google.com/appengine/instances?project={{project-id}}) で確認しましょう。
 
+### Firestore でクエリをしてみよう
+
+今回のハンズオンでは全件を取ってくる処理になっていますが、実際には検索条件などを実装すると思います。
+Firestore のクエリについては[制限事項](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations)がありますが、クエリを実行できます。
+
 ### アプリケーションのモニタリングをしてみよう
 
 [Cloud Monitoring](https://console.cloud.google.com/monitoring?project={{project-id}})を使うことでコンソールよりも詳細な情報な確認することができます。（初回アクセス時は最初の表示までに時間がかかるかもしれません。）
@@ -1022,13 +1031,187 @@ curl -X POST '{"id": "00001", "email":"test@example.com", "name":"テスト1"}' 
 curl https://{{project-id}}/sql
 ```
 
+### こぼれ話
+
+`app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
+
 ## Memorystore for Redis を使う
+
+Memorystore for Redis を使ってデータのキャッシュをしてみましょう。
+現在Beta版で Memorystore for Memcached も利用できますので、そちらを試してみても良いかもしれません。
+Firestore のデータをキャッシュから返せるように修正していきます。
+
+### Redis インスタンスを作成する
+
+```bash
+gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
+```
+
+作成できたら、以下のコマンドを実行して Redis インスタンスの IP アドレスを取得します。
+
+```bash
+export REDIS_HOST=`gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host`
+```
+
+### 接続設定
+
+本来なら App Engine から Memorystore に接続する場合は Serverless VPC Access の設定が必要になりますが、今回 Cloud SQL で設定済みなので省略できます。
+
+`app.yaml` の環境変数を追記しましょう。
+
+```yaml
+  REDIS_HOST: 10.224.127.11
+  REDIS_PORT: 6379
+```
+
+`REDIS_HOST` の値は先程設定した REDIS_HOST の値を記載してください。
+
+## Firestore ハンドラの修正
+
+現在、全件取っているだけでキャッシュする意味がないため、キーで取得できるようにまずは修正します。
+
+`main.go` の firestoreHandler 、 MethodGe のところを修正していきます。以下の内容に修正してください。
+
+```go
+	case http.MethodGet:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		log.Printf("id=%v", id)
+		if id == "/firestore" || id == "" {
+			iter := client.Collection("users").Documents(ctx)
+			var u []Users
+
+			for {
+				doc, err := iter.Next()
+				if err == iterator.Done {
+					break
+				}
+				if err != nil {
+					log.Fatal(err)
+				}
+				var user Users
+				err = doc.DataTo(&user)
+				if err != nil {
+					log.Fatal(err)
+				}
+				user.Id = doc.Ref.ID
+				log.Print(user)
+				u = append(u, user)
+			}
+			if len(u) == 0 {
+				w.WriteHeader(http.StatusNoContent)
+			} else {
+				json, err := json.Marshal(u)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Write(json)
+			}
+		} else {
+            doc, err := client.Collection("users").Doc(id).Get(ctx)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+            }
+            var u Users
+            err = doc.DataTo(&u)
+            if err != nil {
+                log.Fatal(err)
+            }
+            u.Id = doc.Ref.ID
+            json, err := json.Marshal(u)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                return
+            }
+            w.Write(json)
+		}
+```
+
+これでまずは単一のユーザーデータを取得できるようになりました。
+
+次に Redis 操作のためのコードを追加します。 
+
+import に以下を追記してください。
+
+```go
+    "github.com/gomodule/redigo/redis"
+```
+
+main 関数のDB接続の初期化の下に以下を追記してください。
+
+```go
+	// Redis
+	initRedis()
+```
+
+`main.go` 末尾に以下を追記してください。
+
+```go
+var pool *redis.Pool
+
+func initRedis() {
+	var (
+		host = os.Getenv("REDIS_HOST")
+		port = os.Getenv("REDIS_PORT")
+		addr = fmt.Sprintf("%s:%s", host, port)
+	)
+	pool = redis.NewPool(func() (redis.Conn, error) {
+		return redis.Dial("tcp", addr)
+	}, 10)
+}
+```
+
+`firestoreHandler` の Firestore クライアントのコードの下に以下を追記してください。
+
+```go
+	// Redis クライアント作成
+	conn := pool.Get()
+	defer conn.Close()
+```
+
+else の方が今回単一ユーザーデータを取得するようにしたところですが、こちらにキャッシュを取得するようなコードを追加します。
+元のところを else で囲むので、まるっと以下に置き換えてみましょう。
+
+```go
+            cache, _ := redis.String(conn.Do("GET", id))
+            log.Printf("cache : %v", cache)
+
+            if cache != "" {
+                json, err := json.Marshal(cache)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                w.Write(json)
+                log.Printf("find cache")
+            } else {
+                doc, err := client.Collection("users").Doc(id).Get(ctx)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                var u Users
+                err = doc.DataTo(&u)
+                if err != nil {
+                    log.Fatal(err)
+                }
+                u.Id = doc.Ref.ID
+                json, err := json.Marshal(u)
+                if err != nil {
+                    w.WriteHeader(http.StatusInternalServerError)
+                    return
+                }
+                conn.Do("SET", id, string(json))
+			    w.Write(json)
+            }
+```
 
 ## Congraturations!
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
-これにて GAE を使ったアプリケーション開発のハンズオンは完了です！！
+これにて GAE を使ったアプリケーション開発のハンズnオンは完了です！！
 
 デモで使った資材が不要な方は、次の手順でクリーンアップを行って下さい。
 
