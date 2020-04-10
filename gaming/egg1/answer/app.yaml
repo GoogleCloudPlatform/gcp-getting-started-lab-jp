@@ -4,3 +4,13 @@ handlers:
   - url: /.*
     secure: always
     script: auto
+
+vpc_access_connector:
+  name: "projects/tt-egg1-handson1/locations/us-central1/connectors/egg-vpc-connector"
+
+env_variables:
+  DB_INSTANCE: "tt-egg1-handson1:us-central1:eggsql-1"
+  DB_USER: root
+  DB_PASS: xxxxx
+  REDIS_HOST: 0.0.0.0
+  REDIS_PORT: 6379
