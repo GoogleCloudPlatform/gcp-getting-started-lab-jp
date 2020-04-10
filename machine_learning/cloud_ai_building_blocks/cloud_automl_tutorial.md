@@ -1,4 +1,4 @@
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/Youki/gcp-getting-started-lab-jp&tutorial=machine_learning/cloud_ai_building_blocks/cloud_automl_tutorial.md)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&tutorial=machine_learning/cloud_ai_building_blocks/cloud_automl_tutorial.md)
 
 # Cloud AutoML Vision: データの準備
 
