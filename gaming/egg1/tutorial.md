@@ -53,7 +53,7 @@
 下記の設定を進めていきます。
 
 - gcloud コマンドラインツール設定
-- App Engine 有効化設定
+- GAE 有効化設定
 - GCP 機能（API）有効化設定
 
 ## gcloud コマンドラインツール
@@ -99,14 +99,14 @@ gcloud config set project $GOOGLE_CLOUD_PROJECT
 <walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
 
 
-## GCP 環境設定
+## GCP 環境設定 Part1
 
 GCP では利用したい機能ごとに、有効化を行う必要があります。
 ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
 
-### App Engine を有効にする
+### GAE を有効にする
 
-App Engine はロケーションを指定できますが、1プロジェクトにつき1ロケーションになります。最初に作ったロケーションにしたがい、そのプロジェクトは動きます。
+GAE はロケーションを指定できますが、1プロジェクトにつき1ロケーションになります。最初に作ったロケーションにしたがい、そのプロジェクトは動きます。
 
 ```bash
 gcloud app create --region=us-central
@@ -132,6 +132,8 @@ gcloud services enable sql-component.googleapis.com \
 
 <walkthrough-spotlight-pointer console-nav-menu="">API ライブラリ</walkthrough-spotlight-pointer>
 **GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+
+## GCP 環境設定 Part2
 
 ### サービスアカウントの作成
 
@@ -161,6 +163,8 @@ gcloud iam service-accounts keys create dev-key.json --iam-account dev-egg-sa@{{
 export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/dev-key.json
 ```
 
+## GCP 環境設定 Part3
+
 ### Firestore を有効にする
 
 今回のハンズオンでは Firestore のネイティブモードを使用します。
@@ -180,7 +184,7 @@ GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/en
 
 <walkthrough-tutorial-duration duration=60></walkthrough-tutorial-duration>
 
-App Engine を利用したアプリケーション開発を体験します。
+Google App Engine (GAE) を利用したアプリケーション開発を体験します。
 
 下記の手順で進めていきます。
 ### アプリケーションの作成
@@ -310,7 +314,11 @@ gcloud app browse
 
 先程と同様に正しくアプリケーションにアクセスできると、 `Hello EGG!` と表示されます。
 
-### こぼれ話
+<walkthrough-footnote>実際に GAE にデプロイができました！次に Firestore を操作するための準備を進めます。</walkthrough-footnote>
+
+## こぼれ話
+
+### こぼれ話1
 
 GAE はプロジェクト、サービス、バージョンから構成される `appspot.com` のサブドメインでアクセスできます。デフォルトのサービス、デフォルトのバージョンについては `{プロジェクトID}.appspot.com` でアクセスができます。
 サービス、バージョンを指定する場合は以下のような形式のドメインになります。
@@ -319,9 +327,9 @@ GAE はプロジェクト、サービス、バージョンから構成される 
 https://VERSION_ID-dot-SERVICE_ID-dot-PROJECT_ID.REGION_ID.r.appspot.com
 ```
 
-- `VERSION_ID` : App Engine にデプロイしたアプリケーションのバージョンIDになります。
-- `SERVICE_ID` : App Engine にデプロイしたアプリケーションのサービスIDになります。デフォルトサービスの場合、 `default` になります。
-- `PROJECT_ID` : App Engine を使っているプロジェクトIDになります。
+- `VERSION_ID` : GAE にデプロイしたアプリケーションのバージョンIDになります。
+- `SERVICE_ID` : GAE にデプロイしたアプリケーションのサービスIDになります。デフォルトサービスの場合、 `default` になります。
+- `PROJECT_ID` : GAE を使っているプロジェクトIDになります。
 - `REGION_ID` : 最初に選択したリージョンIDになります。（現在は省略可能です。）
 - `-dot-` : 各要素は `-dot-` で連結されます。
 
@@ -330,8 +338,6 @@ https://VERSION_ID-dot-SERVICE_ID-dot-PROJECT_ID.REGION_ID.r.appspot.com
 ### こぼれ話2
 
 デプロイの際に `.gcloudignore` が出力されるようなログが出たかもしれません。これはデプロイの際にファイルをアップロードしないように設定ファイルとして書いておくことができます。
-
-<walkthrough-footnote>実際に App Engine にデプロイができました！次に Firestore を操作するための準備を進めます。</walkthrough-footnote>
 
 ## チャレンジ問題：HTTPS 対応してみる
 
@@ -359,16 +365,29 @@ gcloud app deploy
 
 Firestore にアクセスするためのクライアントライブラリを追加します。 Go 言語の場合、 `go.mod` でアプリケーションの依存関係を設定します。`app.yaml` と同じ場所に `go.mod` ファイルを配置してください。
 
-以下の内容で `go.mod` ファイルを作成してください。
+以下の内容で `go.mod` ファイルを作成してください。今回のハンズオンで使う依存関係を全部書いています。
 
 ```
 module egg1
+
 go 1.12
+
 require (
-        cloud.google.com/go/firestore v1.2.0
-        google.golang.org/api v0.21.0
+	cloud.google.com/go/firestore v1.2.0
+	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
+	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/influxdata/tdigest v0.0.1 // indirect
+	github.com/mailru/easyjson v0.7.1 // indirect
+	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
+	github.com/tsenart/vegeta v12.7.0+incompatible // indirect
+	google.golang.org/api v0.21.0
 )
 ```
+
+<walkthrough-footnote>Firestoreを操作するコードを実装していきましょう。</walkthrough-footnote>
+
+## Firestore を使う
 
 ### データの追加処理
 
@@ -437,14 +456,14 @@ type Users struct {
 
 ```
 
-こちらのコードは実際のプロジェクトの Firestore に追加しています。
+こちらのコードは実際のプロジェクトの Firestore にデータを追加しています。
 ローカルでアプリケーションを動かして、Firestore にデータが入るところを確認しましょう。
 
 ```bash
 go run main.go
 ```
 
-Cloud Shell のタブをもう一つ開き、データを投入してみます。
+Cloud Shell のタブを新しく開き（＋ボタン）、データを投入するリクエストを送ります。
 
 ```bash
 curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localhost:8080/firestore
@@ -452,9 +471,15 @@ curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localho
 
 **いくつかデータの内容を変更して実行してみましょう！**
 
+### データの確認
+
 [Firestore コンソール](https://console.cloud.google.com/firestore/data/?project={{project-id}})でデータが入っていることを確認しましょう。
 
 元の Cloud Shell タブに戻り、Ctrl+c で実行中のアプリケーションを停止します。
+
+<walkthrough-footnote>次は登録したデータを Firestore から取得して返す実装を行います。</walkthrough-footnote>
+
+## Firestore を使う
 
 ### データの取得処理
 
@@ -465,10 +490,6 @@ curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localho
 
 ```go
 	"google.golang.org/api/iterator"
-```
-
-リクエストデータを
-```go
 ```
 
 次にデータを取得するコードを書いていきます。POSTの case 句の後に以下の case 句を追記しましょう。
@@ -520,6 +541,10 @@ go run main.go
 curl localhost:8080/firestore
 ```
 
+<walkthrough-footnote>次は登録済みのデータを更新する実装を行います。</walkthrough-footnote>
+
+## Firestore を使う
+
 ### データの更新処理
 
 先程追加したログの中に作成したデータの一意なIDが出力されていると思います。
@@ -550,7 +575,7 @@ curl localhost:8080/firestore
 go run main.go
 ```
 
-Doc にIDの値をセットすることで一意なユーザーデータを対象にし、Setメソッドで受け取ったリクエストの内容で更新します。
+Doc にIDの値をセットすることで一意なユーザーデータを対象にし、Set 関数で受け取ったリクエストの内容で更新します。
 
 id の値はコンソールなどで確認した値をセットしてください。
 
@@ -559,6 +584,10 @@ id の値はコンソールなどで確認した値をセットしてくださ�
 ```bash
 curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' localhost:8080/firestore
 ```
+
+<walkthrough-footnote>次は登録済みのデータを削除する実装を行います。</walkthrough-footnote>
+
+## Firestore を使う
 
 ### データの削除処理
 
@@ -603,7 +632,19 @@ go run main.go
 curl -X DELETE localhost:8080/firebase/<削除対象のID>
 ```
 
+<walkthrough-footnote>最後に、ここまでのアプリケーションを GAE にデプロイします。</walkthrough-footnote>
+
+## Firestore を使う
+
 ### デプロイする
+
+ここまで実装してきた Firestore 操作のコードを GAE にデプロイします。
+
+```bash
+gcloud app deploy
+```
+
+先程までに試した操作を GAE に向けていくつか実行してみてください。（ローカルでも GAE と同じ Firestore を使っているため、データはすでにあると思います。）
 
 最終的な `main.go` は以下のようになっているはずです。
 
@@ -768,74 +809,8 @@ type Users struct {
 
 ```
 
-これらをデプロイします。
 
-```bash
-gcloud app deploy
-```
-
-先程までに試した操作を App Engine に向けていくつか実行してみてください。（ローカルでも App Engine と同じ Firestore を使っているため、データはすでにあると思います。）
-
-## チャレンジ問題
-
-### 色んなデプロイメントをしてみよう
-
-GAE では、バージョンを用いることでブルーグリーンデプロイメントを簡単に実施できます。 先程デプロイで使っていた `gcloud app deploy` はオプションを指定しないと常に最新が有効になります。  
-最新をデプロイしておいて任意のタイミングで切り替えるブルーグリーンデプロイメントなどが App Engine ではデプロイ時のオプションとその後の設定で可能になります。
-
-```bash
-gcloud app deploy --no-promote
-```
-
-`--no-promote` オプションを指定することでアプリケーションをデプロイするけどトラフィックはデプロイしたアプリケーションに流さない、ということができます。確認するには、前述のこぼれ話に書いた URL に直接アクセスするか、GCP コンソールからでもリンクを取得できます。
-
-例えば、最新のデプロイを確認後に以下のコマンドで切り替えることができます。
-
-```bash
-gcloud app versions migrate $VERSION_ID
-```
-
-### オートスケールさせてみよう
-
-[vegeta](https://github.com/tsenart/vegeta) を使って App Engine にアクセスを大量に発生させてみましょう。（vegeta でなくても、使い慣れたものを使えばOKです。）
-
-インストール
-
-```bash
-go get -u github.com/tsenart/vegeta
-```
-
-アタック (Cloud Shell で実行すると送信する側のリソースが足りなくて時間がかかるかもしれません。可能だったらお手元の PC で実行することをオススメします。)
-
-```bash
-echo "GET https://{{project-id}}.appspot.com/firestore" | vegeta attack -rate=1000 -duration=10s | tee /tmp/result.bin
-```
-
-レポート
-```bash
-vegeta report /tmp/result.bin
-```
-
-リクエストに応じてインスタンスがスケールすることを [GCP コンソール](https://console.cloud.google.com/appengine/instances?project={{project-id}}) で確認しましょう。
-
-### Firestore でクエリをしてみよう
-
-今回のハンズオンでは全件を取ってくる処理になっていますが、実際には検索条件などを実装すると思います。
-Firestore のクエリについては[制限事項](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations)がありますが、クエリを実行できます。
-
-### アプリケーションのモニタリングをしてみよう
-
-[Cloud Monitoring](https://console.cloud.google.com/monitoring?project={{project-id}})を使うことでコンソールよりも詳細な情報な確認することができます。（初回アクセス時は最初の表示までに時間がかかるかもしれません。）
-
-[App Engine ダッシュボード](https://console.cloud.google.com/monitoring/dashboards/resourceDetail/gae_application,project_id:{{project-id}}?project={{project-id}}&timeDomain=1h)で App Engine の状態を監視することができます。
-
-[Cloud Trace](https://console.cloud.google.com/traces/list?project={{project-id}}) で時間のかかったリクエストを分析することもできます。
-
-### デプロイしたアプリケーションをデバッグする
-
-[Cloud Debug](https://cloud.google.com/debugger) は、デプロイされた App Engine アプリケーションのコードを確認でき、本番環境のリクエストをデバッグすることができます。今回はGo言語で開発していたため未対応ですが、Java, Pythonでは利用できます。
-
-### サービスを分割してみよう
+<walkthrough-footnote>Firestore についての実装は以上になります。次に Cloud SQL を操作できるようにしていきます。</walkthrough-footnote>
 
 ## Cloud SQL を設定する
 
@@ -845,6 +820,9 @@ Firestore のクエリについては[制限事項](https://firebase.google.com/
 
 ```bash
 gcloud compute networks create eggvpc --subnet-mode=custom
+```
+
+```bash
 gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-central1 --range=10.128.0.0/20
 ```
 
@@ -876,6 +854,9 @@ gcloud sql connect eggsql
 
 ```bash
 create database egg;
+```
+
+```bash
 create table egg.user (id varchar(10), email varchar(255), name varchar(255));
 ```
 
@@ -1035,6 +1016,8 @@ curl https://{{project-id}}/sql
 
 `app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
 
+<walkthrough-footnote>Cloud SQL は以上です。次にMemorystore for Redis を使って Firestore の取得結果をキャッシュします。</walkthrough-footnote>
+
 ## Memorystore for Redis を使う
 
 Memorystore for Redis を使ってデータのキャッシュをしてみましょう。
@@ -1055,7 +1038,7 @@ export REDIS_HOST=`gcloud redis instances list --format=json  --region=us-centra
 
 ### 接続設定
 
-本来なら App Engine から Memorystore に接続する場合は Serverless VPC Access の設定が必要になりますが、今回 Cloud SQL で設定済みなので省略できます。
+本来なら GAE から Memorystore に接続する場合は Serverless VPC Access の設定が必要になりますが、今回 Cloud SQL で設定済みなので省略できます。
 
 `app.yaml` の環境変数を追記しましょう。
 
@@ -1207,6 +1190,79 @@ else の方が今回単一ユーザーデータを取得するようにしたと
             }
 ```
 
+コードが編集できたら、デプロイしましょう。
+
+```bash
+gcloud app deploy
+```
+
+Firestore エンドポイントに登録されているデータのIDで2回アクセスして、レスポンスの時間が短くなっている（キャッシュが効いている）事を確認します。
+
+```bash
+curl https://{{project-id}}.appspot.com/firestore/<ID>
+```
+
+<walkthrough-footnote>ハンズオンの内容は以上になります。お疲れさまでした。</walkthrough-footnote>
+
+## チャレンジ問題
+
+### オートスケールさせてみよう
+
+[vegeta](https://github.com/tsenart/vegeta) を使って GAE にアクセスを大量に発生させてみましょう。（vegeta でなくても、使い慣れたものを使えばOKです。）
+
+インストール
+
+```bash
+go get -u github.com/tsenart/vegeta
+```
+
+アタック (Cloud Shell で実行すると送信する側のリソースが足りなくて時間がかかるかもしれません。可能だったらお手元の PC で実行することをオススメします。)
+
+```bash
+echo "GET https://{{project-id}}.appspot.com/firestore" | vegeta attack -rate=1000 -duration=10s | tee /tmp/result.bin
+```
+
+レポート
+```bash
+vegeta report /tmp/result.bin
+```
+
+リクエストに応じてインスタンスがスケールすることを [GCP コンソール](https://console.cloud.google.com/appengine/instances?project={{project-id}}) で確認しましょう。
+
+### Firestore でクエリをしてみよう
+
+今回のハンズオンでは全件を取ってくる処理になっていますが、実際には検索条件などを実装すると思います。
+Firestore のクエリについては[制限事項](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations)がありますが、クエリを実行できます。
+
+### 色んなデプロイメントをしてみよう
+
+GAE では、バージョンを用いることでブルーグリーンデプロイメントを簡単に実施できます。 先程デプロイで使っていた `gcloud app deploy` はオプションを指定しないと常に最新が有効になります。  
+最新をデプロイしておいて任意のタイミングで切り替えるブルーグリーンデプロイメントなどが GAE ではデプロイ時のオプションとその後の設定で可能になります。
+
+```bash
+gcloud app deploy --no-promote
+```
+
+`--no-promote` オプションを指定することでアプリケーションをデプロイするけどトラフィックはデプロイしたアプリケーションに流さない、ということができます。確認するには、前述のこぼれ話に書いた URL に直接アクセスするか、GCP コンソールからでもリンクを取得できます。
+
+例えば、最新のデプロイを確認後に以下のコマンドで切り替えることができます。
+
+```bash
+gcloud app versions migrate $VERSION_ID
+```
+
+### アプリケーションのモニタリングをしてみよう
+
+[Cloud Monitoring](https://console.cloud.google.com/monitoring?project={{project-id}})を使うことでコンソールよりも詳細な情報な確認することができます。（初回アクセス時は最初の表示までに時間がかかるかもしれません。）
+
+[GAE ダッシュボード](https://console.cloud.google.com/monitoring/dashboards/resourceDetail/gae_application,project_id:{{project-id}}?project={{project-id}}&timeDomain=1h)で GAE の状態を監視することができます。
+
+[Cloud Trace](https://console.cloud.google.com/traces/list?project={{project-id}}) で時間のかかったリクエストを分析することもできます。
+
+### デプロイしたアプリケーションをデバッグする
+
+[Cloud Debug](https://cloud.google.com/debugger) は、デプロイされた GAE アプリケーションのコードを確認でき、本番環境のリクエストをデバッグすることができます。今回はGo言語で開発していたため未対応ですが、Java, Pythonでは利用できます。
+
 ## Congraturations!
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
@@ -1230,17 +1286,33 @@ gcloud projects delete {{project-id}}
 ### GAE の削除
 
 プロジェクトを削除しない場合、GAE のサービス、バージョンを削除することができますが、最初に指定したロケーションは変更できない点については注意してください。（ロケーションを変更したい場合は別プロジェクトを作成することになります。）
+GAE はアクセスがない場合はインスタンスが0になります。0になると GAE についての課金は発生しません。
 
-WIP
 ```bash
-gcloud app services delete
-gcloud app versions delete
+gcloud app services delete ${SERVICE_ID} // 今回は default サービスしか使っていないため、 default サービスは削除できません。
 ```
 
-ちなみに、 App Engine はアクセスがない場合はインスタンスが0になります。0になると App Engine についての課金は発生しません。
+```bash
+gcloud app versions delete ${VERSION_ID} // default サービスのバージョンは最後の一つは削除できません。
+```
+
+このため、厳密に GAE を完全に消去したい場合はプロジェクトを削除してください。
 
 ### Firestore データの削除
 
+Firestore コンソールから、ルートコレクションを削除してください。今回のハンズオンで作成したすべての user データが消えます。
+
+
 ### Cloud SQL の削除
 
+```bash
+gcloud sql instances delete eggsql-1
+```
+
 ### Cloud Memorystore の削除
+
+```bash
+gcloud redis instances delete eggcache --region=us-central1
+```
+
+<walkthrough-footnote>クリーンアップは以上になります。ありがとうございました。</walkthrough-footnote>

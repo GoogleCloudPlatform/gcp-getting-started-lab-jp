@@ -11,6 +11,7 @@ vpc_access_connector:
 env_variables:
   DB_INSTANCE: "tt-egg1-handson1:us-central1:eggsql-1"
   DB_USER: root
-  DB_PASS: xxxxx
+  DB_PASS: xxxxxx
   REDIS_HOST: 0.0.0.0
   REDIS_PORT: 6379
+  
