@@ -1234,7 +1234,10 @@ else の方が今回単一ユーザーデータを取得するようにしたと
             conn := pool.Get()
             defer conn.Close()
 
-            cache, _ := redis.String(conn.Do("GET", id))
+            cache, err := redis.String(conn.Do("GET", id))
+            if err != nil {
+                log.Println(err)
+            }
             log.Printf("cache : %v", cache)
 
             if cache != "" {
