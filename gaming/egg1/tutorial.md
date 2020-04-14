@@ -2,7 +2,9 @@
 
 ## Google Cloud Platform（GCP）プロジェクトの選択
 
-ハンズオンを行う GCP プロジェクトを選択し、 **Start** をクリックしてください。
+ハンズオンを行う GCP プロジェクトを作成し、 GCP プロジェクトを選択して **Start/開始** をクリックしてください。
+
+**今回のハンズオンは GAE を使って行うため、既存のプロジェクト（特にすでに使っているなど）だと不都合が生じる恐れがありますので新しいプロジェクトを作成してください。**
 
 <walkthrough-project-setup>
 </walkthrough-project-setup>
@@ -121,9 +123,11 @@ gcloud app create --region=us-central
 - Google Cloud Firestore API
 - Cloud SQL
 - Google Cloud Memorystore for Redis API
+- Serverless VPC Access
 
 ```bash
-gcloud services enable sql-component.googleapis.com \
+gcloud services enable --async \
+                       sql-component.googleapis.com \
                        vpcaccess.googleapis.com \
                        servicenetworking.googleapis.com \
                        sqladmin.googleapis.com \
@@ -143,7 +147,7 @@ gcloud services enable sql-component.googleapis.com \
 gcloud iam service-accounts create dev-egg-sa
 ```
 
-作成したサービスアカウントに権限を付与します。 *今回のハンズオンはオーナー権限を付与していますが、実際の開発の現場では適切な権限のみを付与しましょう！
+作成したサービスアカウントに権限を付与します。 **今回のハンズオンはオーナー権限を付与していますが、実際の開発の現場では適切な権限を付与しましょう！**
 
 ```bash
 gcloud projects add-iam-policy-binding {{project-id}} --member "serviceAccount:dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
@@ -160,7 +164,7 @@ gcloud iam service-accounts keys create dev-key.json --iam-account dev-egg-sa@{{
 作成したキーを環境変数に設定します。
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/dev-key.json
+export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 ```
 
 ## GCP 環境設定 Part3
@@ -171,12 +175,18 @@ export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/dev-key.json
 
 GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。
 
+1. 切り替え画面
+
 ![switch1](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native1.png)
 ![switch2](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native2.png)
 
-もしかしたらこちらの画面が表示されている場合もあります。同様にネイティブモードを選択していただければOKです。
+2. 次に、もしかしたらこちらの画面が表示されている場合もあります。同様にネイティブモードを選択していただければOKです。
 
 ![select-firestore-mode](https://storage.googleapis.com/egg-resources/egg1/public/select-mode.png)
+
+3. ネイティブモードが有効になると、[Firestore コンソール](https://console.cloud.google.com/firestore/data/?project={{project-id}})でデータ管理の画面が有効になります。
+
+**Datastore モードの場合でも、まだ一度もデータを登録していなければネイティブモードへの切り替えが可能です。**
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次に GAE によるアプリケーションの開発に進みます。</walkthrough-footnote>
 
@@ -217,13 +227,9 @@ Google App Engine (GAE) を利用したアプリケーション開発を体験�
 
 ### チャレンジ問題
 
-- Cloud Build でデプロイを自動化
-- Operations を使ってメトリクスをみてみる、デバッグをする
-- 負荷かけてみる
-
 ## app.yaml の作成
 
-app.yaml は GAE を動かすために必要な定義ファイルです。ここで動作するランタイムの設定や静的ファイルホスティングの設定などがデキます。
+app.yaml は GAE を動かすために必要な定義ファイルです。ここで動作するランタイムの設定や静的ファイルホスティングの設定などができます。
 
 ### ファイルを作成する
 
@@ -237,7 +243,7 @@ runtime: go112
 
 ## アプリケーションコードの作成
 
-設定ができたらあぷりけアプリケーションとして API サーバーを作成していきます。
+設定ができたらハンズオンアプリケーションとして API サーバーを作成していきます。
 
 まずはかんたんな HTTP レスポンスを返す API サーバーを作成します。
 以下の内容で main.go を作成してください。単純な HTTP リクエストに対して `Hello EGG!` を返す Go のコードになります。
@@ -279,6 +285,8 @@ go run main.go
 ```
 
 ここまでは通常の Go アプリケーションと同じです。
+
+**注意事項：今回のコードはあくまでサンプルの実装になりますのでご注意ください。**
 
 <walkthrough-footnote>アプリケーションを作成し、起動することができました。次に実際にアプリケーションにアクセスしてみます。</walkthrough-footnote>
 
@@ -385,6 +393,8 @@ require (
 )
 ```
 
+最初の実行時に展開に数分時間がかかるかもしれません。
+
 <walkthrough-footnote>Firestoreを操作するコードを実装していきましょう。</walkthrough-footnote>
 
 ## Firestore を使う
@@ -454,19 +464,42 @@ type Users struct {
 	Name  string `firestore:name, json:name`
 }
 
+func getUserBody(r *http.Request) (u Users, err error) {
+	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
+	if err != nil {
+		return u, err
+	}
+
+	body := make([]byte, length)
+	length, err = r.Body.Read(body)
+	if err != nil && err != io.EOF {
+		return u, err
+	}
+
+	//parse json
+	err = json.Unmarshal(body[:length], &u)
+	if err != nil {
+		return u, err
+	}
+	log.Print(u)
+	return u, nil
+}
+
 ```
 
 こちらのコードは実際のプロジェクトの Firestore にデータを追加しています。
 ローカルでアプリケーションを動かして、Firestore にデータが入るところを確認しましょう。
 
+貼り付けたコードはインデントが崩れてたりする場合があるので、適宜 `go fmt main.go` で整えてください。
+
 ```bash
 go run main.go
 ```
 
-Cloud Shell のタブを新しく開き（＋ボタン）、データを投入するリクエストを送ります。
+Cloud Shell のタブを新しく開き（＋ボタン）、データを投入するリクエストを送ります。以下のコマンドをコピーして Cloud Shell のコンソールに貼り付けて実行してください。
 
-```bash
-curl -X POST -d '{"email":"test@example.com", "name":"テスト太郎"}' localhost:8080/firestore
+```
+curl -X POST -d '{"email":"tamago@example.com", "name":"たまご太郎"}' localhost:8080/firestore
 ```
 
 **いくつかデータの内容を変更して実行してみましょう！**
@@ -581,7 +614,7 @@ id の値はコンソールなどで確認した値をセットしてくださ�
 
 ![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
 
-```bash
+```
 curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' localhost:8080/firestore
 ```
 
@@ -628,8 +661,8 @@ go run main.go
 
 削除対象のIDは何でも構いません。先程更新したIDでもいいでしょう。
 
-```bash
-curl -X DELETE localhost:8080/firebase/<削除対象のID>
+```
+curl -X DELETE localhost:8080/firestore/<削除対象のID>
 ```
 
 <walkthrough-footnote>最後に、ここまでのアプリケーションを GAE にデプロイします。</walkthrough-footnote>
@@ -830,8 +863,7 @@ gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-ce
 gcloud compute networks vpc-access connectors create egg-vpc-connector \
 --network eggvpc \
 --region us-central1 \
---range 10.129.0.0/28 \
---root-password eggpassword
+--range 10.129.0.0/28
 ```
 
 ### Cloud SQL インスタンスの作成
@@ -839,10 +871,16 @@ gcloud compute networks vpc-access connectors create egg-vpc-connector \
 今回は MySQL を利用します。
 
 ```bash
-gcloud beta sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword eggsql
+gcloud sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword --no-assign-ip eggsql
 ```
 
 ### データベース作成
+
+Cloud Shell から接続する場合、Cloud SQL から見ると外部からの接続になるため、一時的にパブリックなIPを付与します。
+
+```bash
+gcloud sql instances patch --assign-ip eggsql
+```
 
 Cloud SQL のインスタンスに接続します。パスワードを尋ねられるので、作成時に指定したパスワードを入力します。
 
@@ -859,6 +897,13 @@ create database egg;
 ```bash
 create table egg.user (id varchar(10), email varchar(255), name varchar(255));
 ```
+
+データベースとテーブルが作成できたら、パブリックIPを閉じます。
+```bash
+gcloud sql instances patch --no-assign-ip eggsql
+```
+
+<walkthrough-footnote>データベース側の準備は以上です。</walkthrough-footnote>
 
 ## App Engne に Cloud SQL を使うように修正する
 
@@ -877,6 +922,8 @@ env_variables:
   DB_USER: root
   DB_PASS: eggpassword
 ```
+
+`app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
 
 ### データベースアクセスをアプリケーションに実装する
 
@@ -917,8 +964,9 @@ func initConnectionPool() (*sql.DB, error) {
 main 関数の頭のところに以下のコードを追加します。
 
 ```go
+	var err error
     // DB
-    db, err := initConnectionPool()
+    db, err = initConnectionPool()
     if err != nil {
         log.Fatalf("unable to connect: %s", err)
     }
@@ -1000,10 +1048,14 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 
 これをデプロイして実際に試してみましょう。
 
+```bash
+gcloud app deploy
+```
+
 まずは登録。
 
-```bash
-curl -X POST '{"id": "00001", "email":"test@example.com", "name":"テスト1"}' https://{{project-id}}.appspot.com/sql
+```
+curl -X POST -d '{"id": "00001", "email":"tamago@example.com", "name":"タマゴ1"}' https://{{project-id}}.appspot.com/sql
 ```
 
 そして取得。
@@ -1011,10 +1063,6 @@ curl -X POST '{"id": "00001", "email":"test@example.com", "name":"テスト1"}' 
 ```bash
 curl https://{{project-id}}/sql
 ```
-
-### こぼれ話
-
-`app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
 
 <walkthrough-footnote>Cloud SQL は以上です。次にMemorystore for Redis を使って Firestore の取得結果をキャッシュします。</walkthrough-footnote>
 
@@ -1033,7 +1081,7 @@ gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
 作成できたら、以下のコマンドを実行して Redis インスタンスの IP アドレスを取得します。
 
 ```bash
-export REDIS_HOST=`gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host`
+gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host
 ```
 
 ### 接続設定
