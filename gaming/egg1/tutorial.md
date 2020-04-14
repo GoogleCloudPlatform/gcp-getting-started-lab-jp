@@ -134,7 +134,6 @@ gcloud services enable --async \
                        redis.googleapis.com
 ```
 
-<walkthrough-spotlight-pointer console-nav-menu="">API ライブラリ</walkthrough-spotlight-pointer>
 **GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
 
 ## GCP 環境設定 Part2
@@ -679,29 +678,59 @@ gcloud app deploy
 
 先程までに試した操作を GAE に向けていくつか実行してみてください。（ローカルでも GAE と同じ Firestore を使っているため、データはすでにあると思います。）
 
+登録
+
+```
+curl -X POST -d '{"email":"tamago@example.com", "name":"たまご太郎"}' {{project-id}}.appspot.com/firestore
+```
+
+取得（全件）
+
+```
+curl {{project-id}}.appspot.com/firestore
+```
+
+取得（１件）
+
+```
+curl {{project-id}}.appspot.com/firestore/<取得対象のID>
+```
+
+更新
+
+```
+curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' {{project-id}}.appspot.com/firestore
+```
+
+削除
+
+```
+curl -X DELETE {{project-id}}.appspot.com/firestore/<削除対象のID>
+```
+
 最終的な `main.go` は以下のようになっているはずです。
 
 ```go
 package main
 
 import (
+	"cloud.google.com/go/firestore"
+	"encoding/json"
 	"fmt"
+	"google.golang.org/api/iterator"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
-
-	"cloud.google.com/go/firestore"
-	"encoding/json"
-	"google.golang.org/api/iterator"
-	"io"
-	"strconv"
+    "strconv"
+    "strings"
 )
 
 func main() {
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/firestore", firestoreHandler)
-	http.HandleFunc("/firestore/", firestoreHandler)
+
+    http.HandleFunc("/firestore", firestoreHandler)
+    http.HandleFunc("/firestore/", firestoreHandler)  
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -713,33 +742,12 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello, Egg!")
 }
 
-func getUserBody(r *http.Request) (u Users, err error) {
-	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
-	if err != nil {
-		return u, err
-	}
-
-	body := make([]byte, length)
-	length, err = r.Body.Read(body)
-	if err != nil && err != io.EOF {
-		return u, err
-	}
-
-	//parse json
-	err = json.Unmarshal(body[:length], &u)
-	if err != nil {
-		return u, err
-	}
-	log.Print(u)
-	return u, nil
-}
 func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Firestore クライアント作成
@@ -769,7 +777,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Print("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
-	// 取得処理
+		// 取得処理
 	case http.MethodGet:
 		iter := client.Collection("users").Documents(ctx)
 		var u []Users
@@ -816,18 +824,17 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Fprintln(w, "success updating")
-	// 削除処理
-	case http.MethodDelete:
-		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
-		_, err := client.Collection("users").Doc(id).Delete(ctx)
-		if err != nil {
-            log.Fatal(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+        fmt.Fprintln(w, "success updating")
+        // 削除処理
+        case http.MethodDelete:
+                id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+                _, err := client.Collection("users").Doc(id).Delete(ctx)
+                if err != nil {
+                        w.WriteHeader(http.StatusInternalServerError)
+                        return
         }
         fmt.Fprintln(w, "success deleting")
-	// それ以外のHTTPメソッド
+		// それ以外のHTTPメソッド
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -840,14 +847,32 @@ type Users struct {
 	Name  string `firestore:name, json:name`
 }
 
+func getUserBody(r *http.Request) (u Users, err error) {
+	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
+	if err != nil {
+		return u, err
+	}
+
+	body := make([]byte, length)
+	length, err = r.Body.Read(body)
+	if err != nil && err != io.EOF {
+		return u, err
+	}
+
+	//parse json
+	err = json.Unmarshal(body[:length], &u)
+	if err != nil {
+		return u, err
+	}
+	log.Print(u)
+	return u, nil
+}
+
 ```
 
+<walkthrough-footnote>Firestore についての実装は以上になります。次に Memorystore を操作できるようにしていきます。</walkthrough-footnote>
 
-<walkthrough-footnote>Firestore についての実装は以上になります。次に Cloud SQL を操作できるようにしていきます。</walkthrough-footnote>
-
-## Cloud SQL を設定する
-
-### Serverless VPC Access のコネクタを作成する
+## Serverless VPC Access のコネクタを作成する
 
 まずは VPC ネットワークを作成します。
 
@@ -866,12 +891,15 @@ gcloud compute networks vpc-access connectors create egg-vpc-connector \
 --range 10.129.0.0/28
 ```
 
+<!-- 
+## Cloud SQL を設定する
+
 ### Cloud SQL インスタンスの作成
 
 今回は MySQL を利用します。
 
 ```bash
-gcloud sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword --no-assign-ip eggsql
+gcloud beta sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword --no-assign-ip eggsql
 ```
 
 ### データベース作成
@@ -1064,7 +1092,7 @@ curl -X POST -d '{"id": "00001", "email":"tamago@example.com", "name":"タマゴ
 curl https://{{project-id}}/sql
 ```
 
-<walkthrough-footnote>Cloud SQL は以上です。次にMemorystore for Redis を使って Firestore の取得結果をキャッシュします。</walkthrough-footnote>
+<walkthrough-footnote>Cloud SQL は以上です。次にMemorystore for Redis を使って Firestore の取得結果をキャッシュします。</walkthrough-footnote> -->
 
 ## Memorystore for Redis を使う
 
@@ -1088,9 +1116,13 @@ gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host
 
 本来なら GAE から Memorystore に接続する場合は Serverless VPC Access の設定が必要になりますが、今回 Cloud SQL で設定済みなので省略できます。
 
-`app.yaml` の環境変数を追記しましょう。
+`app.yaml` の環境変数とコネクタの設定をを追記しましょう。
 
 ```yaml
+vpc_access_connector:
+  name: "projects/{{project-id}}/locations/us-central1/connectors/egg-vpc-connector"
+
+env_variables:
   REDIS_HOST: 10.224.127.11
   REDIS_PORT: 6379
 ```
@@ -1169,7 +1201,7 @@ import に以下を追記してください。
     "github.com/gomodule/redigo/redis"
 ```
 
-main 関数のDB接続の初期化の下に以下を追記してください。
+main 関数の最初のところに以下を追記してください。
 
 ```go
 	// Redis
@@ -1193,18 +1225,15 @@ func initRedis() {
 }
 ```
 
-`firestoreHandler` の Firestore クライアントのコードの下に以下を追記してください。
-
-```go
-	// Redis クライアント作成
-	conn := pool.Get()
-	defer conn.Close()
-```
-
 else の方が今回単一ユーザーデータを取得するようにしたところですが、こちらにキャッシュを取得するようなコードを追加します。
 元のところを else で囲むので、まるっと以下に置き換えてみましょう。
 
 ```go
+
+            // Redis クライアント作成
+            conn := pool.Get()
+            defer conn.Close()
+
             cache, _ := redis.String(conn.Do("GET", id))
             log.Printf("cache : %v", cache)
 
@@ -1280,6 +1309,8 @@ vegeta report /tmp/result.bin
 ### Firestore でクエリをしてみよう
 
 今回のハンズオンでは全件を取ってくる処理になっていますが、実際には検索条件などを実装すると思います。
+[こちら](https://cloud.google.com/firestore/docs/query-data/queries)を参考に検索条件を追加してみましょう。
+
 Firestore のクエリについては[制限事項](https://firebase.google.com/docs/firestore/query-data/queries#query_limitations)がありますが、クエリを実行できます。
 
 ### 色んなデプロイメントをしてみよう
@@ -1315,7 +1346,7 @@ gcloud app versions migrate $VERSION_ID
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
-これにて GAE を使ったアプリケーション開発のハンズnオンは完了です！！
+これにて GAE を使ったアプリケーション開発のハンズオンは完了です！！
 
 デモで使った資材が不要な方は、次の手順でクリーンアップを行って下さい。
 
@@ -1350,12 +1381,12 @@ gcloud app versions delete ${VERSION_ID} // default サービスのバージョ�
 
 Firestore コンソールから、ルートコレクションを削除してください。今回のハンズオンで作成したすべての user データが消えます。
 
-
+<!-- 
 ### Cloud SQL の削除
 
 ```bash
 gcloud sql instances delete eggsql-1
-```
+``` -->
 
 ### Cloud Memorystore の削除
 
