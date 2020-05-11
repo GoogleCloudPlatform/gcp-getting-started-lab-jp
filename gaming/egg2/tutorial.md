@@ -218,7 +218,7 @@ pip install apache-beam[gcp]
 2. ファイルのヘッダー行を除外
 3. BigQuery に出力
 
-Dataflow では、１つのプログラムの実行単位を Jobと 呼びます。
+Dataflow では、１つのプログラムの実行単位を Job と呼びます。
 以下のコマンドは、`data_ingestion.py` を実行しています。
 
 ```bash
@@ -391,5 +391,4 @@ GCS のバケット削除
 ```bash
 gsutil rm -r gs://{{project-id}}-egg2/
 ```
-
 
