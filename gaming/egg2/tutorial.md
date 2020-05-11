@@ -304,7 +304,7 @@ gcloud dataflow jobs run transform_from_template \
 ## Scheduler から Dataflow の Job を実行する
 
 Cloud Scheduler は HTTP、Pub/Sub、GAE HTTP をターゲットとすることが可能です。
-今回は、Dataflow の API に対して HTTP リクエストでJobをキックします。
+今回は、Dataflow の API に対して HTTP リクエストで Job をキックします。
 
 Dataflow の Job を Template から実行するエンドポイントは以下になります。
 ```
@@ -391,4 +391,3 @@ GCS のバケット削除
 ```bash
 gsutil rm -r gs://{{project-id}}-egg2/
 ```
-
