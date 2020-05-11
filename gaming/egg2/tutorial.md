@@ -20,7 +20,7 @@
 1. Cloud Storage に毎日同じファイル名で、ファイルが格納される
 2. Cloud Storage に格納されたデータに対して、Dataflow によってバッチ処理を行う
 3. 処理されたデータは BigQuery に格納される
-3. BigQueryのテーブルは毎回 Truncate する
+3. BigQuery のテーブルは毎回 Truncate する
 4. バッチ処理は1日1回、朝9時に開始される。
   
 
@@ -41,8 +41,8 @@
   - gcloud コマンドラインツール設定
   - GCP 機能（API）有効化設定
 
-- [Cloud Dataflow](https://cloud.google.com/dataflow/docs) を用いた ETL 処理：45 分
-  - GCSのバケット作成
+- [Cloud Dataflow](https://cloud.google.com/dataflow/docs)  を用いた ETL 処理：45 分
+  - GCS のバケット作成
   - BigQuery データセットの作成
   - データの取り込み
   - データの加工
@@ -59,7 +59,7 @@
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
 
 最初に、ハンズオンを進めるための環境準備を行います。
-前回と同じ内容ですので、わかる方はスキップしてください。（APIの有効化は忘れずに）
+前回と同じ内容ですので、わかる方はスキップしてください。（API の有効化は忘れずに）
 
 下記の設定を進めていきます。
 
@@ -89,7 +89,7 @@ gcloud config list
 ```
 
 ### Tips
-ちなみにgcloud コマンドには、config設定をまとめて切り替える方法があります。
+ちなみに gcloud コマンドには、config 設定をまとめて切り替える方法があります。
 アカウントやプロジェクト、デフォルトのリージョン、ゾーンの切り替えがまとめて切り替えられるので、おすすめの機能です。
 ```bash
 gcloud config configurations list
@@ -125,11 +125,11 @@ gcloud services enable dataflow.googleapis.com \
 6. テンプレートの作成
 7. Cloud Scheduler によるスケジューリング
 
-今実行するPythonプログラムは、以下のような処理を行うものです。
+今実行する Python プログラムは、以下のような処理を行うものです。
 
-1. GCSからファイルを取り込む
+1. GCS からファイルを取り込む
 2. 加工処理を行う 
-3. BigQueryに出力
+3. BigQuery に出力
 
 ## Google Cloud Storage(GCS) 
 
@@ -144,7 +144,7 @@ gsutil mb -c regional -l us-central1 gs://{{project-id}}-egg2
 
 ### データのインポート
 
-dataflowのサンプルデータを、バケットへコピーします。
+Dataflow のサンプルデータを、バケットへコピーします。
 
 ```bash
 gsutil cp gs://python-dataflow-example/data_files/head_usa_names.csv gs://{{project-id}}-egg2/data_files/
@@ -164,7 +164,7 @@ AK,F,1910,Helen,7,11/28/2016
 AK,M,1910,James,7,11/28/2016
 ```
 
-上記のファイルの全量が`gs://python-dataflow-example/data_files/usa_names.csv`にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
+上記のファイルの全量が `gs://python-dataflow-example/data_files/usa_names.csv` にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
 ぜひ復習のときには、こちらのデータセットでも試してください。
 
 ## BigQuery
@@ -180,17 +180,17 @@ bq mk lake_egg2
 
 ### Python 環境のセットアップ
 
-#### path移動
+#### path 移動
 ```bash
 cd dataflow
 ```
 
-#### venvをインストール
+#### venv をインストール
 ```bash
 sudo pip install virtualenv 
 ```
 
-#### venvを設定 & アクティベート 
+#### venv を設定 & アクティベート 
 ```bash
 virtualenv -p python3 venv
 ```
@@ -199,7 +199,7 @@ virtualenv -p python3 venv
 source venv/bin/activate  
 ```
 
-#### apache-beamをインストール
+#### apache-beam をインストール
 ```bash
 pip install apache-beam[gcp]
 ```
@@ -212,13 +212,13 @@ pip install apache-beam[gcp]
 ## データの取り込み
 
 早速、Dataflow のプログラムを実行してみましょう。
-今実行するPythonパイプラインは、以下のようなステップで処理を行うものです。
+今実行する Python パイプラインは、以下のようなステップで処理を行うものです。
 
-1. GCSからファイルを取り込む
+1. GCS からファイルを取り込む
 2. ファイルのヘッダー行を除外
-3. BigQueryに出力
+3. BigQuery に出力
 
-Dataflowでは、１つのプログラムの実行単位を Jobと呼びます。
+Dataflow では、１つのプログラムの実行単位を Jobと 呼びます。
 以下のコマンドは、`data_ingestion.py` を実行しています。
 
 ```bash
@@ -245,15 +245,15 @@ Dataflow のフローチャートを見ると BigQuery への書き込みも成�
 
 ## データの加工
 
-次に、データを加工して、BigQueryに格納してみましょう。
-今実行するPythonパイプラインは、以下のようなステップで処理を行うものです。
+次に、データを加工して、BigQuery に格納してみましょう。
+今実行する Python パイプラインは、以下のようなステップで処理を行うものです。
 
-1. GCSからファイルを取り込む
+1. GCS からファイルを取り込む
 2. ファイルのヘッダー行を除外
 3. 読み取った行をオブジェクトに変換
-4. BigQueryに出力
+4. BigQuery に出力
 
-ここでは、STRINGだった`created_date`をDATEに、`number`をINTEGERに加工しています。
+ここでは、STRING だった `created_date` を DATE に、`number` を INTEGER に加工しています。
 
 ```bash
 python data_transformation.py --project={{project-id}} --runner=DataflowRunner --staging_location=gs://{{project-id}}-egg2/test --temp_location gs://{{project-id}}-egg2/test --input gs://{{project-id}}-egg2/data_files/head_usa_names.csv --save_main_session
@@ -285,7 +285,7 @@ gsutil ls gs://{{project-id}}-egg2/templates/DataTransformationTemplate
 
 以下のコマンドで、Dataflow の Job を実行します。
 テンプレート化しているため、`Python` を実行するのではなく、
-`gcloud`コマンドからの実行になります。
+`gcloud` コマンドからの実行になります。
 
 ```bash
 gcloud dataflow jobs run transform_from_template \
@@ -299,19 +299,19 @@ gcloud dataflow jobs run transform_from_template \
   
 [BigQuery](https://console.cloud.google.com/bigquery?project={{project-id}}&p={{project-id}}&d=lake_egg2&t=usa_names&page=dataset)
 
-これで、Dataflow、側は自動化の準備ができたので、スケジューリングの設定を進めていきます。
+これで、Dataflow 側は自動化の準備ができたので、スケジューリングの設定を進めていきます。
 
 ## Scheduler から Dataflow の Job を実行する
 
-Cloud Scheduler は HTTP、Pub/Sub、GAE HTTPをターゲットとすることが可能です。
+Cloud Scheduler は HTTP、Pub/Sub、GAE HTTP をターゲットとすることが可能です。
 今回は、Dataflow の API に対して HTTP リクエストでJobをキックします。
 
-DataflowのJobをTemplateから実行するエンドポイントは以下になります。
+Dataflow の Job を Template から実行するエンドポイントは以下になります。
 ```
 https://dataflow.googleapis.com/v1b3/projects/{{project-id}}/templates:launch?gcsPath=gs://{{project-id}}-egg2/templates/DataTransformationTemplate
 ```
 
-また、先程付与していたパラメータは`request body`として付与します。
+また、先程付与していたパラメータは `request body` として付与します。
 
 
 ## サービスアカウントの作成
@@ -333,12 +333,12 @@ gcloud projects add-iam-policy-binding {{project-id}} \
 
 ## Scheduler Job の作成
 
-まずターミナルで、Pathを移動します。
+まずターミナルで、Path を移動します。
 ```bash
 cd ../scheduler
 ```
 
-`dataflow_message_body.json`というファイルを開き、以下をコピペしてください。
+`dataflow_message_body.json` というファイルを開き、以下をコピペしてください。
 ```json
 {
   "jobName": "run_template_from_scheduler",
@@ -349,8 +349,8 @@ cd ../scheduler
 }
 ```
 
-以下のコマンドで Schduler Job を作成します。
-環境によっては、App Engine appがないというメッセージが出る可能性があります。
+以下のコマンドで Scheduler Job を作成します。
+環境によっては、App Engine app がないというメッセージが出る可能性があります。
 作成する必要がありますので、適宜リージョンを選択してください。
 
 ```bash
@@ -362,8 +362,8 @@ gcloud beta scheduler jobs create http schedule_for_dataflow \
 ```
 
 [コンソール](https://console.cloud.google.com/cloudscheduler?project={{project-id}})で確認してみましょう。
-コンソールに、Jobが表示されていると思います。
-`RUN NOW`をクリックすると、作成したJOBが即時実行されます。クリックし、
+コンソールに、Job が表示されていると思います。
+`RUN NOW` をクリックすると、作成した Job が即時実行されます。クリックし、
 [Dataflow](https://console.cloud.google.com/dataflow?project={{project-id}})、[BigQuery](https://console.cloud.google.com/bigquery?project={{project-id}}&p={{project-id}}&d=lake_egg2&t=usa_names&page=dataset)をそれぞれ確認してください。
 
 
@@ -377,17 +377,17 @@ gcloud beta scheduler jobs create http schedule_for_dataflow \
 
 #### プロジェクトを削除出来ない方
 
-Cloud Scheduler Jobの削除
+Cloud Scheduler Job の削除
 ```bash
 gcloud beta scheduler jobs delete schedule_for_dataflow
 ```
 
-BigQueryのデータセット削除
+BigQuery のデータセット削除
 ```bash
 bq rm lake_egg2
 ```
 
-GCSのバケット削除
+GCS のバケット削除
 ```bash
 gsutil rm -r gs://{{project-id}}-egg2/
 ```
