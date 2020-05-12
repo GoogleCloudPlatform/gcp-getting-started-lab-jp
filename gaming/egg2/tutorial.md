@@ -354,7 +354,7 @@ cd ../scheduler
 作成する必要がありますので、適宜リージョンを選択してください。
 
 ```bash
-gcloud beta scheduler jobs create http schedule_for_dataflow \
+gcloud scheduler jobs create http schedule_for_dataflow \
 --schedule="every day 09:00" \
 --uri="https://dataflow.googleapis.com/v1b3/projects/{{project-id}}/templates:launch?gcsPath=gs://{{project-id}}-egg2/templates/DataTransformationTemplate" \
 --message-body-from-file="dataflow_message_body.json" \
@@ -379,7 +379,7 @@ gcloud beta scheduler jobs create http schedule_for_dataflow \
 
 Cloud Scheduler Job の削除
 ```bash
-gcloud beta scheduler jobs delete schedule_for_dataflow
+gcloud scheduler jobs delete schedule_for_dataflow
 ```
 
 BigQuery のデータセット削除
