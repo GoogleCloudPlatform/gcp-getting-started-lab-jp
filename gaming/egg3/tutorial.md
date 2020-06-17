@@ -103,9 +103,19 @@ Cloud Spanner インスタンスノード数を変更したい場合、編集画
 ## [演習] 3. 接続用テスト環境作成 Cloud Shell 上で構築
 
 作成した Cloud Spanner に対して各種コマンドを実行するために Cloud Shell を準備します。
-今回はハンズオンの冒頭で起動した Cloud Shell をそのまま使いましょう。
+
+今回はハンズオンの冒頭で起動した Cloud Shell が開かれていると思います。今回のハンズオンで使うパスと、プロジェクト ID が正しく表示されていることを確認してください。以下のように、青文字のパスに続いて、かっこにくくられてプロジェクトIDが黄色文字で表示されています。
+
+![](https://storage.googleapis.com/egg-resources/egg3/public/3-2.png)
+
+もしプロジェクトIDが表示されていない場合、以下の図の様に、青字のパスのみが表示されている状態だと思います。以下のコマンドを Cloud Shell で実行し、プロジェクトIDを設定してください。
 
 ![](https://storage.googleapis.com/egg-resources/egg3/public/3-3.png)
+
+```bash
+gcloud config set project 今回使うGCPのプロジェクトID
+``` 
+
 
 続いて、環境変数 `PROJECT_ID` に、各自で利用しているプロジェクトのIDを格納しておきます。以下のコマンドを、Cloud Shell のターミナルで実行してください。
 
@@ -114,6 +124,7 @@ export PROJECT_ID=$(gcloud config list project --format "value(core.project)")
 ```
 
 以下のコマンドで、正しく格納されているか確認してください。
+echo の結果が空の場合、1つ前の手順で gcloud コマンドでプロジェクトIDを取得できていません。gcloud config set project コマンドで現在お使いのプロジェクトを正しく設定してください。
 
 ```bash
 echo $PROJECT_ID
