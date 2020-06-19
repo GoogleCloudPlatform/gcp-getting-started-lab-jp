@@ -109,7 +109,6 @@ gcloud container clusters create "k8s-appdev-handson"  \
 --scopes "https://www.googleapis.com/auth/cloud-platform" \
 --num-nodes "3" \
 --enable-stackdriver-kubernetes \
---cluster-version "1.14.10-gke.27" \
 --enable-ip-alias \
 --network "projects/$GOOGLE_CLOUD_PROJECT/global/networks/default" \
 --subnetwork "projects/$GOOGLE_CLOUD_PROJECT/regions/asia-northeast1/subnetworks/default" \
