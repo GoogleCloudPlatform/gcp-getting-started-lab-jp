@@ -194,8 +194,8 @@ gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance
 
 ### Spanner サンプルデータ作成
 
-```
-export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
+```bash
+export COUPON_EXPIREDBY=$(python3 -c "import time; print(int(time.time()) + 10800);")
 ```
 
 サンプルデータの挿入
@@ -380,10 +380,10 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/co
 
 ## Spanner へのクーポンデータ追加
 
-### クーポン期限の設定
+### クーポン期限の設定 (3 時間後のエポック秒)
 
-```
-export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
+```bash
+export COUPON_EXPIREDBY=$(python3 -c "import time; print(int(time.time()) + 10800);")
 ```
 
 ### セッション ID の設定
