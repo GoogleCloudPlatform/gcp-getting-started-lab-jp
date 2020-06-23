@@ -5,6 +5,7 @@
 フルマネージド Kubernetes サービス「Kubernetes Engine」や、フルマネージド リレーショナル データベースサービス「Cloud Spanner」 をはじめとした、GCP 開発者向けサービスを使用したマイクロサービス アプリケーションの開発について学ぶハンズオンです。
 
 ハンズオンの流れ
+
 1. 環境準備
 2. クーポンサービスの作成
 3. クーポンサービスの組み込み
@@ -13,6 +14,7 @@
 6. クリーンアップ
 
 # 1. 環境準備
+
 ## GCP のプロジェクト ID を設定する
 
 ### プロジェクト名と ID のリストを取得する
@@ -125,16 +127,19 @@ gcloud container clusters get-credentials k8s-appdev-handson --zone asia-northea
 ### GCP の IAM 情報と Kubernetes のサービスアカウントを紐付ける (Workload Identity)
 
 ネームスペースの作成
+
 ```bash
 kubectl create namespace appdev-handson-ns
 ```
 
 Kubernetes のサービスアカウント作成
+
 ```bash
 kubectl create serviceaccount --namespace appdev-handson-ns appdev-handson-k8s
 ```
 
 GCP の IAM で GCP のサービスアカウントと Kubernetes のサービスアカウントを紐付ける
+
 ```bash
 gcloud iam service-accounts add-iam-policy-binding \
   --role roles/iam.workloadIdentityUser \
@@ -143,6 +148,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 ```
 
 Kubernetes のサービスアカウントに WorkloadIdentity を利用するためのアノテーションを追加する
+
 ```bash
 kubectl annotate serviceaccount \
   --namespace appdev-handson-ns \
@@ -159,6 +165,7 @@ gcloud spanner instances create appdev-handson-instance --config=regional-asia-n
 ```
 
 ### Spanner デフォルトインスタンスの設定
+
 ```bash
 gcloud config set spanner/instance appdev-handson-instance
 ```
@@ -172,12 +179,14 @@ gcloud spanner databases create appdev-db --instance=appdev-handson-instance --p
 ### Spanner テーブルの作成
 
 Visitors
+
 ```
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Visitors ( SessionId STRING(1024) NOT NULL, LatestCouponUsed INT64 ) PRIMARY KEY (SessionId)'
 ```
 
 Coupons
+
 ```
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Coupons ( SessionId STRING(1024) NOT NULL, CouponId STRING(1024) NOT NULL, DiscountPercentage INT64 NOT NULL, IsUsed BOOL NOT NULL, ExpiredBy INT64 NOT NULL) PRIMARY KEY (SessionId, CouponId), INTERLEAVE IN PARENT Visitors ON DELETE CASCADE'
@@ -190,6 +199,7 @@ export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
 ```
 
 サンプルデータの挿入
+
 ```bash
 gcloud spanner rows insert --database=appdev-db \
       --table=Visitors \
@@ -203,6 +213,7 @@ gcloud spanner rows insert --database=appdev-db \
 ```
 
 結果の確認
+
 ```bash
 gcloud spanner databases execute-sql appdev-db \
     --sql='SELECT SessionId, CouponId, DiscountPercentage, IsUsed, ExpiredBy  FROM Coupons WHERE SessionId="aaaaaaaa-1111-bbbb-2222-cccccccccccc"'
@@ -213,6 +224,7 @@ gcloud spanner databases execute-sql appdev-db \
 ### Kubernetes へのデモアプリケーションデプロイ
 
 [サンプルサプリケーション(microservices-demo)](https://github.com/GoogleCloudPlatform/microservices-demo)をダウンロードする
+
 ```bash
 curl -L https://github.com/GoogleCloudPlatform/microservices-demo/archive/v0.1.4.tar.gz --output microservices-demo-0.1.4.tar.gz
 ```
@@ -221,14 +233,15 @@ curl -L https://github.com/GoogleCloudPlatform/microservices-demo/archive/v0.1.4
 tar zxvf microservices-demo-0.1.4.tar.gz
 ```
 
-Kubertesnにアプリケーションをデプロイする
+Kubertesn にアプリケーションをデプロイする
+
 ```bash
 kubectl apply -f microservices-demo-0.1.4/release/kubernetes-manifests.yaml --namespace appdev-handson-ns
 ```
 
 ## ハンズオン資材の修正
 
-以下コマンドでKubernetesにクーポンサービスをデプロイする為の定義ファイルへGCPプロジェクト固有の情報を設定する。(FIXMEという文字列をGCPプロジェクトIDに置き換える)
+以下コマンドで Kubernetes にクーポンサービスをデプロイする為の定義ファイルへ GCP プロジェクト固有の情報を設定する。(FIXME という文字列を GCP プロジェクト ID に置き換える)
 
 ```bash
 sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml
@@ -240,12 +253,13 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
-接続可能なIPアドレスを調べる
+接続可能な IP アドレスを調べる
+
 ```bash
 kubectl describe services frontend-external --namespace appdev-handson-ns | grep "LoadBalancer Ingress"
 ```
 
-ブラウザで調べたIPアドレスにアクセスし、アプリケーションにアクセスできることを確認する
+ブラウザで調べた IP アドレスにアクセスし、アプリケーションにアクセスできることを確認する
 
 # 2. クーポンサービスの作成
 
@@ -268,16 +282,19 @@ appdev/microservices-demo
 ## couponservice コンテナイメージの作成 (CloudBuild にてビルド)
 
 v1 というタグをつけてコンテナをビルドする。
+
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
 ```
 
 ## couponservice のデプロイ
+
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
 # 3. クーポンサービスの組み込み
+
 クーポンサービスは Kubernetes 上で動いているが、他のマイクロサービスから呼び出されていない。そのため他のマイクロサービスから呼び出されるように変更を行う。本ハンズオンでは frontend サービスと couponservice を接続する。
 
 ```
@@ -299,27 +316,31 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
 ## frontend コンテナイメージの作成 (CloudBuild にてビルド)
 
 v1 というタグをつけてコンテナをビルドする。
+
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
 ```
 
 ## frontend のデプロイ
+
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
 ```
 
 ## 動作確認
+
 ブラウザでアプリケーションにアクセスし、クーポンが表示される事を確認する。
 
 # 4. クーポンサービスの改善
-Spannerを使ってクーポンの払い出しに関するデータを永続化する。
+
+Spanner を使ってクーポンの払い出しに関するデータを永続化する。
 
 ## ソースコードの修正
 
 appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponService.java
 
-* `Collection<Coupon> coupons = service.getCouponsBySessionId(req.getSessionId());`をコメントアウトする。
-* `Collection<Coupon> coupons = service.getCouponsBySessionIdWithSpanner(req.getSessionId());`をコメントインする。
+- `Collection<Coupon> coupons = service.getCouponsBySessionId(req.getSessionId());`をコメントアウトする。
+- `Collection<Coupon> coupons = service.getCouponsBySessionIdWithSpanner(req.getSessionId());`をコメントインする。
 
 ```java
 修正前
@@ -339,7 +360,8 @@ appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponServ
 
 ## コンテナイメージの作成 (CloudBuild にてビルド)
 
-v2というタグをつけてコンテナをビルドする。
+v2 というタグをつけてコンテナをビルドする。
+
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2
 ```
@@ -352,20 +374,23 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/co
 export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
 ```
 
-### セッションIDの設定
+### セッション ID の設定
 
-ブラウザでアプリケーションにアクセスし、画面下部にあるSessionIdをメモする。
+ブラウザでアプリケーションにアクセスし、画面下部にある SessionId をメモする。
+
 ```
 例
 session-id: 42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-環境変数に調べたセッションIDを設定する
+環境変数に調べたセッション ID を設定する
+
 ```bash
 export USER_SESSION_ID=42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
 サンプルデータの挿入
+
 ```bash
 gcloud spanner rows insert --database=appdev-db \
       --table=Visitors \
@@ -381,8 +406,10 @@ gcloud spanner rows insert --database=appdev-db \
 ## Kubernetes に修正したクーポンサービスをデプロイする
 
 ### Kubernetes のアプリケーション定義ファイルを修正する
+
 appdev/microservices-demo/kubernetes-manifests/couponservice.yaml を以下の通り修正する。
-xxxxxはプロジェクトIDに読み替えて実行する。
+xxxxx はプロジェクト ID に読み替えて実行する。
+
 ```
 修正前
 image: gcr.io/xxxxx/couponservice:v1
@@ -392,16 +419,19 @@ image: gcr.io/xxxxx/couponservice:v2
 ```
 
 ### 新しいアプリケーションをデプロイする
+
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
 ## 動作確認
-ブラウザでアプリケーションにアクセスし、Spannerに保存したクーポンが表示される事を確認する。
+
+ブラウザでアプリケーションにアクセスし、Spanner に保存したクーポンが表示される事を確認する。
 
 # 5. (Advanced) クーポンサービスの高度化
 
 ### 有効な期限内のクーポンだけを返却する機能を追加
+
 CouponService に 有効なクーポンだけを返却する機能を追加する。CouponService に新しい RPC (getValidCoupons) として実装すること。CouponService に機能実装した後は FrontendService から新しい RPC を呼び出し、有効なクーポンだけを表示する。検証時は Spanner に無効なクーポンを追加し、これらが表示されない事を確認すること。
 
 # おめでとうございます！
@@ -417,6 +447,7 @@ CouponService に 有効なクーポンだけを返却する機能を追加す�
 ## ハンズオンで利用した資材の削除
 
 ### GKE クラスター（k8s-appdev-handson）削除
+
 ```bash
 gcloud container clusters delete k8s-appdev-handson --zone asia-northeast1-c
 ```
@@ -428,6 +459,7 @@ gcloud iam service-accounts delete appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gser
 ```
 
 ### Container Registry のコンテナイメージ削除
+
 ```bash
 gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1 --force-delete-tags
 ```
@@ -436,17 +468,18 @@ gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1 --f
 gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2 --force-delete-tags
 ```
 
-
 ```bash
 gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1 --force-delete-tags
 ```
 
 ### Spanner データベース削除
+
 ```bash
 gcloud spanner databases delete appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Spanner インスタンス削除
+
 ```bash
 gcloud spanner instances delete appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT
 ```
