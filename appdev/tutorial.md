@@ -256,10 +256,14 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 接続可能な IP アドレスを調べる
 
 ```bash
-kubectl describe services frontend-external --namespace appdev-handson-ns | grep "LoadBalancer Ingress"
+export FRONTEND_IP=$(kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
 ブラウザで調べた IP アドレスにアクセスし、アプリケーションにアクセスできることを確認する
+
+```bash
+echo http://$FRONTEND_IP/
+```
 
 # 2. クーポンサービスの作成
 
@@ -331,6 +335,10 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
 
 ブラウザでアプリケーションにアクセスし、クーポンが表示される事を確認する。
 
+```bash
+echo http://$FRONTEND_IP/
+```
+
 # 4. クーポンサービスの改善
 
 Spanner を使ってクーポンの払い出しに関するデータを永続化する。
@@ -381,6 +389,10 @@ export COUPON_EXPIREDBY=`date +%s -d "+3 hours"`
 ### セッション ID の設定
 
 ブラウザでアプリケーションにアクセスし、画面下部にある SessionId をメモする。
+
+```bash
+echo http://$FRONTEND_IP/
+```
 
 ```
 例
@@ -435,6 +447,10 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
 ## 動作確認
 
 ブラウザでアプリケーションにアクセスし、Spanner に保存したクーポンが表示される事を確認する。
+
+```bash
+echo http://$FRONTEND_IP/
+```
 
 # 5. (Advanced) クーポンサービスの高度化
 
