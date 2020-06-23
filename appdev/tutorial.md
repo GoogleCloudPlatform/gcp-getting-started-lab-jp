@@ -358,6 +358,10 @@ appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponServ
 130
 ```
 
+<walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponService.java">
+ファイルを Cloud Shell Editor で開く
+</walkthrough-editor-open-file>
+
 ## コンテナイメージの作成 (CloudBuild にてビルド)
 
 v2 というタグをつけてコンテナをビルドする。
@@ -417,6 +421,10 @@ image: gcr.io/xxxxx/couponservice:v1
 修正後
 image: gcr.io/xxxxx/couponservice:v2
 ```
+
+<walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml">
+ファイルを Cloud Shell Editor で開く
+</walkthrough-editor-open-file>
 
 ### 新しいアプリケーションをデプロイする
 
