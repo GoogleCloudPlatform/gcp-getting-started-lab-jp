@@ -233,7 +233,7 @@ curl -L https://github.com/GoogleCloudPlatform/microservices-demo/archive/v0.1.4
 tar zxvf microservices-demo-0.1.4.tar.gz
 ```
 
-Kubertesn にアプリケーションをデプロイする
+Kubernetes にアプリケーションをデプロイする
 
 ```bash
 kubectl apply -f microservices-demo-0.1.4/release/kubernetes-manifests.yaml --namespace appdev-handson-ns
