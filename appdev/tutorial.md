@@ -180,14 +180,14 @@ gcloud spanner databases create appdev-db --instance=appdev-handson-instance --p
 
 Visitors
 
-```
+```bash
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Visitors ( SessionId STRING(1024) NOT NULL, LatestCouponUsed INT64 ) PRIMARY KEY (SessionId)'
 ```
 
 Coupons
 
-```
+```bash
 gcloud spanner databases ddl update appdev-db --instance=appdev-handson-instance --project=$GOOGLE_CLOUD_PROJECT \
   --ddl='CREATE TABLE Coupons ( SessionId STRING(1024) NOT NULL, CouponId STRING(1024) NOT NULL, DiscountPercentage INT64 NOT NULL, IsUsed BOOL NOT NULL, ExpiredBy INT64 NOT NULL) PRIMARY KEY (SessionId, CouponId), INTERLEAVE IN PARENT Visitors ON DELETE CASCADE'
 ```
