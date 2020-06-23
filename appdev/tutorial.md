@@ -468,7 +468,23 @@ CouponService に 有効なクーポンだけを返却する機能を追加す�
 
 # クリーンアップ
 
-## ハンズオンで利用した資材の削除
+## プロジェクトごと削除
+
+作成した資材を個別に削除する場合は、こちらのページの手順を実施せずに次のページに進んで下さい。
+
+### プロジェクトの削除
+
+```bash
+gcloud projects delete $GOOGLE_CLOUD_PROJECT
+```
+
+### GCP のデフォルトプロジェクト設定の削除
+
+```bash
+gcloud config unset project
+```
+
+## ハンズオンで利用した資材の個別削除
 
 ### GKE クラスター（k8s-appdev-handson）削除
 
