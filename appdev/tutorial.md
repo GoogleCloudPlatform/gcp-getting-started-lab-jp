@@ -216,7 +216,7 @@ gcloud spanner rows insert --database=appdev-db \
 
 ```bash
 gcloud spanner databases execute-sql appdev-db \
-    --sql='SELECT SessionId, CouponId, DiscountPercentage, IsUsed, ExpiredBy  FROM Coupons WHERE SessionId="aaaaaaaa-1111-bbbb-2222-cccccccccccc"'
+    --sql='SELECT SessionId, CouponId, DiscountPercentage, IsUsed, ExpiredBy FROM Coupons WHERE SessionId="aaaaaaaa-1111-bbbb-2222-cccccccccccc"'
 ```
 
 ## デモアプリケーションの準備
