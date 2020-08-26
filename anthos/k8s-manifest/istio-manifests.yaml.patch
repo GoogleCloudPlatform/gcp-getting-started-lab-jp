@@ -1,0 +1,34 @@
+--- istio-manifests.yaml	2020-11-16 01:43:27.000000000 +0900
++++ istio-manifest.yaml	2020-11-16 01:43:27.000000000 +0900
+@@ -44,8 +44,31 @@
+     - route:
+         - destination:
+             host: frontend
++            subset: v1
+             port:
+               number: 80
++          weight: 50
++        - destination:
++            host: frontend
++            subset: v2
++            port:
++              number: 80
++          weight: 50
++---
++apiVersion: networking.istio.io/v1alpha3
++kind: ServiceEntry
++metadata:
++  name: currency-provider-external
++spec:
++  hosts:
++    - www.ecb.europa.eu
++  ports:
++    - number: 80
++      name: http
++      protocol: HTTP
++    - number: 443
++      name: https
++      protocol: HTTPS
+ ---
+ apiVersion: networking.istio.io/v1alpha3
+ kind: VirtualService

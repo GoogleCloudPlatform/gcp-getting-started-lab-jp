@@ -1,0 +1,10 @@
+46a47
+>         subset: v1
+48a50,56
+>       weight: 50
+>     - destination:
+>         host: frontend
+>         subset: v2
+>         port:
+>           number: 80
+>       weight: 50
