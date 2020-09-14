@@ -164,8 +164,6 @@ gcloud services enable \
   redis.googleapis.com \
   vpcaccess.googleapis.com \
   servicenetworking.googleapis.com \
-  sql-component.googleapis.com \
-  sqladmin.googleapis.com
 ```
 
 **GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
@@ -208,7 +206,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 
 今回のハンズオンでは Firestore のネイティブモードを使用します。
 
-GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。ロケーション選択では `us-central1` を選択してください。
+GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。ロケーション選択では `us-east1` を選択してください。
 
 1. 切り替え画面
 
@@ -245,6 +243,8 @@ Cloud Run を利用したアプリケーション開発を体験します。
 
 <!-- Step 10 -->
 ## Cloud Shell 復旧手順
+
+** リカバリ用手順のため、Step 1 から始めている方はスキップしてください **
 
 もしハンズオン中に Cloud Shell を閉じてしまったり、リロードした場合、以下のコマンドを再実行してから作業を再開してください。
 
@@ -473,6 +473,10 @@ export CB_SA=$(gcloud projects get-iam-policy $GOOGLE_CLOUD_PROJECT | grep cloud
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:$CB_SA --role roles/run.admin
 ```
 
+```bash
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:$CB_SA --role add-iam-policy-binding
+```
+
 <walkthrough-footnote>Cloud Build で利用するサービスアカウントに権限を付与し、Cloud Run に自動デプロイできるようにしました。</walkthrough-footnote>
 
 
@@ -500,6 +504,8 @@ steps:
     '--platform=managed',
     '--region=us-central1',
     '--allow-unauthenticated',
+    '--set-env-vars',
+    'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
     'egg1-app',
   ]
 ```
@@ -696,9 +702,9 @@ func getUserBody(r *http.Request) (u Users, err error) {
 
 ```
 
-こちらのコードは実際のプロジェクトの Firestore にデータを追加、または Firestore からデータを取得しています。
+こちらのコードは実際のプロジェクトの Firestore にデータを追加、または Firestore からデータを取得しようとしています。
 
-<walkthrough-footnote>コードをデプロイし、動作を確認してみましょう。</walkthrough-footnote>
+<walkthrough-footnote>次のステップでコードをデプロイし、動作を確認してみましょう。</walkthrough-footnote>
 
 
 <!-- Step 23 -->
@@ -726,20 +732,14 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 
 **登録**
 
-```bash
+```
 curl -X POST -d '{"email":"tamago@example.com", "name":"Tamago Taro"}' ${URL}/firestore
 ```
 
 **取得（全件）**
 
-```bash
-curl ${URL}/firestore
 ```
-
-**取得（１件）**
-
-```bash
-curl ${URL}/firestore/<ID>
+curl ${URL}/firestore
 ```
 
 <walkthrough-footnote>次は登録済みのデータを更新・削除する実装を行います。</walkthrough-footnote>
@@ -833,7 +833,7 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 ![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
 
 ```bash
-curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' localhost:8080/firestore
+curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' ${URL}/firestore
 ```
 
 **削除**
@@ -841,7 +841,7 @@ curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' lo
 `<ID>` へは削除する `id` の値を指定してください。
 
 ```bash
-curl -X DELETE localhost:8080/firestore/<ID>
+curl -X DELETE ${URL}/firestore/<ID>
 ```
 
 <walkthrough-footnote>Firestore についての実装は以上になります。次に Memorystore を操作できるようにしていきます。</walkthrough-footnote>
@@ -1125,16 +1125,45 @@ curl ${URL}/firestore/<ID>
 
 Cloud Run には、リビジョン間でトラフィックを切り替える機能があり、A/B テストやカナリアデプロイを行なうことが可能です。main.go の `Hello, EGG!` の文言を任意の言葉に変更し、以下の手順でトラフィックの段階的な移行を試してみましょう。
 
-### couldbuild.yaml の Cloud Run オプションに --no-traffic を追加
+### couldbuild.yaml の変更
 
+以下のように Cloud Run のデプロイ オプションに **--no-traffic** を追加します。
+**REDIS_HOST** の `XXX.XXX.XXX.XXX` には先程作成した REDIS_HOST の IP アドレスを指定してください。
+
+```
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: [
+    'run',
+    'deploy',
+		'--no-traffic',
+    '--image=gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID',
+    '--vpc-connector=egg-vpc-connector',
+    '--service-account=dev-egg-sa@$PROJECT_ID.iam.gserviceaccount.com',
+    '--platform=managed',
+    '--region=us-central1',
+    '--allow-unauthenticated',
+    '--set-env-vars',
+    'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
+    '--set-env-vars',
+    'REDIS_HOST=XXX.XXX.XXX.XXX',
+    '--set-env-vars',
+    'REDIS_PORT=6379',
+    'egg1-app',
+  ]
+```
 
 ### Cloud Build のジョブを実行
 
 ```bash
 gcloud builds submit --config cloudbuild.yaml .
 ```
-
-**--no-traffic** を指定しているため、まだ以前のリビジョンがトラフィックを処理しています。
 
 ### リビジョン情報の確認
 
@@ -1143,6 +1172,8 @@ gcloud builds submit --config cloudbuild.yaml .
 ```bash
 gcloud run revisions list --platform=managed --region=us-central1 --service=egg1-app
 ```
+
+**--no-traffic** を指定しているため、まだ以前のリビジョンがトラフィックを処理しています。
 
 **GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/egg1-app/revisions?hl=ja&project={{project-id}})
 
@@ -1158,9 +1189,7 @@ gcloud run services update-traffic --to-latest --platform=managed --region=us-ce
 **GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/egg1-app/revisions?hl=ja&project={{project-id}})
 
 
-## アプリケーションの確認
-
-### URL の表示
+### アプリケーションの確認
 
 以下のコマンドで URL を表示します。
 
@@ -1243,6 +1272,7 @@ git push google master
 ### Cloud Build の自動実行を確認
 
 [Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds?project={{project-id}}) にアクセスし、git push コマンドを実行した時間にビルドが実行されていることを確認します。
+恐らくこのビルドは失敗していると思います。更に時間に余裕がある方は、どこがエラーになっているか Cloud Build のログから確認して修正してみましょう！
 
 
 ## Congraturations!
@@ -1268,7 +1298,7 @@ gcloud projects delete {{project-id}}
 ### Cloud Run の削除
 
 ```bash
-gcloud run services delete egg1-app
+gcloud run services delete egg1-app --platform managed --region=us-central1
 ```
 
 ### Firestore データの削除

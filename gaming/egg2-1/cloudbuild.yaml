@@ -14,5 +14,7 @@ steps:
     '--platform=managed',
     '--region=us-central1',
     '--allow-unauthenticated',
+    '--set-env-vars',
+    'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
     'egg1-app',
   ]
