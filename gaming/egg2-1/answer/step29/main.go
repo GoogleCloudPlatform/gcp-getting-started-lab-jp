@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-
 	"strings"
 
 	"cloud.google.com/go/firestore"
@@ -34,19 +33,6 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
-
-	var pool *redis.Pool
-}
-
-func initRedis() {
-	var (
-		host = os.Getenv("REDIS_HOST")
-		port = os.Getenv("REDIS_PORT")
-		addr = fmt.Sprintf("%s:%s", host, port)
-	)
-	pool = redis.NewPool(func() (redis.Conn, error) {
-		return redis.Dial("tcp", addr)
-	}, 10)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +49,10 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	defer client.Close()
+
+	// Redis クライアント作成
+	conn := pool.Get()
+	defer conn.Close()
 
 	switch r.Method {
 	// 追加処理
@@ -118,14 +108,8 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 				w.Write(json)
 			}
 		} else {
-			// Redis クライアント作成
-			conn := pool.Get()
-			defer conn.Close()
-
-			cache, err := redis.String(conn.Do("GET", id))
-			if err != nil {
-				log.Println(err)
-			}
+			// (Step 29) 置き換えここから
+			cache, _ := redis.String(conn.Do("GET", id))
 			log.Printf("cache : %v", cache)
 
 			if cache != "" {
@@ -156,6 +140,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 				conn.Do("SET", id, string(json))
 				w.Write(json)
 			}
+			// (Step 29) 置き換えここまで
 		}
 
 	// 更新処理
@@ -217,4 +202,17 @@ func getUserBody(r *http.Request) (u Users, err error) {
 	}
 	log.Print(u)
 	return u, nil
+}
+
+var pool *redis.Pool
+
+func initRedis() {
+	var (
+		host = os.Getenv("REDIS_HOST")
+		port = os.Getenv("REDIS_PORT")
+		addr = fmt.Sprintf("%s:%s", host, port)
+	)
+	pool = redis.NewPool(func() (redis.Conn, error) {
+		return redis.Dial("tcp", addr)
+	}, 10)
 }
