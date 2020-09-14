@@ -196,7 +196,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 
 今回のハンズオンでは Firestore のネイティブモードを使用します。
 
-GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。
+GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。ロケーション選択では `us-central1` を選択してください。
 
 1. 切り替え画面
 
@@ -226,8 +226,41 @@ Cloud Run を利用したアプリケーション開発を体験します。
   - Cloud Firestore の利用
   - サーバーレス VPC アクセスの設定
   - Cloud Memorystore for Redis の利用
-  - Cloud SQL の利用
   - チャレンジ問題
+
+
+## Cloud Shell 復旧手順
+
+もしハンズオン中に Cloud Shell を閉じてしまったり、リロードした場合、以下のコマンドを再実行してから作業を再開してください。
+
+- 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定
+
+```bash
+export GOOGLE_CLOUD_PROJECT="{{project-id}}"
+```
+
+- CLI（gcloud コマンド） から利用する GCP のデフォルトプロジェクトを設定
+
+```bash
+gcloud config set project $GOOGLE_CLOUD_PROJECT
+```
+
+- デフォルトリージョンを設定
+
+```bash
+gcloud config set compute/region us-central1
+```
+
+- 作業用のディレクトリへ移動
+```bash
+cd ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1
+```
+
+- シークレットキーの参照先を設定
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
+```
 
 
 ## アプリケーション コードの確認
