@@ -163,7 +163,7 @@ gcloud services enable \
   run.googleapis.com \
   redis.googleapis.com \
   vpcaccess.googleapis.com \
-  servicenetworking.googleapis.com \
+  servicenetworking.googleapis.com
 ```
 
 **GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
@@ -244,9 +244,9 @@ Cloud Run を利用したアプリケーション開発を体験します。
 <!-- Step 10 -->
 ## Cloud Shell 復旧手順
 
-** リカバリ用手順のため、Step 1 から始めている方はスキップしてください **
+もしハンズオン中に Cloud Shell を閉じてしまったり、リロードした場合、以下のコマンドを再実行してから作業を再開してください。(Step 1 から順番に進めている場合はこのページはスキップいただいて結構です)
 
-もしハンズオン中に Cloud Shell を閉じてしまったり、リロードした場合、以下のコマンドを再実行してから作業を再開してください。
+**Step 10 以降からの再開**
 
 - 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定
 
@@ -267,6 +267,7 @@ gcloud config set compute/region us-central1
 ```
 
 - 作業用のディレクトリへ移動
+
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1
 ```
@@ -276,6 +277,25 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 ```
+
+**Step 16 以降からの再開**
+
+上記に加えて、以下も実行してからお進みください。
+
+- Cloud Run の URL の取得
+
+```bash
+URL=$(gcloud run services describe --format=json --region=us-central1 --platform=managed egg1-app | jq .status.url -r)
+echo ${URL}
+```
+
+**Cloud Shell が固まってしまう方へ**
+
+Cloud Shell が遅い、固まってしまう、という場合はブーストモードを有効にすることで改善される可能性がありますのでお試しください。ブーストモードは、Cloud Shell VM のマシンスペックを 24 時間の間、一時的に向上させる機能です。
+
+- Cloud Shell のブーストモードの有効化手順
+
+ブーストモードを有効にするには、[その他] メニュー（Cloud Shell の右上にある 3 つの点のアイコン）の下の [ブーストモードを有効にする] オプションを使います。ブーストモードを有効にすると、Cloud Shell が再起動され、すぐにセッションが終了します。その後、新しい VM がプロビジョニングされますが、これには数分かかることがあります。ホーム ディレクトリのデータはそのまま残りますが、実行中のすべてのプロセスは失われます。
 
 
 <!-- Step 11 -->
@@ -474,7 +494,7 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 ```
 
 ```bash
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:$CB_SA --role add-iam-policy-binding
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:$CB_SA --role roles/iam.serviceAccountUser
 ```
 
 <walkthrough-footnote>Cloud Build で利用するサービスアカウントに権限を付与し、Cloud Run に自動デプロイできるようにしました。</walkthrough-footnote>
@@ -832,7 +852,7 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 
 ![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
 
-```bash
+```
 curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' ${URL}/firestore
 ```
 
@@ -840,7 +860,7 @@ curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' ${
 
 `<ID>` へは削除する `id` の値を指定してください。
 
-```bash
+```
 curl -X DELETE ${URL}/firestore/<ID>
 ```
 
@@ -1142,7 +1162,7 @@ steps:
   args: [
     'run',
     'deploy',
-		'--no-traffic',
+    '--no-traffic',
     '--image=gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID',
     '--vpc-connector=egg-vpc-connector',
     '--service-account=dev-egg-sa@$PROJECT_ID.iam.gserviceaccount.com',
@@ -1200,7 +1220,7 @@ echo $URL
 
 ## チャレンジ問題: Cloud Source Repositories へのコミットをトリガーにしたデプロイ
 
-[Cloud Source Repositories](https://cloud.google.com/source-repositories/) へリポジトリを作成し [Cloud Build トリガー](https://cloud.google.com/cloud-build/docs/running-builds/automate-builds) を設定し、Git の Push をトリガーにしたアプリケーションのビルド、Cloud Run へのデプロイを自動化してみましょう。
+[Cloud Source Repositories](https://cloud.google.com/source-repositories/) へリポジトリを作成して [Cloud Build トリガー](https://cloud.google.com/cloud-build/docs/running-builds/automate-builds) を設定し、Git の Push をトリガーにしたアプリケーションのビルド、Cloud Run へのデプロイを自動化してみましょう。
 
 ### Cloud Source Repository（CSR）に Git レポジトリを作成
 
@@ -1217,7 +1237,7 @@ gcloud source repos create egg1-handson
 Cloud Build に前の手順で作成した、プライベート Git リポジトリに push が行われたときに起動されるトリガーを作成します。
 
 ```bash
-gcloud beta builds triggers create cloud-source-repositories --description="egg1handson" --repo=egg1-handson --branch-pattern=".*" --build-config="cloudbuild.yaml"
+gcloud beta builds triggers create cloud-source-repositories --description="egg1handson" --repo=egg1-handson --branch-pattern=".*" --build-config="gaming/egg2-1/cloudbuild.yaml"
 ```
 
 **GUI**: [ビルドトリガー](https://console.cloud.google.com/cloud-build/triggers?project={{project-id}})
@@ -1318,7 +1338,7 @@ gcloud compute networks vpc-access connectors delete egg-vpc-connector --region 
 ```
 
 
-### VPC Subnet と VPC の削除
+### VPC の削除
 
 ```bash
 gcloud compute networks subnets delete us-subnet --region=us-central1
@@ -1331,6 +1351,10 @@ gcloud compute networks delete eggvpc
 ### Container Registry に登録したコンテナイメージの削除
 
 Container Registry コンソールから、イメージを選択して削除してください。
+
+### Cloud Source Repositories に作成したリポジトリの削除
+
+[CSR の設定画面](https://source.cloud.google.com/admin/settings?projectId={{project-id}}&repository=egg1-handson) にアクセスし、「このリポジトリを削除」を実行
 
 ### Owner 権限をつけた dev-key.json の削除
 
