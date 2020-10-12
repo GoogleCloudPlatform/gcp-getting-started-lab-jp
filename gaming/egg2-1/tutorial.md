@@ -1362,7 +1362,13 @@ Container Registry コンソールから、イメージを選択して削除し�
 rm ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1/dev-key.json
 ```
 
-### サービスアカウント dev-egg-sa の削除
+### サービスアカウントに付与したロールの取り消し
+
+```bash
+gcloud projects remove-iam-policy-binding {{project-id}} --member "serviceAccount:dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
+```
+
+### サービスアカウントの削除
 
 ```bash
 gcloud iam service-accounts delete dev-egg-sa@{{project-id}}.iam.gserviceaccount.com
