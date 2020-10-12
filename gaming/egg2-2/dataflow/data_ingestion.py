@@ -16,7 +16,7 @@ contents to a BigQuery table.
 This example does not do any transformation on the data.
 
 
-This Sample code from https://github.com/GoogleCloudPlatform/professional-services/blob/master/examples/dataflow-python-examples/dataflow_python_examples/data_ingestion.py for E.G.G hands on
+This Sample code from https://github.com/GoogleCloudPlatform/professional-services/tree/master/examples/dataflow-python-examples/batch-examples/cookbook-examples/pipelines for E.G.G hands on
 """
 
 from __future__ import absolute_import

@@ -68,6 +68,11 @@
 
 ## gcloud コマンドラインツール設定
 
+#### CloudShell EditorのIntegrated Terminalの設定
+```
+gcloud alpha cloud-shell ssh 
+```
+
 #### GCP のプロジェクト ID を環境変数に設定
 
 環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
@@ -160,6 +165,12 @@ Dataflow のサンプルデータを、バケットへコピーします。
 gsutil cp gs://spls/gsp290/data_files/head_usa_names.csv gs://{{project-id}}-egg2/data_files/
 ```
 
+`gsutil cat`コマンドで中身を確認出来ます。
+
+```bash
+gsutil cat gs://{{project-id}}-egg2/data_files/head_usa_names.csv
+```
+
 このようなデータが入っています。
 
 ```csv
@@ -175,7 +186,7 @@ AK,F,1910,Helen,7,11/28/2016
 AK,M,1910,James,7,11/28/2016
 ```
 
-上記のファイルの全量が `gs://spls/gsp290/data_files/head_usa_names.csv` にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
+上記のファイルの全量が `gs://spls/gsp290/data_files/usa_names.csv` にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
 ぜひ復習のときには、こちらのデータセットでも試してください。
 
 ## BigQuery

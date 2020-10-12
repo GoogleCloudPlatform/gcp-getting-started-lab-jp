@@ -18,7 +18,8 @@ its contents to a BigQuery table.
 This example reads a json schema of the intended output into BigQuery,
 and transforms the date data to match the format BigQuery expects.
 
-This Sample code from https://github.com/GoogleCloudPlatform/professional-services/blob/master/examples/dataflow-python-examples/dataflow_python_examples/data_transformation.py for E.G.G hands on
+
+This Sample code from https://github.com/GoogleCloudPlatform/professional-services/tree/master/examples/dataflow-python-examples/batch-examples/cookbook-examples/pipelines for E.G.G hands on
 """
 
 from __future__ import absolute_import

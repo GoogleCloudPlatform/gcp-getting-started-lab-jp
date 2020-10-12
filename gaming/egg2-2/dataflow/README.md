@@ -1,1 +1,1 @@
-These sample codes are based on https://github.com/GoogleCloudPlatform/professional-services/blob/master/examples/dataflow-python-examples/
+These sample codes are based on https://github.com/GoogleCloudPlatform/professional-services/tree/master/examples/dataflow-python-examples/batch-examples/cookbook-examples/pipelines
