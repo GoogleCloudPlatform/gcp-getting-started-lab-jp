@@ -409,6 +409,10 @@ gcloud scheduler jobs create http schedule_for_dataflow \
 
 プロジェクトを削除出来る方は、削除してしまってください。
 
+```bash
+gcloud projects delete {{project-id}}
+```
+
 #### プロジェクトを削除出来ない方
 
 Cloud Scheduler Job の削除
@@ -428,3 +432,20 @@ GCS のバケット削除
 ```bash
 gsutil rm -r gs://{{project-id}}-egg2/
 ```
+
+ServiceAccount から権限を削除
+
+```bash
+gcloud projects remove-iam-policy-binding {{project-id}} \
+--member "serviceAccount:dev-egg-scheduler@{{project-id}}.iam.gserviceaccount.com" \
+--role "roles/owner"
+```
+
+ServiceAccount の削除
+
+```bash
+gcloud iam service-accounts delete dev-egg-scheduler@{{project-id}}.iam.gserviceaccount.com
+```
+
+セッションは以上です。
+おつかれさまでした:)
