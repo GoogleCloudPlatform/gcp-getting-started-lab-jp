@@ -1,15 +1,17 @@
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA', '.']
-  dir: 'devops/'
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA']
-- name: 'gcr.io/cloud-builders/kubectl'
-  args:
-  - 'set'
-  - 'image'
-  - 'deployment/devops-handson-deployment'
-  - 'myapp=gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA'
-  env:
-  - 'CLOUDSDK_COMPUTE_ZONE=asia-northeast1-c'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=k8s-devops-handson'
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA", "."]
+    dir: "devops/"
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA"]
+  - name: "gcr.io/cloud-builders/kubectl"
+    args:
+      - "set"
+      - "image"
+      - "deployment/devops-handson-deployment"
+      - "myapp=gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA"
+      - "-n"
+      - "devops-handson-ns"
+    env:
+      - "CLOUDSDK_COMPUTE_ZONE=asia-northeast1-c"
+      - "CLOUDSDK_CONTAINER_CLUSTER=k8s-devops-handson"
