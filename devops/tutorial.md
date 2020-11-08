@@ -7,17 +7,18 @@
 <walkthrough-project-setup>
 </walkthrough-project-setup>
 
-
 ## ハンズオンの内容
 
 下記の内容をハンズオン形式で学習します。
 
 - 環境準備：10 分
+
   - gcloud コマンドラインツール設定
   - GCP 機能（API）有効化設定
   - サービスアカウント設定
 
 - [Kubernetes Engine（GKE）](https://cloud.google.com/kubernetes-engine/) を用いたアプリケーション開発：40 分
+
   - サンプルアプリケーションのコンテナ化
   - コンテナの[Google Container Registry](https://cloud.google.com/container-registry/) への登録
   - GKE クラスターの作成
@@ -25,12 +26,14 @@
   - チャレンジ問題：もう一つの外部からのアクセス経路
 
 - [Operations](https://cloud.google.com/products/operations) を用いたアプリケーションの運用：10 分
+
   - [Cloud Logging](https://cloud.google.com/logging/) によるログ管理
   - [Cloud Trace](https://cloud.google.com/trace/) による分散トレーシング
   - [Cloud Profiler](https://cloud.google.com/profiler/) によるプロファイリング
   - チャレンジ問題：特定のログの確認
 
 - [Cloud Build](https://cloud.google.com/cloud-build/) によるビルド、デプロイの自動化：30 分
+
   - [Cloud Source Repositories](https://cloud.google.com/source-repositories/) へのリポジトリの作成
   - [Cloud Build トリガー](https://cloud.google.com/cloud-build/docs/running-builds/automate-builds) の作成
   - Git クライアントの設定
@@ -40,7 +43,6 @@
 - クリーンアップ：10 分
   - プロジェクトごと削除
   - （オプション）個別リソースの削除
-
 
 ## 環境準備
 
@@ -54,11 +56,9 @@
 - GCP 機能（API）有効化設定
 - サービスアカウント設定
 
-
 ## gcloud コマンドラインツール
 
 GCP は、CLI、GUI から操作が可能です。ハンズオンでは主に CLI を使い作業を行いますが、GUI で確認する URL も合わせて掲載します。
-
 
 ### gcloud コマンドラインツールとは?
 
@@ -73,7 +73,6 @@ gcloud コマンドライン インターフェースは、GCP でメインと�
 **ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
 
 <walkthrough-footnote>次に gcloud CLI をハンズオンで利用するための設定を行います。</walkthrough-footnote>
-
 
 ## gcloud コマンドラインツール設定 - プロジェクト
 
@@ -95,7 +94,6 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
-
 ## gcloud コマンドラインツール設定 - リージョン、ゾーン
 
 ### デフォルトリージョンを設定
@@ -116,7 +114,6 @@ gcloud config set compute/zone asia-northeast1-c
 
 <walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
 
-
 ## GCP 環境設定
 
 GCP では利用したい機能ごとに、有効化を行う必要があります。
@@ -125,13 +122,12 @@ GCP では利用したい機能ごとに、有効化を行う必要がありま�
 ### ハンズオンで利用する GCP の API を有効化する
 
 ```bash
-gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com
+gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com iamcredentials.googleapis.com
 ```
 
-**GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次にサービスアカウントの設定を行います。</walkthrough-footnote>
-
 
 ## サービスアカウントの作成、権限設定
 
@@ -139,20 +135,13 @@ gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com conta
 
 ### ハンズオン向けのサービスアカウントを作成する
 
-`dohandson` という名前で、ハンズオン専用のサービスアカウントを作成します。
+`devops-handson-gsa` という名前で、ハンズオン専用のサービスアカウントを作成します。
 
 ```bash
-gcloud iam service-accounts create dohandson --display-name "DevOps HandsOn Service Account"
+gcloud iam service-accounts create devops-handson-gsa --display-name "DevOps HandsOn Service Account"
 ```
 
 **ヒント**: サービスアカウントについての詳細は[こちら](https://cloud.google.com/iam/docs/service-accounts)をご参照ください。
-
-### サービスアカウントで利用する鍵を作成し、ダウンロードする
-
-```bash
-gcloud iam service-accounts keys create auth.json --iam-account=dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --key-file-type=json
-```
-
 **GUI**: [サービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts?project={{project-id}})
 
 ## サービスアカウントに権限（IAM ロール）を割り当てる
@@ -168,11 +157,11 @@ gcloud iam service-accounts keys create auth.json --iam-account=dohandson@$GOOGL
 - Cloud Debugger Agent ロール
 
 ```bash
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudprofiler.agent
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudtrace.agent
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/monitoring.metricWriter
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/stackdriver.resourceMetadata.writer
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/clouddebugger.agent
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudprofiler.agent
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudtrace.agent
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/monitoring.metricWriter
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/stackdriver.resourceMetadata.writer
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/clouddebugger.agent
 ```
 
 <walkthrough-footnote>アプリケーションから利用する、サービスアカウントの設定が完了しました。次に GKE を利用したアプリケーション開発に進みます。</walkthrough-footnote>
@@ -191,12 +180,11 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 - コンテナの GKE へのデプロイ、外部公開
 - チャレンジ問題：もう一つの外部からのアクセス経路
 
-
 ## サンプルアプリケーションのコンテナ化
 
 ### コンテナを作成する
 
-Go言語で作成されたサンプル Web アプリケーションをコンテナ化します。
+Go 言語で作成されたサンプル Web アプリケーションをコンテナ化します。
 ここで作成したコンテナはローカルディスクに保存されます。
 
 ```bash
@@ -212,15 +200,12 @@ docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1 .
 ```bash
 docker run -d -p 8080:8080 \
 --name devops-handson \
--e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/auth.json \
--v $PWD/auth.json:/tmp/keys/auth.json:ro \
 gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 ```
 
 **ヒント**: Cloud Shell 環境の 8080 ポートを、コンテナの 8080 ポートに紐付け、バックグラウンドで起動します。
 
 <walkthrough-footnote>アプリケーションをコンテナ化し、起動することができました。次に実際にアプリケーションにアクセスしてみます。</walkthrough-footnote>
-
 
 ## 作成したコンテナの動作確認
 
@@ -231,10 +216,9 @@ gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 
 正しくアプリケーションにアクセスできると、下記のような画面が表示されます。
 
-![BrowserAccessToMainController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToMainController.png)
+![BrowserAccessToFrontend](https://storage.googleapis.com/jp-devops-handson/frontend_normal.png)
 
 <walkthrough-footnote>ローカル環境（Cloud Shell 内）で動いているコンテナにアクセスできました。次に GKE で動かすための準備を進めます。</walkthrough-footnote>
-
 
 ## コンテナのレジストリへの登録
 
@@ -251,7 +235,6 @@ docker push gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 
 <walkthrough-footnote>次にコンテナを動かすための基盤である GKE の準備を進めます。</walkthrough-footnote>
 
-
 ## GKE クラスターの作成、設定
 
 コンテナレジストリに登録したコンテナを動かすための、GKE 環境を準備します。
@@ -259,13 +242,12 @@ docker push gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 ### GKE クラスターを作成する
 
 ```bash
-gcloud beta container clusters create "k8s-devops-handson"  \
+gcloud container clusters create "k8s-devops-handson"  \
 --image-type "COS" \
---scopes "https://www.googleapis.com/auth/cloud-platform" \
 --enable-stackdriver-kubernetes \
 --enable-ip-alias \
---network "projects/$GOOGLE_CLOUD_PROJECT/global/networks/default" \
---subnetwork "projects/$GOOGLE_CLOUD_PROJECT/regions/asia-northeast1/subnetworks/default"
+--release-channel stable \
+--workload-pool $GOOGLE_CLOUD_PROJECT.svc.id.goog
 ```
 
 **参考**: クラスターの作成が完了するまでに、最大 10 分程度時間がかかることがあります。
@@ -273,7 +255,6 @@ gcloud beta container clusters create "k8s-devops-handson"  \
 **GUI**: [クラスター](https://console.cloud.google.com/kubernetes/list?project={{project-id}})
 
 <walkthrough-footnote>クラスターが作成できました。次にクラスターを操作するツールの設定を行います。</walkthrough-footnote>
-
 
 ## GKE クラスターの作成、設定
 
@@ -289,19 +270,43 @@ gcloud container clusters get-credentials k8s-devops-handson
 
 <walkthrough-footnote>これで kubectl コマンドから作成したクラスターを操作できるようになりました。次に作成済みのコンテナをクラスターにデプロイします。</walkthrough-footnote>
 
+## コンテナの GKE へのデプロイ、外部公開 - Workload Identity
 
-## コンテナの GKE へのデプロイ、外部公開 - 準備
+今回デプロイするアプリケーションは Logging, Tracing など GCP の機能を利用します。アプリケーションに先の手順で作成した Google サービスアカウントの権限を付与するために [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) を利用します。
 
-### Kubernetes クラスターに、ダウンロード済みのサービスアカウントの鍵情報を Secret として登録する
-
-以前の手順で作成したサービスアカウントの鍵ファイルを Kubernetes に登録します。
-コンテナはこれを利用し、各種 GCP のサービスにアクセスします。
+### アプリケーションを配置する名前空間を作成する
 
 ```bash
-kubectl create secret generic dohandson-key --from-file=key.json=auth.json
+kubectl create namespace devops-handson-ns
 ```
 
-**ヒント**: Secret についての詳細は[こちら](https://cloud.google.com/kubernetes-engine/docs/concepts/secret)をご参照ください。
+### アプリケーションで利用する Kubernetes サービスアカウントを作成する
+
+```bash
+kubectl create serviceaccount --namespace devops-handson-ns devops-handson-ksa
+```
+
+### Kubernetes サービスアカウントと Google サービスアカウント間のポリシーバインディングを作成する
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:{{project-id}}.svc.id.goog[devops-handson-ns/devops-handson-ksa]" \
+  devops-handson-gsa@{{project-id}}.iam.gserviceaccount.com
+```
+
+### Kubernetes サービスアカウントにアノテーションを追加する
+
+```bash
+kubectl annotate serviceaccount \
+  --namespace devops-handson-ns \
+  devops-handson-ksa \
+  iam.gke.io/gcp-service-account=devops-handson-gsa@{{project-id}}.iam.gserviceaccount.com
+```
+
+<walkthrough-footnote>これで GKE 上の devops-handson-ns 名前空間に作成したアプリケーションが devops-handson-gsa サービスアカウントの権限を利用できるようになりました。</walkthrough-footnote>
+
+## コンテナの GKE へのデプロイ、外部公開 - 準備
 
 ### ハンズオン用の設定ファイルを修正する
 
@@ -331,7 +336,6 @@ kubectl apply -f gke-config/
 
 <walkthrough-footnote>コンテナを GKE にデプロイし、外部公開できました。次にデプロイしたアプリケーションにアクセスします。</walkthrough-footnote>
 
-
 ## コンテナの GKE へのデプロイ、外部公開 - 動作確認
 
 ### アクセスするグローバル IP アドレスの取得
@@ -339,7 +343,7 @@ kubectl apply -f gke-config/
 デプロイしたコンテナへのアクセスを待ち受ける Service の IP アドレスを確認します。
 
 ```bash
-kubectl get service devops-handson-loadbalancer -w
+kubectl get service devops-handson-loadbalancer -n devops-handson-ns -w
 ```
 
 このコマンドは対象のリソース状態を監視（watch）します。グローバル IP アドレスが付与されたら Ctrl + C を押してキャンセルしてください。
@@ -351,35 +355,24 @@ kubectl get service devops-handson-loadbalancer -w
 下記のコマンドを実行し出力された URL をクリックし、アクセスします。
 
 ```bash
-export SERVICE_IP=$(kubectl get service devops-handson-loadbalancer -ojsonpath='{.status.loadBalancer.ingress[0].ip}'); echo "http://${SERVICE_IP}/"
+export SERVICE_IP=$(kubectl get service devops-handson-loadbalancer -n devops-handson-ns -ojsonpath='{.status.loadBalancer.ingress[0].ip}'); echo "http://${SERVICE_IP}/"
 ```
 
 <walkthrough-footnote>アプリケーションにインターネット経由でアクセスすることができました。次にアクセスに時間がかかるページの調査を行います。</walkthrough-footnote>
 
-
 ## アクセスに時間がかかるページの確認
 
-下記のコマンドを実行し出力された URL をクリック、アクセスし、描画されるまで時間がかかることを確認します。
-Google Chrome を利用している場合は、[Chrome DevTools](https://developers.google.com/web/tools/chrome-devtools?hl=ja) を起動しレスポンスが返ってくるまでの秒数を確認します。
+ページ下部のタブで normal, bench を切り替え、`Start!` をクリックすることで /normal と /bench に対して API アクセスをすることが可能です。
 
-```bash
-echo "http://${SERVICE_IP}/bench1"
-```
+![BrowserAccessToBench](https://storage.googleapis.com/jp-devops-handson/frontend_bench.png)
 
-**ヒント**: 意図的に処理に時間がかかるようにアプリケーションを作成しています。
+### /bench の API にアクセス負荷をかける
 
-![BrowserAccessToSlowBenchController](https://storage.googleapis.com/devops-handson-for-github/BrowserAccessToSlowBenchController.png)
+リクエストが増加する速度を確認します。bench は処理に時間がかかる API を叩くようになっているため、ゆっくり増えていくはずです。
 
-### 擬似的にアクセス負荷をかける
-
-後のステップで確認する Cloud Profiler のサンプル数を稼ぐため、 `/bench1` に 50 回アクセスを行います。
-
-```bash
-COUNT=0; while [ $COUNT -lt 50 ]; do curl -s http://${SERVICE_IP}/bench1 > /dev/null; echo $COUNT; COUNT=$(( COUNT + 1 )); done
-```
+**ヒント**: 意図的に処理に時間がかかるように API を作成しています。
 
 <walkthrough-footnote>特定のページへのアクセスに時間がかかることを確認し、そこに負荷をかけました。次になぜこのページが重いのかをトラブルシューティングします。</walkthrough-footnote>
-
 
 ## チャレンジ問題：もう一つの外部からのアクセス経路
 
@@ -393,7 +386,7 @@ COUNT=0; while [ $COUNT -lt 50 ]; do curl -s http://${SERVICE_IP}/bench1 > /dev/
 しかし大きく下記の違いがあります。
 
 - Service: L4 で動作するため、IP アドレス、ポート番号に基づいて負荷分散を行う。
-- Ingress: L7 で動作するため、HTTPの情報に基づき負荷分散ができる。具体的には、TLSの終端、URL 情報による負荷分散先のコントロールなどが可能。
+- Ingress: L7 で動作するため、HTTP の情報に基づき負荷分散ができる。具体的には、TLS の終端、URL 情報による負荷分散先のコントロールなどが可能。
 
 昨今の Web サービスでは、TLS を利用することが基本となっており、さらにより柔軟な設定を行えるため Ingress を前段に置く形が基本的な構成となります。
 詳細は、[Service](https://kubernetes.io/ja/docs/concepts/services-networking/service/)、[Ingress](https://kubernetes.io/ja/docs/concepts/services-networking/ingress/)をご参照ください。
@@ -404,7 +397,6 @@ COUNT=0; while [ $COUNT -lt 50 ]; do curl -s http://${SERVICE_IP}/bench1 > /dev/
 
 **ヒント**: CLI で調査をする場合、Service で実施した情報取得の手順を参考にしてください。
 GUI で調査をする場合、以前の手順でアクセスしたページから IP アドレスを探して下さい。
-
 
 ## Operations を利用したアプリケーションの運用
 
@@ -419,47 +411,44 @@ Operations を利用しアプリケーションのトラブルシューティン
 - [Cloud Profiler](https://cloud.google.com/profiler/) によるプロファイリング
 - チャレンジ問題：特定のログの確認
 
-
 ## Cloud Trace による分散トレーシング
 
 サンプルアプリケーションには、あらかじめトレーシングをするための情報を埋め込んでいます。
 その情報を Cloud Trace から可視化することが可能です。
 
-1. [トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}})にブラウザからアクセスし、リクエスト フィルタに `/bench1` を入力
+1. [トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}})にブラウザからアクセスし、`トレース フィルタを追加` で `RowSpan`プロパティを選択、`/bench` を入力
 2. リクエストが遅い Span（青丸）を確認
 3. ログを表示をクリック
 4. “I” と表示されるアイコンをクリックして、連携された Cloud logging のログを確認
 
-![Trace](https://storage.googleapis.com/devops-handson-for-github/StackdriverTrace.png)
+![Trace](https://storage.googleapis.com/jp-devops-handson/trace_overall.png)
 
-**ヒント**: 今回は 1 アプリケーションの中の処理呼び出しを見ています。しかしこの分散トレーシングはユーザーの 1 リクエストが複数のサービスで構成されるような、マイクロサービスアーキテクチャで特に有用です。
+**ヒント**: 今回は 1 アプリケーションの中の処理呼び出しを見ています。しかしこの分散トレーシングは特にユーザーの 1 リクエストが複数のサービスで構成されるような、マイクロサービスアーキテクチャで有用です。
 
 <walkthrough-footnote>処理がかかっているページの処理内のトレーシング情報を元に、どの処理に時間がかかっているのかを確認しました。次にログ情報からアプリケーションに問題が無いかを確認します。</walkthrough-footnote>
-
 
 ## Cloud Logging によるログ管理
 
 サンプルアプリケーションでは標準出力にログを出力しています。
 それらは自動的に Cloud Logging に連携され、表示、検索などをすることが可能です。
 
-[トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}}) のページで `/bench1` のトレースを表示し、ログの横に表示されている 表示リンク をクリックします。
+[トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}}) のページで `/bench` のトレースを表示し、ログの横に表示されている 表示リンク をクリックします。
 
-![TraceToLogging](https://storage.googleapis.com/devops-handson-for-github/StackdriverTraceToStackdriverLogging.png)
+![TraceToLogging](https://storage.googleapis.com/jp-devops-handson/trace_detail.png)
 
 Logging のページに遷移し、関連するログが表示されていることを確認します。
 
-![Logging](https://storage.googleapis.com/devops-handson-for-github/StackdriverLogging.png)
+![Logging](https://storage.googleapis.com/jp-devops-handson/log_viewer.png)
 
 [アプリケーションログ](https://console.cloud.google.com/logs/viewer?project={{project-id}}&resource=k8s_container)も確認可能です。
 
 <walkthrough-footnote>Cloud Logging からアプリケーション、その他のログを確認しました。次にプロファイラを使い、リソース使用量の観点からアプリケーションを確認します。</walkthrough-footnote>
 
-
 ## Cloud Profiler によるプロファイリング
 
 [プロファイラ](https://console.cloud.google.com/profiler/devops-demo;zone=asia-northeast1-c;version=1.0.0/cpu?project={{project-id}}) を開き、fibonacci という関数の処理にリソースが使われていることを確認します。
 
-![Profiler](https://storage.googleapis.com/devops-handson-for-github/StackdriverProfiler.png)
+![Profiler](https://storage.googleapis.com/jp-devops-handson/profiler.png)
 
 `プロファイルの種類` を切り替えることで、様々な情報を見ることができます。
 
@@ -469,7 +458,6 @@ Logging のページに遷移し、関連するログが表示されているこ
 - スレッド
 
 <walkthrough-footnote>プロファイラを使うことで様々なリソースの使用量を確認しました。ここまでで簡単にアプリケーションのトラブルシュートができることを体験頂けたと思います。次にアプリケーションの作成、更新を自動化します。</walkthrough-footnote>
-
 
 ## チャレンジ問題：特定のログの確認
 
@@ -483,14 +471,13 @@ Logging のページに遷移し、関連するログが表示されているこ
 
 1. 画面右上にあるアイコン <walkthrough-cloud-shell-editor-icon></walkthrough-cloud-shell-editor-icon> をクリックし、Cloud Shell エディタを開きます。
 2. 次にエディタのエクスプローラーから `cloudshell_open/gcp-getting-started-lab-jp/devops/` とたどり、main.go ファイルを開きます。
-3. 99 行目の log.XXXX という行が該当箇所です。
+3. 98 行目の log.Printf という行が該当箇所です。
 
 ### 出力されたログの確認
 
 Cloud Logging を使い、該当のログが出力されていることを確認します。
 
 **ヒント**: このログはアプリケーションから出力されています。また Cloud Logging はログの検索機能を持っています。
-
 
 ## Cloud Build によるビルド、デプロイの自動化
 
@@ -505,7 +492,6 @@ Cloud Build を利用し今まで手動で行っていたアプリケーショ�
 - Git クライアントの設定
 - ソースコードの Push をトリガーにした、アプリケーションのビルド、GKE へのデプロイ
 - チャレンジ問題：処理に時間がかかっているページの改善
-
 
 ## Cloud Build サービスアカウントへの権限追加
 
@@ -523,7 +509,6 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 <walkthrough-footnote>Cloud Build で利用するサービスアカウントに権限を付与し、Kubernetes に自動デプロイできるようにしました。次に資材を格納する Git リポジトリを作成します。</walkthrough-footnote>
 
-
 ## Cloud Source Repository（CSR）に Git レポジトリを作成
 
 今回利用しているソースコードを配置するためのプライベート Git リポジトリを、Cloud Source Repository（CSR）に作成します。
@@ -536,7 +521,6 @@ gcloud source repos create devops-handson
 
 <walkthrough-footnote>資材を格納する Git リポジトリを作成しました。次にこのリポジトリに更新があったときにそれを検知し、処理を開始するトリガーを作成します。</walkthrough-footnote>
 
-
 ## Cloud Build トリガーを作成
 
 Cloud Build に前の手順で作成した、プライベート Git リポジトリに push が行われたときに起動されるトリガーを作成します。
@@ -548,7 +532,6 @@ gcloud beta builds triggers create cloud-source-repositories --description="devo
 **GUI**: [ビルドトリガー](https://console.cloud.google.com/cloud-build/triggers?project={{project-id}})
 
 <walkthrough-footnote>リポジトリの更新を検知するトリガーを作成しました。次にリポジトリを操作する Git クライアントの設定を行います。</walkthrough-footnote>
-
 
 ## Git クライアント設定
 
@@ -580,7 +563,6 @@ git config --global user.email "USERNAME@EXAMPLE.com"
 
 <walkthrough-footnote>Git クライアントの設定を行いました。次に先程作成した CSR のリポジトリと、Cloud Shell 上にある資材を紐付けます。</walkthrough-footnote>
 
-
 ## Git リポジトリ設定
 
 CSR を Git のリモートレポジトリとして登録します。
@@ -591,7 +573,6 @@ git remote add google https://source.developers.google.com/p/$GOOGLE_CLOUD_PROJE
 ```
 
 <walkthrough-footnote>以前の手順で作成した CSR のリポジトリと、Cloud Shell 上にある資材を紐付けました。次にその資材をプッシュします。</walkthrough-footnote>
-
 
 ## CSR への資材の転送（プッシュ）
 
@@ -606,7 +587,6 @@ git push google master
 
 <walkthrough-footnote>Cloud Shell 上にある資材を CSR のリポジトリにプッシュしました。次に資材の更新をトリガーに処理が始まっている Cloud Build を確認します。</walkthrough-footnote>
 
-
 ## Cloud Build トリガーの動作確認
 
 ### Cloud Build の自動実行を確認
@@ -618,7 +598,7 @@ git push google master
 ビルドが正常に完了後、以下コマンドを実行し、Cloud Build で作成したコンテナがデプロイされていることを確認します。
 
 ```bash
-kubectl describe deployment/devops-handson-deployment | grep Image
+kubectl describe deployment/devops-handson-deployment -n devops-handson-ns | grep Image
 ```
 
 `error: You must be logged in to the server (Unauthorized)` というメッセージが出た場合は、再度コマンドを実行してみてください。
@@ -634,14 +614,9 @@ Cloud Build 実行前は Image が `gcr.io/{{project-id}}/devops-handson:v1` と
 
 <walkthrough-footnote>資材を更新、プッシュをトリガーとしたアプリケーションのビルド、コンテナ化、GKE へのデプロイを行うパイプラインが完成しました。次はチャレンジ問題を用意しています。</walkthrough-footnote>
 
-
 ## チャレンジ問題：処理に時間がかかっているページの改善
 
-/bench1 にアクセスをするとレスポンスに時間がかかっていることを確認しました。それを修正し、Kubernetes にデプロイしてみましょう。
-
-```bash
-echo "http://${SERVICE_IP}/bench1"
-```
+/bench の API はレスポンスに時間がかかっていることを確認しました。それを修正し、Kubernetes にデプロイしてみましょう。
 
 ### ソースコードの修正
 
@@ -657,14 +632,11 @@ main.go がアプリケーションのソースコードです。処理に時間
 
 ### Cloud Build の自動実行を確認
 
-[Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds?project={{project-id}}) にアクセスし、git push コマンドを実行した時間にビルドが実行されていることを確認します。
+[Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds?project={{project-id}}) にアクセスし、git push コマンドを実行したタイミングでビルドが実行されていることを確認します。
 
 ### アプリケーションにアクセスし、すぐレスポンスがかえることを確認
 
-```bash
-echo "http://${SERVICE_IP}/bench1"
-```
-
+bench のタブから `Start!` をクリックし、カウントアップが速くなっていることを確認します。
 
 ## Congraturations!
 
@@ -673,7 +645,6 @@ echo "http://${SERVICE_IP}/bench1"
 これにて GKE を使ったアプリケーション開発（コーディング、テスト、デプロイ）、Operations を用いた運用（分散トレーシング、ロギング、プロファイリング）、Cloud Build によるビルド、デプロイの自動化を体験するハンズオンは完了です！！
 
 デモで使った資材が不要な方は、次の手順でクリーンアップを行って下さい。
-
 
 ## クリーンアップ（プロジェクトを削除）
 
@@ -691,7 +662,6 @@ gcloud config unset project
 gcloud projects delete {{project-id}}
 ```
 
-
 ## クリーンアップ（個別リソースの削除）
 
 ### GKE クラスターの削除
@@ -703,7 +673,7 @@ gcloud container clusters delete k8s-devops-handson --quiet
 ### アプリケーション用サービスアカウントの削除
 
 ```bash
-gcloud iam service-accounts delete dohandson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --quiet
+gcloud iam service-accounts delete devops-handson-gsa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --quiet
 ```
 
 ### Cloud Build 用サービスアカウントから Kubernetes 管理者権限の削除
