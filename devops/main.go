@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Google LLC
+Copyright 2020 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/profiler"
@@ -34,18 +32,13 @@ import (
 )
 
 var projectID = ""
+var isLocal = false
 
 const (
 	service        = "devops-demo"
 	serviceVersion = "1.0.0"
 	metricPrefix   = "devops-"
 )
-
-// A IndexVariables represents variables used in a template (index.html)
-type IndexVariables struct {
-	WebsiteTitle string
-	RandomNumber string
-}
 
 func logRequest(r *http.Request, traceID string, spanID string, msg string) {
 	log.WithFields(log.Fields{
@@ -70,45 +63,54 @@ func logMethod(traceID string, spanID string, msg string) {
 	}).Info(msg)
 }
 
-func mainHandler() http.Handler {
+func normalHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, span := trace.StartSpan(context.Background(), "/")
-		defer span.End()
-		s := span.SpanContext()
+		start := time.Now()
 
-		addAttributesToSpan(span, r)
-		logRequest(r, s.TraceID.String(), s.SpanID.String(), "Hello from mainHandler")
+		if !isLocal {
+			_, span := trace.StartSpan(context.Background(), "/normal")
+			defer span.End()
+			s := span.SpanContext()
 
-		iv := &IndexVariables{
-			WebsiteTitle: "MainController",
-			RandomNumber: strconv.Itoa(rand.Intn(100)),
+			addAttributesToSpan(span, r)
+			logRequest(r, s.TraceID.String(), s.SpanID.String(), "Access to normal")
 		}
 
-		renderTemplate(w, iv)
+		returnElapsedTimeAsJSON(w, start)
 	})
 }
 
 func benchHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := trace.StartSpan(context.Background(), "/bench1")
-		defer span.End()
-		s := span.SpanContext()
+		start := time.Now()
 
-		addAttributesToSpan(span, r)
-		logRequest(r, s.TraceID.String(), s.SpanID.String(), "Hello from benchHandler")
-		log.Printf("context: %v\n", ctx)
+		if isLocal {
+			fibonacciOnLocal(rand.Intn(3000000000))
+			fibonacciOnLocal(rand.Intn(3000000000))
+			fibonacciOnLocal(rand.Intn(3000000000))
+		} else {
+			ctx, span := trace.StartSpan(context.Background(), "/bench")
+			defer span.End()
+			s := span.SpanContext()
 
-		// Stress
-		fibonacci(ctx, rand.Intn(3000000000))
-		fibonacci(ctx, rand.Intn(3000000000))
-		fibonacci(ctx, rand.Intn(3000000000))
+			addAttributesToSpan(span, r)
+			logRequest(r, s.TraceID.String(), s.SpanID.String(), "Access to bench")
+			log.Printf("context: %v\n", ctx)
 
-		iv := &IndexVariables{
-			WebsiteTitle: "BenchController",
-			RandomNumber: strconv.Itoa(rand.Intn(100)),
+			// Stress
+			fibonacci(ctx, rand.Intn(3000000000))
+			fibonacci(ctx, rand.Intn(3000000000))
+			fibonacci(ctx, rand.Intn(3000000000))
 		}
-		renderTemplate(w, iv)
+
+		returnElapsedTimeAsJSON(w, start)
 	})
+}
+
+func returnElapsedTimeAsJSON(w http.ResponseWriter, start time.Time) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf(`{"elapsed": %d}`, time.Now().Sub(start).Milliseconds())))
 }
 
 func addAttributesToSpan(span *trace.Span, r *http.Request) {
@@ -126,12 +128,6 @@ func addAttributesToSpan(span *trace.Span, r *http.Request) {
 	)
 }
 
-func waitRandomMilliseconds(ctx context.Context) {
-	_, span := trace.StartSpan(ctx, "waitRandomMilliseconds")
-	defer span.End()
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
-}
-
 func fibonacci(ctx context.Context, loopNum int) {
 	_, span := trace.StartSpan(ctx, "fibonacci")
 	s := span.SpanContext()
@@ -145,13 +141,10 @@ func fibonacci(ctx context.Context, loopNum int) {
 	logMethod(s.TraceID.String(), s.SpanID.String(), fmt.Sprintf("Fibonacci calculation completed: %v loops", loopNum))
 }
 
-var templates = template.Must(template.ParseFiles("./template/index.html"))
-
-func renderTemplate(w http.ResponseWriter, iv *IndexVariables) {
-	err := templates.Execute(w, iv)
-	if err != nil {
-		log.Printf("Failed to render a template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func fibonacciOnLocal(loopNum int) {
+	prev, next := 0, 1
+	for i := 0; i < loopNum; i++ {
+		prev, next = next, prev+next
 	}
 }
 
@@ -179,38 +172,46 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	projectID = cred.ProjectID
-	log.Infof("Successfully retrieved GCP Project ID: %v", projectID)
-
-	// Initialize Profiler
-	if err := profiler.Start(profiler.Config{
-		Service:        service,
-		ServiceVersion: serviceVersion,
-		ProjectID:      projectID,
-	}); err != nil {
-		log.Fatal(err.Error())
+	if len(projectID) == 0 {
+		log.Println("Failed to get the credential. Trying to enter Local mode...")
+		isLocal = true
+	} else {
+		log.Infof("Successfully retrieved GCP Project ID: %v", projectID)
 	}
-	log.Info("Successfully initialized profiler")
 
-	// Initialize exporter
-	exporter, err := stackdriver.NewExporter(stackdriver.Options{
-		ProjectID:    projectID,
-		MetricPrefix: metricPrefix,
-	})
-	if err != nil {
-		log.Fatal(err.Error())
+	if !isLocal {
+		// Initialize Profiler
+		if err := profiler.Start(profiler.Config{
+			Service:        service,
+			ServiceVersion: serviceVersion,
+			ProjectID:      projectID,
+		}); err != nil {
+			log.Fatal(err.Error())
+		}
+		log.Info("Successfully initialized profiler")
+
+		// Initialize exporter
+		exporter, err := stackdriver.NewExporter(stackdriver.Options{
+			ProjectID:    projectID,
+			MetricPrefix: metricPrefix,
+		})
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		log.Info("Successfully initialized exporter")
+		defer exporter.Flush()
+		trace.RegisterExporter(exporter)
+		trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 	}
-	log.Info("Successfully initialized exporter")
-	defer exporter.Flush()
-	trace.RegisterExporter(exporter)
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	// Serve static files under /static/ directory
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	// Serve Frontend scripts under /static/ directory
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	// Register handlers
-	http.Handle("/", mainHandler())
-	http.Handle("/bench1", benchHandler())
+	http.Handle("/normal", normalHandler())
+	http.Handle("/bench", benchHandler())
 
 	log.Info("Start listening : 8080...")
 	http.ListenAndServe(":8080", nil)
