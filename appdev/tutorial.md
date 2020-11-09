@@ -399,7 +399,7 @@ kubectl describe deployment frontend --namespace appdev-handson-ns
 
 Imageのパスが、gcr.io/{{project-id}}/frontend:v1 となっていることを確認します。
 
-結果出力の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+結果出力の例
 ```
 ...
 server:
