@@ -276,7 +276,7 @@ http://35.187.195.202/
 ```
 
 取得したURLへアクセスし、アプリケーションにアクセスできることを確認する。
-![BaseApp](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/BaseApp.png?raw=true)
+![BaseApp](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/BaseApp.png?raw=true)
 
 
 # 2. クーポンサービスの作成
@@ -415,7 +415,7 @@ server:
 echo http://$FRONTEND_IP/
 ```
 
-![V1App](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V1App.png?raw=true)
+![V1App](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V1App.png?raw=true)
 
 # 4. クーポンサービスの改善
 
@@ -477,7 +477,7 @@ echo http://$FRONTEND_IP/
 session-id: 42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-![CheckSession](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/CheckSession.png?raw=true)
+![CheckSession](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/CheckSession.png?raw=true)
 
 
 以下コマンドを実行し、環境変数に調べたセッション ID を設定する
@@ -551,7 +551,7 @@ server:
 echo http://$FRONTEND_IP/
 ```
 
-![V2App](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V2App.png?raw=true)
+![V2App](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V2App.png?raw=true)
 
 
 # 5. (Advanced) クーポンサービスの高度化
