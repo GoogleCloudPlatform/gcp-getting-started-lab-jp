@@ -539,7 +539,7 @@ Imageのパスが、gcr.io/{{project-id}}/couponservice:v2 となっているこ
 ```
 ...
 server:
-    Image:      gcr.io/xxxxx/couponservice:v2
+    Image:      gcr.io/{{project-id}}/couponservice:v2
 ...
 ```
 
