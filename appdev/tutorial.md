@@ -81,7 +81,6 @@ gcloud iam service-accounts create appdev-handson --display-name "AppDev HandsOn
 - Cloud Monitoring Metric Writer role
 - Cloud Monitoring Metadata Writer role
 - Cloud Spanner Database User role
-- 
 
 ```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudprofiler.agent
@@ -98,6 +97,7 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 ```bash
 gcloud container clusters create "k8s-appdev-handson"  \
 --image-type "COS" \
+--machine-type "n1-standard-2" \
 --enable-stackdriver-kubernetes \
 --enable-ip-alias \
 --release-channel stable \
@@ -246,7 +246,7 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
 サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を以下のコマンドで確認します。
-EXTERNAL-IP に 値が入っていない場合は時間を置いて再度確認用のコマンドを実行してください。
+EXTERNAL-IP に 値が入っていない場合、もしくは<pending>になっている場合は時間を置いて再度確認用のコマンドを実行してください。
 
 ```bash
 kubectl get service frontend-external -n appdev-handson-ns
