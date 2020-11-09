@@ -372,7 +372,7 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/fr
 
 ## Kubernetes マニフェストファイルの確認
 
-先ほどビルドしたコンテナ ( frontend:v1 ) を Kubernetes クラスターにデプロイするための修正がマニュフェストファイルに反映されている事を確認する
+先ほどビルドしたコンテナ ( frontend:v1 ) を Kubernetes クラスターにデプロイするための修正がマニフェストファイルに反映されている事を確認する
 
 ```bash
 cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml | grep "frontend:v1"
