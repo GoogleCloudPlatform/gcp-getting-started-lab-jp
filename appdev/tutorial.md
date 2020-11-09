@@ -51,7 +51,7 @@ gcloud config set compute/region asia-northeast1
 
 ### デフォルトゾーンを設定
 
-コンピュートリソースを作成するデフォルトのゾーンとして、日本リージョン内の 1 ゾーン（asia-northeast1-c）を指定します。
+コンピュートリソースを作成するデフォルトのゾーンとして、東京リージョン内の 1 ゾーン（asia-northeast1-c）を指定します。
 
 ```bash
 gcloud config set compute/zone asia-northeast1-c
