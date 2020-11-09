@@ -246,7 +246,7 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
 サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を以下のコマンドで確認します。
-EXTERNAL-IP に 値が入っていない場合、もしくは<pending>になっている場合は時間を置いて再度確認用のコマンドを実行してください。
+EXTERNAL-IP に 値が入っていない場合、もしくは\<pending\>になっている場合は時間を置いて再度確認用のコマンドを実行してください。
 
 ```bash
 kubectl get service frontend-external -n appdev-handson-ns
@@ -550,6 +550,9 @@ server:
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+![V2App](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V2App.png?raw=true)
+
 
 # 5. (Advanced) クーポンサービスの高度化
 
