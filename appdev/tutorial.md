@@ -305,7 +305,7 @@ couponservice を Cloud Build を使ってコンテナをビルドし、couponse
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
 ```
 
-## Kubernetes マニュフェストファイルの確認
+## Kubernetes マニフェストファイルの確認
 
 先ほどビルドしたコンテナ ( couponservice:v1 ) を Kubernetes クラスターにデプロイするための修正がマニュフェストファイルに反映されている事を確認する
 
