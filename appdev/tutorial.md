@@ -380,7 +380,7 @@ cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kuber
 
 出力画面の例
 ```
-image: gcr.io/xxxxx/frontend:v1
+image: gcr.io/{{project-id}}/frontend:v1
 ```
 
 ## frontend のデプロイ
