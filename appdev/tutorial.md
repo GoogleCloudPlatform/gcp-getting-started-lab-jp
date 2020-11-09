@@ -332,7 +332,7 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
 kubectl describe deployment couponservice --namespace appdev-handson-ns
 ```
 
-Imageのパスが、gcr.io/xxxxx/couponservice:v1 となっていることを確認します。
+Imageのパスが、gcr.io/{{project-id}}/couponservice:v1 となっていることを確認します。
 
 結果出力の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
 ```
