@@ -17,24 +17,44 @@
 
 ## GCP のプロジェクト ID を設定する
 
-### プロジェクト名と ID のリストを取得する
+### Google Cloud Platform（GCP）プロジェクトの選択
 
-```bash
-gcloud projects list
+ハンズオンを行う GCP プロジェクトを選択し、 **Start** をクリックしてください。
+
+<walkthrough-project-setup>
+</walkthrough-project-setup>
 ```
 
 ### 取得した GCP プロジェクト ID を環境変数に設定する
 
-下記コマンドの FIXME を実際の GCP プロジェクト ID に置き換えて実行する。
+環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
 
 ```bash
-export GOOGLE_CLOUD_PROJECT=FIXME
+export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 ```
 
 ### gcloud から利用する GCP のデフォルトプロジェクトを設定する
 
 ```bash
 gcloud config set project $GOOGLE_CLOUD_PROJECT
+```
+
+## gcloud コマンドラインツール設定 - リージョン、ゾーン
+
+### デフォルトリージョンを設定
+
+コンピュートリソースを作成するデフォルトのリージョンとして、東京リージョン（asia-northeast1）を指定します。
+
+```bash
+gcloud config set compute/region asia-northeast1
+```
+
+### デフォルトゾーンを設定
+
+コンピュートリソースを作成するデフォルトのゾーンとして、東京リージョン内の 1 ゾーン（asia-northeast1-c）を指定します。
+
+```bash
+gcloud config set compute/zone asia-northeast1-c
 ```
 
 ## ハンズオンで利用する GCP の API を有効化する
@@ -51,48 +71,23 @@ gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com conta
 gcloud iam service-accounts create appdev-handson --display-name "AppDev HandsOn Service Account"
 ```
 
-## サービスアカウントで利用する鍵を作成しダウンロードする
-
-```bash
-gcloud iam service-accounts keys create auth.json --iam-account=appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --key-file-type=json
-```
-
 ## サービスアカウントに権限（IAM ロール）を割り当てる
+作成したサービスアカウントには GCP リソースの操作権限がついていないため、ここで必要な権限を割り当てます。
 
-### Cloud Profiler Agent role
+下記の権限を割り当てます。
+
+- Cloud Profiler Agent role
+- Cloud Trace Agent role
+- Cloud Monitoring Metric Writer role
+- Cloud Monitoring Metadata Writer role
+- Cloud Spanner Database User role
 
 ```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudprofiler.agent
-```
-
-### Cloud Trace Agent role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudtrace.agent
-```
-
-### Cloud Monitoring Metric Writer role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/monitoring.metricWriter
-```
-
-### Cloud Monitoring Metadata Writer role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/stackdriver.resourceMetadata.writer
-```
-
-### Cloud Spanner Database User role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/spanner.databaseUser
-```
-
-### （Optional）Cloud Debugger Agent role
-
-```bash
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/clouddebugger.agent
 ```
 
 ## GKE の準備
@@ -101,27 +96,18 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ```bash
 gcloud container clusters create "k8s-appdev-handson"  \
---zone "asia-northeast1-c" \
---enable-autorepair \
---username "admin" \
---machine-type "n1-standard-2" \
 --image-type "COS" \
---disk-type "pd-standard" \
---disk-size "100" \
---scopes "https://www.googleapis.com/auth/cloud-platform" \
---num-nodes "3" \
+--machine-type "n1-standard-2" \
 --enable-stackdriver-kubernetes \
 --enable-ip-alias \
---network "projects/$GOOGLE_CLOUD_PROJECT/global/networks/default" \
---subnetwork "projects/$GOOGLE_CLOUD_PROJECT/regions/asia-northeast1/subnetworks/default" \
---addons HorizontalPodAutoscaling,HttpLoadBalancing \
---workload-pool=$GOOGLE_CLOUD_PROJECT.svc.id.goog
+--release-channel stable \
+--workload-pool $GOOGLE_CLOUD_PROJECT.svc.id.goog
 ```
 
 ### GKE クラスターにアクセスするための認証情報を取得する
 
 ```bash
-gcloud container clusters get-credentials k8s-appdev-handson --zone asia-northeast1-c
+gcloud container clusters get-credentials k8s-appdev-handson
 ```
 
 ### GCP の IAM 情報と Kubernetes のサービスアカウントを紐付ける (Workload Identity)
@@ -219,6 +205,12 @@ gcloud spanner databases execute-sql appdev-db \
     --sql='SELECT SessionId, CouponId, DiscountPercentage, IsUsed, ExpiredBy FROM Coupons WHERE SessionId="aaaaaaaa-1111-bbbb-2222-cccccccccccc"'
 ```
 
+上記コマンドを実行後、以下のような出力結果が得られることを確認する
+```
+SessionId                             CouponId                              DiscountPercentage  IsUsed  ExpiredBy
+aaaaaaaa-1111-bbbb-2222-cccccccccccc  xxxxxxxx-1111-yyyy-2222-zzzzzzzzzzzz  40                  False   1604913597
+```
+
 ## デモアプリケーションの準備
 
 ### Kubernetes へのデモアプリケーションデプロイ
@@ -253,17 +245,39 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
-接続可能な IP アドレスを調べる
+サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を以下のコマンドで確認します。
+EXTERNAL-IP に 値が入っていない場合、もしくは\<pending\>になっている場合は時間を置いて再度確認用のコマンドを実行してください。
+
+```bash
+kubectl get service frontend-external -n appdev-handson-ns
+```
+
+上記コマンドを実行した結果の例 ( EXTERNAL-IPに値が入っている場合 )
+```
+NAME                TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
+frontend-external   LoadBalancer   10.4.10.232   35.187.195.202   80:32692/TCP   2m19s
+```
+
+サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を環境変数へ設定する。
 
 ```bash
 export FRONTEND_IP=$(kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
-ブラウザで調べた IP アドレスにアクセスし、アプリケーションにアクセスできることを確認する
+以下コマンドを実行し、ブラウザからアクセスするためのURLを取得する。
 
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+コマンド実行例
+```
+http://35.187.195.202/
+```
+
+取得したURLへアクセスし、アプリケーションにアクセスできることを確認する。
+![BaseApp](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/BaseApp.png?raw=true)
+
 
 # 2. クーポンサービスの作成
 
@@ -283,23 +297,54 @@ appdev/microservices-demo
         └── Dockerfile              : コンテナのビルド定義ファイル
 ```
 
-## couponservice コンテナイメージの作成 (CloudBuild にてビルド)
+## couponservice コンテナイメージの作成 ( Cloud Build にてビルド)
 
-v1 というタグをつけてコンテナをビルドする。
+couponservice を Cloud Build を使ってコンテナをビルドし、couponservice:v1 というタグをつけて Container Registry にコンテナを登録する
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
 ```
 
+## Kubernetes マニフェストファイルの確認
+
+先ほどビルドしたコンテナ ( couponservice:v1 ) を Kubernetes クラスターにデプロイするための修正がマニフェストファイルに反映されている事を確認する
+
+```bash
+cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml | grep "couponservice:v1"
+```
+
+出力画面の例
+```
+image: gcr.io/{{project-id}}/couponservice:v1
+```
+
 ## couponservice のデプロイ
+
+以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v1 ) を Kubernetes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment couponservice --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/{{project-id}}/couponservice:v1 となっていることを確認します。
+
+結果出力の例
+```
+...
+server:
+    Image:      gcr.io/{{project-id}}/couponservice:v1
+...
+```
+
 # 3. クーポンサービスの組み込み
 
-クーポンサービスは Kubernetes 上で動いているが、他のマイクロサービスから呼び出されていない。そのため他のマイクロサービスから呼び出されるように変更を行う。本ハンズオンでは frontend サービスと couponservice を接続する。
+コンテナのデプロイは完了したため、クーポンサービスは Kubernetes 上で動いているが、他のマイクロサービスから呼び出されていない。そのため他のマイクロサービスから呼び出されるように変更を行う必要があります。本ハンズオンでは frontend サービスと couponservice を接続します。
 
 ```
 .
@@ -317,27 +362,60 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
             └── home.html           : トップページの HTML テンプレート
 ```
 
-## frontend コンテナイメージの作成 (CloudBuild にてビルド)
+## frontend コンテナイメージの作成 ( Cloud Build にてビルド)
 
-v1 というタグをつけてコンテナをビルドする。
+frontend を Cloud Build を使ってコンテナをビルドし、frontend:v1 というタグをつけて Container Registry にコンテナを登録します
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
 ```
 
+## Kubernetes マニフェストファイルの確認
+
+先ほどビルドしたコンテナ ( frontend:v1 ) を Kubernetes クラスターにデプロイするための修正がマニフェストファイルに反映されている事を確認する
+
+```bash
+cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml | grep "frontend:v1"
+```
+
+出力画面の例
+```
+image: gcr.io/{{project-id}}/frontend:v1
+```
+
 ## frontend のデプロイ
+
+以下コマンドを実行し、マニフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( frontend:v1 ) を Kubernetes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
 ```
 
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment frontend --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/{{project-id}}/frontend:v1 となっていることを確認します。
+
+結果出力の例
+```
+...
+server:
+    Image:      gcr.io/{{project-id}}/frontend:v1
+...
+```
+
 ## 動作確認
 
-ブラウザでアプリケーションにアクセスし、クーポンが表示される事を確認する。
+ブラウザからアプリケーションにアクセスし、クーポン ( Special Coupon: xx% OFF ... ) が表示される事を確認する。
 
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+![V1App](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V1App.png?raw=true)
 
 # 4. クーポンサービスの改善
 
@@ -370,9 +448,9 @@ appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponServ
 ファイルを Cloud Shell Editor で開く
 </walkthrough-editor-open-file>
 
-## コンテナイメージの作成 (CloudBuild にてビルド)
+## コンテナイメージの作成 ( CloudBuild にてビルド )
 
-v2 というタグをつけてコンテナをビルドする。
+修正後の couponservice を Cloud Build を使ってコンテナをビルドし、couponservice:v2 というタグをつけて Container Registry にコンテナを登録する
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2
@@ -380,7 +458,7 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/co
 
 ## Spanner へのクーポンデータ追加
 
-### クーポン期限の設定 (3 時間後のエポック秒)
+### クーポン期限の設定 ( 3 時間後のエポック秒 )
 
 ```bash
 export COUPON_EXPIREDBY=$(python3 -c "import time; print(int(time.time()) + 10800);")
@@ -399,13 +477,16 @@ echo http://$FRONTEND_IP/
 session-id: 42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-環境変数に調べたセッション ID を設定する
+![CheckSession](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/CheckSession.png?raw=true)
+
+
+以下コマンドを実行し、環境変数に調べたセッション ID を設定する
 
 ```bash
 export USER_SESSION_ID=42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-サンプルデータの挿入
+以下コマンドを実行し、Spanner にいま開いているセッションに対してのみクーポンを表示するためのデータを追加(Insert)します。
 
 ```bash
 gcloud spanner rows insert --database=appdev-db \
@@ -421,7 +502,7 @@ gcloud spanner rows insert --database=appdev-db \
 
 ## Kubernetes に修正したクーポンサービスをデプロイする
 
-### Kubernetes のアプリケーション定義ファイルを修正する
+### Kubernetes のマニフェストファイルを修正する
 
 appdev/microservices-demo/kubernetes-manifests/couponservice.yaml を以下の通り修正する。
 xxxxx はプロジェクト ID に読み替えて実行する。
@@ -440,8 +521,26 @@ image: gcr.io/xxxxx/couponservice:v2
 
 ### 新しいアプリケーションをデプロイする
 
+以下コマンドを実行し、マニフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v2 ) を Kubernetes ( GKE ) のクラスター上にデプロイします
+
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
+```
+
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment couponservice --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/{{project-id}}/couponservice:v2 となっていることを確認します。
+
+結果出力の例
+```
+...
+server:
+    Image:      gcr.io/{{project-id}}/couponservice:v2
+...
 ```
 
 ## 動作確認
@@ -451,6 +550,9 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+![V2App](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V2App.png?raw=true)
+
 
 # 5. (Advanced) クーポンサービスの高度化
 
