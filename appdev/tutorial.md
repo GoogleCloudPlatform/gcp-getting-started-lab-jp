@@ -502,7 +502,7 @@ gcloud spanner rows insert --database=appdev-db \
 
 ## Kubernetes に修正したクーポンサービスをデプロイする
 
-### Kubernetes のマニュフェストファイルを修正する
+### Kubernetes のマニフェストファイルを修正する
 
 appdev/microservices-demo/kubernetes-manifests/couponservice.yaml を以下の通り修正する。
 xxxxx はプロジェクト ID に読み替えて実行する。
