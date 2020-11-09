@@ -107,7 +107,7 @@ gcloud container clusters create "k8s-appdev-handson"  \
 ### GKE クラスターにアクセスするための認証情報を取得する
 
 ```bash
-gcloud container clusters get-credentials k8s-appdev-handson --zone asia-northeast1-c
+gcloud container clusters get-credentials k8s-appdev-handson
 ```
 
 ### GCP の IAM 情報と Kubernetes のサービスアカウントを紐付ける (Workload Identity)
@@ -205,6 +205,12 @@ gcloud spanner databases execute-sql appdev-db \
     --sql='SELECT SessionId, CouponId, DiscountPercentage, IsUsed, ExpiredBy FROM Coupons WHERE SessionId="aaaaaaaa-1111-bbbb-2222-cccccccccccc"'
 ```
 
+上記コマンドを実行後、以下のような出力結果が得られることを確認する
+```
+SessionId                             CouponId                              DiscountPercentage  IsUsed  ExpiredBy
+aaaaaaaa-1111-bbbb-2222-cccccccccccc  xxxxxxxx-1111-yyyy-2222-zzzzzzzzzzzz  40                  False   1604913597
+```
+
 ## デモアプリケーションの準備
 
 ### Kubernetes へのデモアプリケーションデプロイ
@@ -239,22 +245,39 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
-サービスへ接続する IP アドレスを以下のコマンドで確認します。
+サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を以下のコマンドで確認します。
+EXTERNAL-IP に 値が入っていない場合は時間を置いて再度確認用のコマンドを実行してください。
 
 ```bash
-kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}
+kubectl get service frontend-external -n appdev-handson-ns
 ```
 
-サービスへ接続する IP アドレスを調べる
+上記コマンドを実行した結果の例 ( EXTERNAL-IPに値が入っている場合 )
+```
+NAME                TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
+frontend-external   LoadBalancer   10.4.10.232   35.187.195.202   80:32692/TCP   2m19s
+```
+
+サービスへ接続する 外部 IP アドレス ( EXTERNAL-IP ) を環境変数へ設定する。
+
 ```bash
 export FRONTEND_IP=$(kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
-ブラウザで調べた IP アドレスにアクセスし、アプリケーションにアクセスできることを確認する
+以下コマンドを実行し、ブラウザからアクセスするためのURLを取得する。
 
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+コマンド実行例
+```
+http://35.187.195.202/
+```
+
+取得したURLへアクセスし、アプリケーションにアクセスできることを確認する。
+![BaseApp](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/BaseApp.png?raw=true)
+
 
 # 2. クーポンサービスの作成
 
@@ -274,23 +297,54 @@ appdev/microservices-demo
         └── Dockerfile              : コンテナのビルド定義ファイル
 ```
 
-## couponservice コンテナイメージの作成 (CloudBuild にてビルド)
+## couponservice コンテナイメージの作成 ( Cloud Build にてビルド)
 
-v1 というタグをつけてコンテナをビルドする。
+couponservice を Cloud Build を使ってコンテナをビルドし、couponservice:v1 というタグをつけて Container Registry にコンテナを登録する
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v1
 ```
 
+## Kubernetes マニュフェストファイルの確認
+
+先ほどビルドしたコンテナ ( couponservice:v1 ) を Kubernetes クラスターにデプロイするための修正がマニュフェストファイルに反映されている事を確認する
+
+```bash
+cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml | grep "couponservice:v1"
+```
+
+出力画面の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+```
+image: gcr.io/xxxxx/couponservice:v1
+```
+
 ## couponservice のデプロイ
+
+以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v1 ) を Kuberentes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment couponservice --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/xxxxx/couponservice:v1 となっていることを確認します。
+
+結果出力の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+```
+...
+server:
+    Image:      gcr.io/xxxxx/couponservice:v1
+...
+```
+
 # 3. クーポンサービスの組み込み
 
-クーポンサービスは Kubernetes 上で動いているが、他のマイクロサービスから呼び出されていない。そのため他のマイクロサービスから呼び出されるように変更を行う。本ハンズオンでは frontend サービスと couponservice を接続する。
+コンテナのデプロイは完了したため、クーポンサービスは Kubernetes 上で動いているが、他のマイクロサービスから呼び出されていない。そのため他のマイクロサービスから呼び出されるように変更を行う必要があります。本ハンズオンでは frontend サービスと couponservice を接続します。
 
 ```
 .
@@ -308,27 +362,60 @@ kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservic
             └── home.html           : トップページの HTML テンプレート
 ```
 
-## frontend コンテナイメージの作成 (CloudBuild にてビルド)
+## frontend コンテナイメージの作成 ( Cloud Build にてビルド)
 
-v1 というタグをつけてコンテナをビルドする。
+frontend を Cloud Build を使ってコンテナをビルドし、frontend:v1 というタグをつけて Container Registry にコンテナを登録します
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
 ```
 
+## Kubernetes マニュフェストファイルの確認
+
+先ほどビルドしたコンテナ ( frontend:v1 ) を Kubernetes クラスターにデプロイするための修正がマニュフェストファイルに反映されている事を確認する
+
+```bash
+cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml | grep "frontend:v1"
+```
+
+出力画面の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+```
+image: gcr.io/xxxxx/frontend:v1
+```
+
 ## frontend のデプロイ
+
+以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( frontend:v1 ) を Kuberentes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
 ```
 
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment frontend --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/xxxxx/frontend:v1 となっていることを確認します。
+
+結果出力の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+```
+...
+server:
+    Image:      gcr.io/xxxxx/frontend:v1
+...
+```
+
 ## 動作確認
 
-ブラウザでアプリケーションにアクセスし、クーポンが表示される事を確認する。
+ブラウザからアプリケーションにアクセスし、クーポン ( Special Coupon: xx% OFF ... ) が表示される事を確認する。
 
 ```bash
 echo http://$FRONTEND_IP/
 ```
+
+![V1App](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V1App.png?raw=true)
 
 # 4. クーポンサービスの改善
 
@@ -361,9 +448,9 @@ appdev/microservices-demo/src/couponservice/src/main/java/hipstershop/CouponServ
 ファイルを Cloud Shell Editor で開く
 </walkthrough-editor-open-file>
 
-## コンテナイメージの作成 (CloudBuild にてビルド)
+## コンテナイメージの作成 ( CloudBuild にてビルド )
 
-v2 というタグをつけてコンテナをビルドする。
+修正後の couponservice を Cloud Build を使ってコンテナをビルドし、couponservice:v2 というタグをつけて Container Registry にコンテナを登録する
 
 ```bash
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/couponservice && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/couponservice:v2
@@ -371,7 +458,7 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/co
 
 ## Spanner へのクーポンデータ追加
 
-### クーポン期限の設定 (3 時間後のエポック秒)
+### クーポン期限の設定 ( 3 時間後のエポック秒 )
 
 ```bash
 export COUPON_EXPIREDBY=$(python3 -c "import time; print(int(time.time()) + 10800);")
@@ -390,13 +477,16 @@ echo http://$FRONTEND_IP/
 session-id: 42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-環境変数に調べたセッション ID を設定する
+![CheckSession](https://github.com/samuraitaiga/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/CheckSession.png?raw=true)
+
+
+以下コマンドを実行し、環境変数に調べたセッション ID を設定する
 
 ```bash
 export USER_SESSION_ID=42d37f1b-21cc-4bf8-bd63-1775545e870a
 ```
 
-サンプルデータの挿入
+以下コマンドを実行し、Spanner にいま開いているセッションに対してのみクーポンを表示するためのデータを追加(Insert)します。
 
 ```bash
 gcloud spanner rows insert --database=appdev-db \
@@ -412,7 +502,7 @@ gcloud spanner rows insert --database=appdev-db \
 
 ## Kubernetes に修正したクーポンサービスをデプロイする
 
-### Kubernetes のアプリケーション定義ファイルを修正する
+### Kubernetes のマニュフェストファイルを修正する
 
 appdev/microservices-demo/kubernetes-manifests/couponservice.yaml を以下の通り修正する。
 xxxxx はプロジェクト ID に読み替えて実行する。
@@ -431,8 +521,26 @@ image: gcr.io/xxxxx/couponservice:v2
 
 ### 新しいアプリケーションをデプロイする
 
+以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v2 ) を Kuberentes ( GKE ) のクラスター上にデプロイします
+
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
+```
+
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+
+```bash
+kubectl describe deployment couponservice --namespace appdev-handson-ns
+```
+
+Imageのパスが、gcr.io/xxxxx/couponservice:v2 となっていることを確認します。
+
+結果出力の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+```
+...
+server:
+    Image:      gcr.io/xxxxx/couponservice:v2
+...
 ```
 
 ## 動作確認
