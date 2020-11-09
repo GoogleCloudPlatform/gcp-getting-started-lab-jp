@@ -385,7 +385,7 @@ image: gcr.io/{{project-id}}/frontend:v1
 
 ## frontend のデプロイ
 
-以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( frontend:v1 ) を Kuberentes ( GKE ) のクラスター上にデプロイする
+以下コマンドを実行し、マニフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( frontend:v1 ) を Kubernetes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
