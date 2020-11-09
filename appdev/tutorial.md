@@ -315,7 +315,7 @@ cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kuber
 
 出力画面の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
 ```
-image: gcr.io/xxxxx/couponservice:v1
+image: gcr.io/{{project-id}}/couponservice:v1
 ```
 
 ## couponservice のデプロイ
