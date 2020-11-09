@@ -416,7 +416,7 @@ Operations を利用しアプリケーションのトラブルシューティン
 サンプルアプリケーションには、あらかじめトレーシングをするための情報を埋め込んでいます。
 その情報を Cloud Trace から可視化することが可能です。
 
-1. [トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}})にブラウザからアクセスし、`トレース フィルタを追加` で `RowSpan`プロパティを選択、`/bench` を入力
+1. [トレースリストのページ](https://console.cloud.google.com/traces/traces?project={{project-id}})にブラウザからアクセスし、`トレース フィルタを追加` で `RootSpan`プロパティを選択、`/bench` を入力
 2. リクエストが遅い Span（青丸）を確認
 3. ログを表示をクリック
 4. “I” と表示されるアイコンをクリックして、連携された Cloud logging のログを確認
