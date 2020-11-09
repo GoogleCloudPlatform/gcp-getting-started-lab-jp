@@ -403,7 +403,7 @@ Imageのパスが、gcr.io/{{project-id}}/frontend:v1 となっていること�
 ```
 ...
 server:
-    Image:      gcr.io/xxxxx/frontend:v1
+    Image:      gcr.io/{{project-id}}/frontend:v1
 ...
 ```
 
