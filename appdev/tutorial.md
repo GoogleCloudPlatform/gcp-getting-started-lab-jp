@@ -370,7 +370,7 @@ frontend を Cloud Build を使ってコンテナをビルドし、frontend:v1 �
 cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/frontend && gcloud builds submit --tag gcr.io/$GOOGLE_CLOUD_PROJECT/frontend:v1
 ```
 
-## Kubernetes マニュフェストファイルの確認
+## Kubernetes マニフェストファイルの確認
 
 先ほどビルドしたコンテナ ( frontend:v1 ) を Kubernetes クラスターにデプロイするための修正がマニュフェストファイルに反映されている事を確認する
 
