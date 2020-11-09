@@ -43,7 +43,7 @@ gcloud config set project $GOOGLE_CLOUD_PROJECT
 
 ### デフォルトリージョンを設定
 
-コンピュートリソースを作成するデフォルトのリージョンとして、日本リージョン（asia-northeast1）を指定します。
+コンピュートリソースを作成するデフォルトのリージョンとして、東京リージョン（asia-northeast1）を指定します。
 
 ```bash
 gcloud config set compute/region asia-northeast1
