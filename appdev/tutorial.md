@@ -521,7 +521,7 @@ image: gcr.io/xxxxx/couponservice:v2
 
 ### 新しいアプリケーションをデプロイする
 
-以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v2 ) を Kuberentes ( GKE ) のクラスター上にデプロイします
+以下コマンドを実行し、マニフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v2 ) を Kubernetes ( GKE ) のクラスター上にデプロイします
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
