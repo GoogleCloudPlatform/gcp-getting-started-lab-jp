@@ -17,24 +17,44 @@
 
 ## GCP のプロジェクト ID を設定する
 
-### プロジェクト名と ID のリストを取得する
+### Google Cloud Platform（GCP）プロジェクトの選択
 
-```bash
-gcloud projects list
+ハンズオンを行う GCP プロジェクトを選択し、 **Start** をクリックしてください。
+
+<walkthrough-project-setup>
+</walkthrough-project-setup>
 ```
 
 ### 取得した GCP プロジェクト ID を環境変数に設定する
 
-下記コマンドの FIXME を実際の GCP プロジェクト ID に置き換えて実行する。
+環境変数 `GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
 
 ```bash
-export GOOGLE_CLOUD_PROJECT=FIXME
+export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 ```
 
 ### gcloud から利用する GCP のデフォルトプロジェクトを設定する
 
 ```bash
 gcloud config set project $GOOGLE_CLOUD_PROJECT
+```
+
+## gcloud コマンドラインツール設定 - リージョン、ゾーン
+
+### デフォルトリージョンを設定
+
+コンピュートリソースを作成するデフォルトのリージョンとして、日本リージョン（asia-northeast1）を指定します。
+
+```bash
+gcloud config set compute/region asia-northeast1
+```
+
+### デフォルトゾーンを設定
+
+コンピュートリソースを作成するデフォルトのゾーンとして、日本リージョン内の 1 ゾーン（asia-northeast1-c）を指定します。
+
+```bash
+gcloud config set compute/zone asia-northeast1-c
 ```
 
 ## ハンズオンで利用する GCP の API を有効化する
@@ -51,48 +71,24 @@ gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com conta
 gcloud iam service-accounts create appdev-handson --display-name "AppDev HandsOn Service Account"
 ```
 
-## サービスアカウントで利用する鍵を作成しダウンロードする
-
-```bash
-gcloud iam service-accounts keys create auth.json --iam-account=appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --key-file-type=json
-```
-
 ## サービスアカウントに権限（IAM ロール）を割り当てる
+作成したサービスアカウントには GCP リソースの操作権限がついていないため、ここで必要な権限を割り当てます。
 
-### Cloud Profiler Agent role
+下記の権限を割り当てます。
+
+- Cloud Profiler Agent role
+- Cloud Trace Agent role
+- Cloud Monitoring Metric Writer role
+- Cloud Monitoring Metadata Writer role
+- Cloud Spanner Database User role
+- 
 
 ```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudprofiler.agent
-```
-
-### Cloud Trace Agent role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/cloudtrace.agent
-```
-
-### Cloud Monitoring Metric Writer role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/monitoring.metricWriter
-```
-
-### Cloud Monitoring Metadata Writer role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/stackdriver.resourceMetadata.writer
-```
-
-### Cloud Spanner Database User role
-
-```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/spanner.databaseUser
-```
-
-### （Optional）Cloud Debugger Agent role
-
-```bash
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:appdev-handson@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com --role roles/clouddebugger.agent
 ```
 
 ## GKE の準備
@@ -101,21 +97,11 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ```bash
 gcloud container clusters create "k8s-appdev-handson"  \
---zone "asia-northeast1-c" \
---enable-autorepair \
---username "admin" \
---machine-type "n1-standard-2" \
 --image-type "COS" \
---disk-type "pd-standard" \
---disk-size "100" \
---scopes "https://www.googleapis.com/auth/cloud-platform" \
---num-nodes "3" \
 --enable-stackdriver-kubernetes \
 --enable-ip-alias \
---network "projects/$GOOGLE_CLOUD_PROJECT/global/networks/default" \
---subnetwork "projects/$GOOGLE_CLOUD_PROJECT/regions/asia-northeast1/subnetworks/default" \
---addons HorizontalPodAutoscaling,HttpLoadBalancing \
---workload-pool=$GOOGLE_CLOUD_PROJECT.svc.id.goog
+--release-channel stable \
+--workload-pool $GOOGLE_CLOUD_PROJECT.svc.id.goog
 ```
 
 ### GKE クラスターにアクセスするための認証情報を取得する
@@ -253,8 +239,13 @@ sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" ~/cloudshell_open/gcp-getting-
 
 ### Kubernetes 上にデプロイしたデモアプリケーションの動作確認
 
-接続可能な IP アドレスを調べる
+サービスへ接続する IP アドレスを以下のコマンドで確認します。
 
+```bash
+kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}
+```
+
+サービスへ接続する IP アドレスを調べる
 ```bash
 export FRONTEND_IP=$(kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
