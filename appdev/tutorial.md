@@ -313,7 +313,7 @@ cd ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/src/co
 cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml | grep "couponservice:v1"
 ```
 
-出力画面の例 ( xxxxx は 実際のGCPプロジェクトIDが入るため、実行する環境によって異なります )
+出力画面の例
 ```
 image: gcr.io/{{project-id}}/couponservice:v1
 ```
