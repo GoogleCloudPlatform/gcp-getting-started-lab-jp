@@ -4,4 +4,10 @@
 
 **This is not an officially supported Google product**.
 
-see [tutorial.md](tutorial.md) for more details
+See [tutorial.md](tutorial.md) for more details.
+
+Run following command to launch a tutorial.
+
+```
+teachme tutorial.md
+```
