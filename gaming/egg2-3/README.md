@@ -1,6 +1,6 @@
-# GCP Handson materials for EGG #3
+# GCP Handson materials for EGG #2-3
 
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&cloudshell_working_dir=gaming/egg3&cloudshell_tutorial=tutorial.md)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&cloudshell_working_dir=gaming/egg2-3&cloudshell_tutorial=tutorial.md)
 
 **This is not an officially supported Google product**.
 

@@ -1,8 +1,8 @@
-# EGG ハンズオン #3
+# EGG ハンズオン #2-3
 
-## Google Cloud Platform（GCP）プロジェクトの選択
+## Google Cloud プロジェクトの選択
 
-ハンズオンを行う GCP プロジェクトを作成し、 GCP プロジェクトを選択して **Start/開始** をクリックしてください。
+ハンズオンを行う Google Cloud プロジェクトを作成し、 Google Cloud プロジェクトを選択して **Start/開始** をクリックしてください。
 
 **なるべく新しいプロジェクトを作成してください。**
 
@@ -62,7 +62,7 @@ INTERLEAVE IN PARENT players ON DELETE CASCADE;
 
 ## [演習] 2. Cloud Spanner インスタンスの作成
 
-現在 Cloud Shell と Editor の画面が開かれている状態だと思いますので、まず [GCPコンソール](https://console.cloud.google.com/) を開きます。
+現在 Cloud Shell と Editor の画面が開かれている状態だと思いますが、[Google Cloud のコンソール](https://console.cloud.google.com/) を開いていない場合は、コンソールの画面を開いてください。
 
 
 ### **Cloud Spanner インスタンスの作成**
@@ -98,13 +98,15 @@ INTERLEAVE IN PARENT players ON DELETE CASCADE;
 Cloud Spanner インスタンスノード数を変更したい場合、編集画面を開いてノードの割り当て数を変更することで、かんたんに行われます
 ノード追加であってもノード削減であっても、一切のダウンタイムなく実施することができます。
 
+なお補足ですが、たとえ 1 ノード構成であっても裏は多重化されており、単一障害点がありません。ノード数は可用性の観点ではなく、純粋に性能の観点でのみ増減させることができます。
+
 ![](https://storage.googleapis.com/egg-resources/egg3/public/2-5.png)
 
 ## [演習] 3. 接続用テスト環境作成 Cloud Shell 上で構築
 
 作成した Cloud Spanner に対して各種コマンドを実行するために Cloud Shell を準備します。
 
-今回はハンズオンの冒頭で起動した Cloud Shell が開かれていると思います。今回のハンズオンで使うパスと、プロジェクト ID が正しく表示されていることを確認してください。以下のように、青文字のパスに続いて、かっこにくくられてプロジェクトIDが黄色文字で表示されています。
+今回はハンズオンの冒頭で起動した Cloud Shell が開かれていると思います。今回のハンズオンで使うパスと、プロジェクト ID が正しく表示されていることを確認してください。以下のように、青文字のパスに続いて、かっこにくくられてプロジェクト ID が黄色文字で表示されています。このプロジェクト ID は各個人の環境でお使いのものに読み替えてください。
 
 ![](https://storage.googleapis.com/egg-resources/egg3/public/3-2.png)
 
@@ -113,7 +115,7 @@ Cloud Spanner インスタンスノード数を変更したい場合、編集画
 ![](https://storage.googleapis.com/egg-resources/egg3/public/3-3.png)
 
 ```bash
-gcloud config set project 今回使うGCPのプロジェクトID
+gcloud config set project <今回使う Google Cloud のプロジェクト ID>
 ``` 
 
 
@@ -139,10 +141,10 @@ pwd
 以下のようなパスが表示されると思います。
 
 ```
-/home/<あなたのユーザー名>/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg3
+/home/<あなたのユーザー名>/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-3
 ```
 
-過去に他の E.G.G のハンズオンを同一環境で実施している場合、***gcp-getting-started-lab-jp-0*** や ***gcp-getting-started-lab-jp-1*** のように末尾に数字がついたディレクトリを、今回の egg3 用のディレクトリとしている場合があります。誤って過去のハンズオンで使ったディレクトリを使ってしまわぬよう、**今いる今回利用してるディレクトリを覚えておいてください。**
+過去に他の E.G.G のハンズオンを同一環境で実施している場合、***gcp-getting-started-lab-jp-0*** や ***gcp-getting-started-lab-jp-1*** のように末尾に数字がついたディレクトリを、今回の egg2-3 用のディレクトリとしている場合があります。誤って過去のハンズオンで使ったディレクトリを使ってしまわぬよう、**今いる今回利用してるディレクトリを覚えておいてください。**
 
 
 ## [解説] 4. Cloud Spanner 接続クライアントの準備
@@ -173,7 +175,7 @@ Cloud Console の GUI または gcloud コマンドを利用する方法もあ�
 
 まずはクライアント ライブラリを利用したアプリケーションを作成してみましょう。
 
-Cloud Shell では、今回利用する `egg3` のディレクトリにいると思います。
+Cloud Shell では、今回利用する `egg2-3` のディレクトリにいると思います。
 spanner というディレクトリがありますので、そちらに移動します。
 
 ```bash
@@ -189,7 +191,11 @@ ls -la
 `addplayer.go` という名前のファイルが見つかります。
 これは Cloud Shell の Editor でも確認することができます。
 
-`egg3/spanner/addplayer.go` を Editor から開いて中身を確認してみましょう。
+`egg2-3/spanner/addplayer.go` を Editor から開いて中身を確認してみましょう。
+
+```bash
+cloudshell edit addplayer.go
+```
 
 ![](https://storage.googleapis.com/egg-resources/egg3/public/4-1.png)
 
@@ -247,35 +253,11 @@ ls -la
 
 Google Cloud が提供しているわけではなく、Cloud Spanner Ecosystem と呼ばれるコミュニティによって開発進められており、GitHub 上で公開されています。
 
-Cloud Shell のターミナルに、以下のコマンド入力し、spanner-cli の Linux 用のバイナリをダウンロードします。
+Cloud Shell のターミナルに、以下のコマンド入力し、spanner-cli の Linux 用のバイナリをインストールします。
 
 ```bash
-wget https://github.com/cloudspannerecosystem/spanner-cli/releases/download/v0.6.0/spanner-cli_linux_amd64.zip
+go get -u github.com/cloudspannerecosystem/spanner-cli
 ```
-
-Cloud Shell の環境には、unzip 用のコマンドが初期状態では含まれておりませんので、以下のコマンドでインストールします。
-
-```bash
-sudo apt-get install zip unzip
-```
-
-unzip コマンドをつかって、spanner-cli を展開します。
-
-```bash
-unzip spanner-cli_linux_amd64.zip
-```
-
-PATH が通ってる場所にバイナリをコピーし、かんたんに使えるようにします。
-今回は `/usr/local/bin` に配置しています。
-
-なおこのような $HOME 以外への変更は、Cloud Shell のセッションが終了すると無効になってしまいます。
-ハンズオンを複数回に分けて行う場合など、セッションが無効化される際はご注意ください。
-無効化された際は、再度コピーをしてください。
-
-```bash
-sudo cp spanner-cli_linux_amd64/spanner-cli /usr/local/bin
-```
-
 
 ## [演習] 5. テーブルの作成
 
