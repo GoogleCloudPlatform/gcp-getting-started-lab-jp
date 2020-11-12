@@ -1,4 +1,4 @@
-# E.G.G ハンズオン #1
+# G.I.G ハンズオン #1
 
 ## Google Cloud Platform（GCP）プロジェクトの選択
 
@@ -143,19 +143,19 @@ gcloud services enable --async \
 ローカルの開発で使用するサービスアカウントを作成します。
 
 ```bash
-gcloud iam service-accounts create dev-egg-sa
+gcloud iam service-accounts create dev-gig-sa
 ```
 
 作成したサービスアカウントに権限を付与します。 **今回のハンズオンはオーナー権限を付与していますが、実際の開発の現場では適切な権限を付与しましょう！**
 
 ```bash
-gcloud projects add-iam-policy-binding {{project-id}} --member "serviceAccount:dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
+gcloud projects add-iam-policy-binding {{project-id}} --member "serviceAccount:dev-gig-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
 ```
 
 キーファイルを生成します。
 
 ```bash
-gcloud iam service-accounts keys create dev-key.json --iam-account dev-egg-sa@{{project-id}}.iam.gserviceaccount.com
+gcloud iam service-accounts keys create dev-key.json --iam-account dev-gig-sa@{{project-id}}.iam.gserviceaccount.com
 ```
 
 **GUI**: [サービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts?project={{project-id}}) 
@@ -245,7 +245,7 @@ runtime: go112
 設定ができたらハンズオンアプリケーションとして API サーバーを作成していきます。
 
 まずはかんたんな HTTP レスポンスを返す API サーバーを作成します。
-以下の内容で main.go を作成してください。単純な HTTP リクエストに対して `Hello EGG!` を返す Go のコードになります。
+以下の内容で main.go を作成してください。単純な HTTP リクエストに対して `Hello GIG!` を返す Go のコードになります。
 
 ```go
 package main
@@ -273,7 +273,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, Egg!")
+	fmt.Fprint(w, "Hello, GIG!")
 }
 ```
 
@@ -298,7 +298,7 @@ Cloud Shell 環境の 8080 ポートを、アプリケーションの 8080 ポ�
 画面右上にあるアイコン <walkthrough-web-preview-icon></walkthrough-web-preview-icon> をクリックし、"プレビューのポート: 8080"を選択します。
 これによりブラウザで新しいタブが開き、Cloud Shell 上で起動しているコンテナにアクセスできます。
 
-正しくアプリケーションにアクセスできると、 `Hello EGG!` と表示されます。
+正しくアプリケーションにアクセスできると、 `Hello GIG!` と表示されます。
 
 確認が終わったら、Ctrl+c で実行中のアプリケーションを停止します。
 
@@ -319,7 +319,7 @@ gcloud app deploy
 gcloud app browse
 ```
 
-先程と同様に正しくアプリケーションにアクセスできると、 `Hello EGG!` と表示されます。
+先程と同様に正しくアプリケーションにアクセスできると、 `Hello GIG!` と表示されます。
 
 <walkthrough-footnote>実際に GAE にデプロイができました！次に Firestore を操作するための準備を進めます。</walkthrough-footnote>
 
@@ -375,7 +375,7 @@ Firestore にアクセスするためのクライアントライブラリを追�
 以下の内容で `go.mod` ファイルを作成してください。今回のハンズオンで使う依存関係を全部書いています。
 
 ```
-module egg1
+module gig1
 
 go 1.12
 
@@ -680,8 +680,8 @@ gcloud app deploy
 
 登録
 
-```
-curl -X POST -d '{"email":"tamago@example.com", "name":"たまご太郎"}' {{project-id}}.appspot.com/firestore
+```bash
+curl -X POST -d '{"email":"tamago@example.com", "name":"Egg Taro"}' https://{{project-id}}.appspot.com/firestore
 ```
 
 取得（全件）
@@ -745,7 +745,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, Egg!")
+	fmt.Fprint(w, "Hello, GIG!")
 }
 
 func firestoreHandler(w http.ResponseWriter, r *http.Request) {
@@ -877,16 +877,16 @@ func getUserBody(r *http.Request) (u Users, err error) {
 まずは VPC ネットワークを作成します。
 
 ```bash
-gcloud compute networks create eggvpc --subnet-mode=custom
+gcloud compute networks create gigvpc --subnet-mode=custom
 ```
 
 ```bash
-gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-central1 --range=10.128.0.0/20
+gcloud compute networks subnets create us-subnet --network=gigvpc --region=us-central1 --range=10.128.0.0/20
 ```
 
 ```bash
-gcloud compute networks vpc-access connectors create egg-vpc-connector \
---network eggvpc \
+gcloud compute networks vpc-access connectors create gig-vpc-connector \
+--network gigvpc \
 --region us-central1 \
 --range 10.129.0.0/28
 ```
@@ -899,7 +899,7 @@ gcloud compute networks vpc-access connectors create egg-vpc-connector \
 今回は MySQL を利用します。
 
 ```bash
-gcloud beta sql instances create --network=eggvpc --region=us-central1 --root-password=eggpassword --no-assign-ip eggsql
+gcloud beta sql instances create --network=gigvpc --region=us-central1 --root-password=gigpassword --no-assign-ip gigsql
 ```
 
 ### データベース作成
@@ -907,28 +907,28 @@ gcloud beta sql instances create --network=eggvpc --region=us-central1 --root-pa
 Cloud Shell から接続する場合、Cloud SQL から見ると外部からの接続になるため、一時的にパブリックなIPを付与します。
 
 ```bash
-gcloud sql instances patch --assign-ip eggsql
+gcloud sql instances patch --assign-ip gigsql
 ```
 
 Cloud SQL のインスタンスに接続します。パスワードを尋ねられるので、作成時に指定したパスワードを入力します。
 
 ```bash
-gcloud sql connect eggsql
+gcloud sql connect gigsql
 ```
 
 接続できたら、データベースとテーブルを作成します。
 
 ```bash
-create database egg;
+create database gig;
 ```
 
 ```bash
-create table egg.user (id varchar(10), email varchar(255), name varchar(255));
+create table gig.user (id varchar(10), email varchar(255), name varchar(255));
 ```
 
 データベースとテーブルが作成できたら、パブリックIPを閉じます。
 ```bash
-gcloud sql instances patch --no-assign-ip eggsql
+gcloud sql instances patch --no-assign-ip gigsql
 ```
 
 <walkthrough-footnote>データベース側の準備は以上です。</walkthrough-footnote>
@@ -943,12 +943,12 @@ MySQL は慣れてる方も多いと思うので、登録と取得のみを実�
 
 ```yaml
 vpc_access_connector:
-  name: "projects/{{project-id}}/locations/us-central1/connectors/egg-vpc-connector"
+  name: "projects/{{project-id}}/locations/us-central1/connectors/gig-vpc-connector"
 
 env_variables:
-  DB_INSTANCE: "{{project-id}}:us-central1:eggsql"
+  DB_INSTANCE: "{{project-id}}:us-central1:gigsql"
   DB_USER: root
-  DB_PASS: eggpassword
+  DB_PASS: gigpassword
 ```
 
 `app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
@@ -973,7 +973,7 @@ func initConnectionPool() (*sql.DB, error) {
         dbUser     = os.Getenv("DB_USER")
         dbPwd      = os.Getenv("DB_PASS")
         dbInstance = os.Getenv("DB_INSTANCE")
-        dbName = "egg"
+        dbName = "gig"
     )
     dbURI := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, dbInstance, dbName)
     dbPool, err := sql.Open("mysql", dbURI)
@@ -1103,7 +1103,7 @@ Firestore のデータをキャッシュから返せるように修正してい�
 ### Redis インスタンスを作成する
 
 ```bash
-gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
+gcloud redis instances create --network=gigvpc --region=us-central1 gigcache
 ```
 
 作成できたら、以下のコマンドを実行して Redis インスタンスの IP アドレスを取得します。
@@ -1120,7 +1120,7 @@ gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host
 
 ```yaml
 vpc_access_connector:
-  name: "projects/{{project-id}}/locations/us-central1/connectors/egg-vpc-connector"
+  name: "projects/{{project-id}}/locations/us-central1/connectors/gig-vpc-connector"
 
 env_variables:
   REDIS_HOST: 10.224.127.11
@@ -1388,13 +1388,13 @@ Firestore コンソールから、ルートコレクションを削除してく�
 ### Cloud SQL の削除
 
 ```bash
-gcloud sql instances delete eggsql-1
+gcloud sql instances delete gigsql-1
 ``` -->
 
 ### Cloud Memorystore の削除
 
 ```bash
-gcloud redis instances delete eggcache --region=us-central1
+gcloud redis instances delete gigcache --region=us-central1
 ```
 
 <walkthrough-footnote>クリーンアップは以上になります。ありがとうございました。</walkthrough-footnote>
