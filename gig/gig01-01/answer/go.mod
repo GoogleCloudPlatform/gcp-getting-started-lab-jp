@@ -1,4 +1,4 @@
-module egg1
+module gig1
 
 go 1.12
 

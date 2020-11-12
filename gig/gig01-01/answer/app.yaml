@@ -6,12 +6,9 @@ handlers:
     script: auto
 
 vpc_access_connector:
-  name: "projects/your-project-id/locations/us-central1/connectors/egg-vpc-connector"
+  name: "projects/your-project-id/locations/us-central1/connectors/gig-vpc-connector"
 
 env_variables:
-  DB_INSTANCE: "your-project-id:us-central1:eggsql-1"
-  DB_USER: root
-  DB_PASS: xxxxxx
   REDIS_HOST: 0.0.0.0
   REDIS_PORT: 6379
   
