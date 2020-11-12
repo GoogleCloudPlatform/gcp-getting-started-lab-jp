@@ -497,8 +497,8 @@ go run main.go
 
 Cloud Shell のタブを新しく開き（＋ボタン）、データを投入するリクエストを送ります。以下のコマンドをコピーして Cloud Shell のコンソールに貼り付けて実行してください。
 
-```
-curl -X POST -d '{"email":"tamago@example.com", "name":"たまご太郎"}' localhost:8080/firestore
+```bash
+curl -X POST -d '{"email":"tamago@example.com", "name":"Egg Taro"}' localhost:8080/firestore
 ```
 
 **いくつかデータの内容を変更して実行してみましょう！**
@@ -636,8 +636,8 @@ id の値はコンソールなどで確認した値をセットしてくださ�
 
 ![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
 
-```
-curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' localhost:8080/firestore
+```bash
+curl -X PUT -d '{"id": "<Document ID>", "email":"test@example.com", "name":"Egg Taro"}' localhost:8080/firestore
 ```
 
 <walkthrough-footnote>次は登録済みのデータを削除する実装を行います。</walkthrough-footnote>
@@ -683,8 +683,8 @@ go run main.go
 
 削除対象のIDは何でも構いません。先程更新したIDでもいいでしょう。
 
-```
-curl -X DELETE localhost:8080/firestore/<削除対象のID>
+```bash
+curl -X DELETE localhost:8080/firestore/<Document ID>
 ```
 
 <walkthrough-footnote>最後に、ここまでのアプリケーションを GAE にデプロイします。</walkthrough-footnote>
@@ -709,26 +709,26 @@ curl -X POST -d '{"email":"tamago@example.com", "name":"Egg Taro"}' https://{{pr
 
 取得（全件）
 
-```
-curl {{project-id}}.appspot.com/firestore
+```bash
+curl https://{{project-id}}.appspot.com/firestore
 ```
 
 取得（１件）
 
-```
-curl {{project-id}}.appspot.com/firestore/<取得対象のID>
+```bash
+curl https://{{project-id}}.appspot.com/firestore/<Document ID>
 ```
 
 更新
 
-```
-curl -X PUT -d '{"id": "<更新対象のID>", "email":"test@example.com", "name":"エッグ次郎"}' {{project-id}}.appspot.com/firestore
+```bash
+curl -X PUT -d '{"id": "<Document ID>", "email":"test@example.com", "name":"Egg Taro"}' https://{{project-id}}.appspot.com/firestore
 ```
 
 削除
 
-```
-curl -X DELETE {{project-id}}.appspot.com/firestore/<削除対象のID>
+```bash
+curl -X DELETE https://{{project-id}}.appspot.com/firestore/<Document ID>
 ```
 
 最終的な `main.go` は以下のようになっているはずです。
