@@ -1178,7 +1178,7 @@ env_variables:
 
 現在、全件取っているだけでキャッシュする意味がないため、キーで取得できるようにまずは修正します。
 
-`main.go` の firestoreHandler 、 MethodGe のところを修正していきます。以下の内容に修正してください。
+`main.go` の firestoreHandler 、 MethodGet のところを修正していきます。以下の内容に修正してください。
 
 ```go
 	case http.MethodGet:
