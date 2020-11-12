@@ -18,7 +18,6 @@
 
 - Google App Engine
 - Firestore
-- Cloud SQL
 - Serverless VPC access
 - Google Cloud Memorystore
 - Operations
@@ -35,14 +34,12 @@
   - アプリケーションの作成
   - Firestore を使う
   - サーバーレス VPC アクセスの設定
-  - Cloud SQL を使う
   - Memorystore for Redis を使う
   - チャレンジ問題
 
 - クリーンアップ：10 分
   - プロジェクトごと削除
   - （オプション）個別リソースの削除
-    - Cloud SQL の削除
     - Firestore の削除
     - Memorystore の削除
 
@@ -71,7 +68,6 @@ gcloud コマンドライン インターフェースは、GCP でメインと�
 - Google App Engine アプリケーション
 - Google Compute Engine 仮想マシン
 - Google Kubernetes Engine クラスタ
-- Google Cloud SQL インスタンス
 
 **ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
 
@@ -121,7 +117,6 @@ gcloud app create --region=us-central
 <walkthrough-enable-apis></walkthrough-enable-apis>
 
 - Google Cloud Firestore API
-- Cloud SQL
 - Google Cloud Memorystore for Redis API
 - Serverless VPC Access
 
@@ -211,12 +206,6 @@ Google App Engine (GAE) を利用したアプリケーション開発を体験�
 ### サーバーレス VPC アクセスの設定
 
 - サーバーレス VPC アクセスの設定
-
-### Cloud SQL を使う
-
-- Cloud SQL の準備
-- Cloud SQL に接続するコードの作成
-- アプリケーションのデプロイ
 
 ### Memorystore for Redis を使う
 
@@ -382,7 +371,6 @@ go 1.12
 require (
 	cloud.google.com/go/firestore v1.2.0
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
-	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/mailru/easyjson v0.7.1 // indirect
@@ -936,209 +924,6 @@ gcloud compute networks vpc-access connectors create gig-vpc-connector \
 --range 10.129.0.0/28
 ```
 
-<!-- 
-## Cloud SQL を設定する
-
-### Cloud SQL インスタンスの作成
-
-今回は MySQL を利用します。
-
-```bash
-gcloud beta sql instances create --network=gigvpc --region=us-central1 --root-password=gigpassword --no-assign-ip gigsql
-```
-
-### データベース作成
-
-Cloud Shell から接続する場合、Cloud SQL から見ると外部からの接続になるため、一時的にパブリックなIPを付与します。
-
-```bash
-gcloud sql instances patch --assign-ip gigsql
-```
-
-Cloud SQL のインスタンスに接続します。パスワードを尋ねられるので、作成時に指定したパスワードを入力します。
-
-```bash
-gcloud sql connect gigsql
-```
-
-接続できたら、データベースとテーブルを作成します。
-
-```bash
-create database gig;
-```
-
-```bash
-create table gig.user (id varchar(10), email varchar(255), name varchar(255));
-```
-
-データベースとテーブルが作成できたら、パブリックIPを閉じます。
-```bash
-gcloud sql instances patch --no-assign-ip gigsql
-```
-
-<walkthrough-footnote>データベース側の準備は以上です。</walkthrough-footnote>
-
-## App Engne に Cloud SQL を使うように修正する
-
-MySQL は慣れてる方も多いと思うので、登録と取得のみを実装します。
-
-### 接続情報を定義する
-
-`app.yaml` を編集して、接続情報を定義します。以下の内容をファイルの末尾に追記してください。
-
-```yaml
-vpc_access_connector:
-  name: "projects/{{project-id}}/locations/us-central1/connectors/gig-vpc-connector"
-
-env_variables:
-  DB_INSTANCE: "{{project-id}}:us-central1:gigsql"
-  DB_USER: root
-  DB_PASS: gigpassword
-```
-
-`app.yaml` に DB パスワードを書いていることに不安を持った方もいるかも知れません。 [Cloud KMS](https://cloud.google.com/kms/) を使うことで機密情報を保護することができます。
-
-### データベースアクセスをアプリケーションに実装する
-
-`main.go` の import に以下の依存関係を追加します。
-
-```go
-	"database/sql"
-    _ "github.com/go-sql-driver/mysql"
-```
-
-`main.go` に以下のコードを追記します。
-
-```go
-
-var db *sql.DB
-func initConnectionPool() (*sql.DB, error) {
-
-    var (
-        dbUser     = os.Getenv("DB_USER")
-        dbPwd      = os.Getenv("DB_PASS")
-        dbInstance = os.Getenv("DB_INSTANCE")
-        dbName = "gig"
-    )
-    dbURI := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, dbInstance, dbName)
-    dbPool, err := sql.Open("mysql", dbURI)
-    if err != nil {
-        return nil, fmt.Errorf("sql.Open: %v", err)
-    }
-    dbPool.SetMaxIdleConns(5)
-    dbPool.SetMaxOpenConns(5)
-    dbPool.SetConnMaxLifetime(1800)
-
-    return dbPool, nil
-}
-
-```
-
-main 関数の頭のところに以下のコードを追加します。
-
-```go
-	var err error
-    // DB
-    db, err = initConnectionPool()
-    if err != nil {
-        log.Fatalf("unable to connect: %s", err)
-    }
-
-```
-
-main 関数に sqlHandler を追加します。
-```go
-	http.HandleFunc("/sql", sqlHandler)
-```
-
-sqlHandler 関数を追加します。
-
-```go
-func sqlHandler(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case http.MethodPost:
-		u, err := getUserBody(r)
-		if err != nil {
-			log.Fatal(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-        }
-
-        ins, err := db.Prepare("INSERT INTO user(id, email, name) VALUES(?,?,?)")
-        if err != nil {
-			log.Fatal(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-        }
-        defer ins.Close()
-        _, err = ins.Exec(u.Id, u.Email, u.Name)
-        if err != nil {
-			log.Fatal(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-        }
-		log.Print("success: id is %v", u.Id)
-		fmt.Fprintf(w, "success: id is %v \n", u.Id)
-        
-	case http.MethodGet:
-		rows, err := db.Query(`SELECT id, email, name FROM user`)
-		if err != nil {
-			log.Fatal(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-		var users []Users
-		for rows.Next() {
-			var u Users
-			err = rows.Scan(&u.Id, &u.Email, &u.Name)
-			if err != nil {
-			    log.Fatal(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			users = append(users, u)
-		}
-		if len(users) == 0 {
-			w.WriteHeader(http.StatusNoContent)
-		} else {
-			json, err := json.Marshal(users)
-			if err != nil {
-			    log.Fatal(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
-		}
-	// それ以外のHTTPメソッド
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-}
-```
-
-これをデプロイして実際に試してみましょう。
-
-```bash
-gcloud app deploy
-```
-
-まずは登録。
-
-```
-curl -X POST -d '{"id": "00001", "email":"tamago@example.com", "name":"タマゴ1"}' https://{{project-id}}.appspot.com/sql
-```
-
-そして取得。
-
-```bash
-curl https://{{project-id}}/sql
-```
-
-<walkthrough-footnote>Cloud SQL は以上です。次にMemorystore for Redis を使って Firestore の取得結果をキャッシュします。</walkthrough-footnote> -->
-
 ## Memorystore for Redis を使う
 
 Memorystore for Redis を使ってデータのキャッシュをしてみましょう。
@@ -1158,8 +943,6 @@ gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host
 ```
 
 ### 接続設定
-
-本来なら GAE から Memorystore に接続する場合は Serverless VPC Access の設定が必要になりますが、今回 Cloud SQL で設定済みなので省略できます。
 
 `app.yaml` の環境変数とコネクタの設定をを追記しましょう。
 
@@ -1428,13 +1211,6 @@ gcloud app versions delete ${VERSION_ID} // default サービスのバージョ�
 ### Firestore データの削除
 
 Firestore コンソールから、ルートコレクションを削除してください。今回のハンズオンで作成したすべての user データが消えます。
-
-<!-- 
-### Cloud SQL の削除
-
-```bash
-gcloud sql instances delete gigsql-1
-``` -->
 
 ### Cloud Memorystore の削除
 
