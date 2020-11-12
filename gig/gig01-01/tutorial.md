@@ -122,10 +122,8 @@ gcloud app create --region=us-central
 
 ```bash
 gcloud services enable --async \
-                       sql-component.googleapis.com \
                        vpcaccess.googleapis.com \
                        servicenetworking.googleapis.com \
-                       sqladmin.googleapis.com \
                        redis.googleapis.com
 ```
 
