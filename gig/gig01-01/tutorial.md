@@ -1109,7 +1109,7 @@ gcloud app versions migrate $VERSION_ID
 
 ### デプロイしたアプリケーションをデバッグする
 
-[Cloud Debug](https://cloud.google.com/debugger) は、デプロイされた GAE アプリケーションのコードを確認でき、本番環境のリクエストをデバッグすることができます。今回はGo言語で開発していたため未対応ですが、Java, Pythonでは利用できます。
+[Cloud Debugger](https://cloud.google.com/debugger) は、デプロイされた GAE アプリケーションのコードを確認でき、本番環境のリクエストをデバッグすることができます。今回はGo言語で開発していたため未対応ですが、Java, Pythonでは利用できます。
 
 ## Congraturations!
 
