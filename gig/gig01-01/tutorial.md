@@ -959,69 +959,8 @@ env_variables:
 
 ## Firestore ハンドラの修正
 
-現在、全件取っているだけでキャッシュする意味がないため、キーで取得できるようにまずは修正します。
 
-`main.go` の firestoreHandler 、 MethodGet のところを修正していきます。以下の内容に修正してください。
-
-```go
-	case http.MethodGet:
-		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
-		log.Printf("id=%v", id)
-		if id == "/firestore" || id == "" {
-			iter := client.Collection("users").Documents(ctx)
-			var u []Users
-
-			for {
-				doc, err := iter.Next()
-				if err == iterator.Done {
-					break
-				}
-				if err != nil {
-					log.Fatal(err)
-				}
-				var user Users
-				err = doc.DataTo(&user)
-				if err != nil {
-					log.Fatal(err)
-				}
-				user.Id = doc.Ref.ID
-				log.Print(user)
-				u = append(u, user)
-			}
-			if len(u) == 0 {
-				w.WriteHeader(http.StatusNoContent)
-			} else {
-				json, err := json.Marshal(u)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				w.Write(json)
-			}
-		} else {
-            doc, err := client.Collection("users").Doc(id).Get(ctx)
-            if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                return
-            }
-            var u Users
-            err = doc.DataTo(&u)
-            if err != nil {
-                log.Fatal(err)
-            }
-            u.Id = doc.Ref.ID
-            json, err := json.Marshal(u)
-            if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                return
-            }
-            w.Write(json)
-		}
-```
-
-これでまずは単一のユーザーデータを取得できるようになりました。
-
-次に Redis 操作のためのコードを追加します。 
+Redis 操作のためのコードを追加します。 
 
 import に以下を追記してください。
 
@@ -1053,8 +992,7 @@ func initRedis() {
 }
 ```
 
-else の方が今回単一ユーザーデータを取得するようにしたところですが、こちらにキャッシュを取得するようなコードを追加します。
-元のところを else で囲むので、まるっと以下に置き換えてみましょう。
+取得処理の else の部分に、キャッシュを取得するようなコードを追加します。元のところを else で囲むので、まるっと以下に置き換えてみましょう。
 
 ```go
 
