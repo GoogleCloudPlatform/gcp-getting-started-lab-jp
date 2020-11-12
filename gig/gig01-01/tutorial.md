@@ -1045,7 +1045,7 @@ gcloud app deploy
 Firestore エンドポイントに登録されているデータのIDで2回アクセスして、レスポンスの時間が短くなっている（キャッシュが効いている）事を確認します。
 
 ```bash
-curl https://{{project-id}}.appspot.com/firestore/<ID>
+curl https://{{project-id}}.appspot.com/firestore/<Document ID>
 ```
 
 <walkthrough-footnote>ハンズオンの内容は以上になります。お疲れさまでした。</walkthrough-footnote>
