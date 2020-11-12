@@ -529,29 +529,52 @@ curl -X POST -d '{"email":"tamago@example.com", "name":"たまご太郎"}' local
 ```go
 	// 取得処理
 	case http.MethodGet:
-		iter := client.Collection("users").Documents(ctx)
-		var u []Users
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		log.Printf("id=%v", id)
+		if id == "/firestore" || id == "" {
+			iter := client.Collection("users").Documents(ctx)
+			var u []Users
 
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
+			for {
+				doc, err := iter.Next()
+				if err == iterator.Done {
+					break
+				}
+				if err != nil {
+					log.Fatal(err)
+				}
+				var user Users
+				err = doc.DataTo(&user)
+				if err != nil {
+					log.Fatal(err)
+				}
+				user.Id = doc.Ref.ID
+				log.Print(user)
+				u = append(u, user)
 			}
-			if err != nil {
-				log.Fatal(err)
+			if len(u) == 0 {
+				w.WriteHeader(http.StatusNoContent)
+			} else {
+				json, err := json.Marshal(u)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Write(json)
 			}
-			var user Users
-			err = doc.DataTo(&user)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user.Id = doc.Ref.ID
-			log.Print(user)
-			u = append(u, user)
-		}
-		if len(u) == 0 {
-			w.WriteHeader(http.StatusNoContent)
 		} else {
+
+			doc, err := client.Collection("users").Doc(id).Get(ctx)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			var u Users
+			err = doc.DataTo(&u)
+			if err != nil {
+				log.Fatal(err)
+			}
+			u.Id = doc.Ref.ID
 			json, err := json.Marshal(u)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -722,15 +745,14 @@ import (
 	"log"
 	"net/http"
 	"os"
-    "strconv"
-    "strings"
+	"strconv"
+	"strings"
 )
 
 func main() {
 	http.HandleFunc("/", indexHandler)
-
-    http.HandleFunc("/firestore", firestoreHandler)
-    http.HandleFunc("/firestore/", firestoreHandler)  
+	http.HandleFunc("/firestore", firestoreHandler)
+	http.HandleFunc("/firestore/", firestoreHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -777,31 +799,55 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Print("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
+		// それ以外のHTTPメソッド
 		// 取得処理
 	case http.MethodGet:
-		iter := client.Collection("users").Documents(ctx)
-		var u []Users
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		log.Printf("id=%v", id)
+		if id == "/firestore" || id == "" {
+			iter := client.Collection("users").Documents(ctx)
+			var u []Users
 
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
+			for {
+				doc, err := iter.Next()
+				if err == iterator.Done {
+					break
+				}
+				if err != nil {
+					log.Fatal(err)
+				}
+				var user Users
+				err = doc.DataTo(&user)
+				if err != nil {
+					log.Fatal(err)
+				}
+				user.Id = doc.Ref.ID
+				log.Print(user)
+				u = append(u, user)
 			}
-			if err != nil {
-				log.Fatal(err)
+			if len(u) == 0 {
+				w.WriteHeader(http.StatusNoContent)
+			} else {
+				json, err := json.Marshal(u)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Write(json)
 			}
-			var user Users
-			err = doc.DataTo(&user)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user.Id = doc.Ref.ID
-			log.Print(user)
-			u = append(u, user)
-		}
-		if len(u) == 0 {
-			w.WriteHeader(http.StatusNoContent)
 		} else {
+
+			doc, err := client.Collection("users").Doc(id).Get(ctx)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			var u Users
+			err = doc.DataTo(&u)
+			if err != nil {
+				log.Fatal(err)
+			}
+			u.Id = doc.Ref.ID
 			json, err := json.Marshal(u)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -824,17 +870,16 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-        fmt.Fprintln(w, "success updating")
-        // 削除処理
-        case http.MethodDelete:
-                id := strings.TrimPrefix(r.URL.Path, "/firestore/")
-                _, err := client.Collection("users").Doc(id).Delete(ctx)
-                if err != nil {
-                        w.WriteHeader(http.StatusInternalServerError)
-                        return
-        }
-        fmt.Fprintln(w, "success deleting")
-		// それ以外のHTTPメソッド
+		fmt.Fprintln(w, "success updating")
+		// 削除処理
+	case http.MethodDelete:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
+		_, err := client.Collection("users").Doc(id).Delete(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintln(w, "success deleting")
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
