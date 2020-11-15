@@ -1,0 +1,12 @@
+apiVersion: networking.gke.io/v1
+kind: MultiClusterIngress
+metadata:
+  annotations:
+    configmanagement.gke.io/cluster-selector: ifa
+  name: mci-igw
+spec:
+  template:
+    spec:
+      backend:
+        serviceName: istio-mcsingressgw
+        servicePort: 80
