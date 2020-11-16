@@ -526,7 +526,7 @@ spec:
 ### frontend の VirtualService を バージョンを識別するように修正
 
 ```bash
-patch namespaces/ob/istio-manifests.yaml ../k8s-manifest/istio-manifest.yaml.patch
+patch namespaces/ob/istio-manifests.yaml ../k8s-manifest/istio-manifests.yaml.patch
 ```
 
 参考: 修正後の `istio-manifests.yaml`
