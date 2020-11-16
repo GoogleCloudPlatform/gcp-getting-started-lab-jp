@@ -308,7 +308,7 @@ mkdir namespaces/ob
 ### マニフェストのコピー
 
 ```bash
-cp ../k8s-manifest/kubernetes-manifests.yaml namespaces/ob/ && cp ../k8s-manifests/istio-manifests.yaml namespaces/ob/ && cp ../k8s-manifests/namespace-ob.yaml namespaces/ob/
+cp ../k8s-manifest/kubernetes-manifests.yaml namespaces/ob/ && cp ../k8s-manifest/istio-manifests.yaml namespaces/ob/ && cp ../k8s-manifest/namespace-ob.yaml namespaces/ob/
 ```
 
 ### Online Boutique のデプロイ
