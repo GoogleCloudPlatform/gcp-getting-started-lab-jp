@@ -937,7 +937,7 @@ gcloud redis instances list --format=json  --region=us-central1 | jq .[0].host
 
 ### 接続設定
 
-`app.yaml` の環境変数とコネクタの設定をを追記しましょう。
+`app.yaml` の環境変数とコネクタの設定を追記しましょう。
 
 ```yaml
 vpc_access_connector:
