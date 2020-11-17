@@ -508,6 +508,7 @@ curl -X POST -d '{"email":"tamago@example.com", "name":"Egg Taro"}' localhost:80
 
 ```go
 	"google.golang.org/api/iterator"
+	"strings"
 ```
 
 次にデータを取得するコードを書いていきます。POSTの case 句の後に以下の case 句を追記しましょう。
