@@ -504,14 +504,20 @@ curl -X POST -d '{"email":"tamago@example.com", "name":"Egg Taro"}' localhost:80
 登録したデータを取得する実装をしていきます。
 同様に `main.go` の `firestoreHandler` を編集していきます。
 
-が、まずは import の中に以下を追記してください。
+まずは import の中に以下を追記してください。
 
 ```go
 	"google.golang.org/api/iterator"
 	"strings"
 ```
 
-次にデータを取得するコードを書いていきます。POSTの case 句の後に以下の case 句を追記しましょう。
+次に、main 関数の HandleFunc に以下を追加します。
+
+```go
+	http.HandleFunc("/firestore/", firestoreHandler)
+```
+
+更に、データを取得するコードを書いていきます。POSTの case 句の後に以下の case 句を追記しましょう。
 
 ```go
 	// 取得処理
@@ -634,21 +640,9 @@ curl -X PUT -d '{"id": "<Document ID>", "email":"test@example.com", "name":"Egg 
 ### データの削除処理
 
 最後に、データの削除処理を行います。
+削除APIはパスパラメータでIDを指定する形式にします。
 
-削除APIはパスパラメータでIDを指定する形式にしましょう。
-`main.go` の import の中に以下を追記してください。
-
-```go
-  "strings"
-```
-
-main 関数の HandleFunc に以下を追加します。
-
-```go
-	http.HandleFunc("/firestore/", firestoreHandler)
-```
-
-次にデータを削除するコードを書いていきます。PUTの case 句の後に以下の case 句を追記しましょう。
+データを削除するコードを書いていきます。PUTの case 句の後に以下の case 句を追記しましょう。
 
 ```go
 	// 削除処理
