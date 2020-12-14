@@ -75,12 +75,18 @@
 export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 ```
 
-#### CLI（gcloud コマンド） から利用する GCP のデフォルトプロジェクトを設定
+#### CLI（gcloud コマンド）から利用する GCP のデフォルトプロジェクトを設定
 
 操作対象のプロジェクトを設定します。
 
 ```bash
 gcloud config set project $GOOGLE_CLOUD_PROJECT
+```
+
+デフォルトのリージョンを設定します。
+
+```bash
+gcloud config set compute/region us-central1
 ```
 
 以下のコマンドで、現在の設定を確認できます。
@@ -147,7 +153,7 @@ gsutil mb -c regional -l us-central1 gs://{{project-id}}-gig2
 Dataflow のサンプルデータを、バケットへコピーします。
 
 ```bash
-gsutil cp gs://python-dataflow-example/data_files/head_usa_names.csv gs://{{project-id}}-gig2/data_files/
+gsutil cp gs://spls/gsp290/data_files/head_usa_names.csv gs://{{project-id}}-gig2/data_files/
 ```
 
 このようなデータが入っています。
@@ -164,7 +170,7 @@ AK,F,1910,Helen,7,11/28/2016
 AK,M,1910,James,7,11/28/2016
 ```
 
-上記のファイルの全量が `gs://python-dataflow-example/data_files/usa_names.csv` にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
+上記のファイルの全量が `gs://spls/gsp290/data_files/usa_names.csv` にありますが、処理に時間がかかるので今回のハンズオンでは利用しません。
 ぜひ復習のときには、こちらのデータセットでも試してください。
 
 ## BigQuery
@@ -187,16 +193,21 @@ cd dataflow
 
 #### venv をインストール
 ```bash
-sudo pip install virtualenv 
+sudo apt-get install -y python3-venv
 ```
 
-#### venv を設定 & アクティベート 
+#### venv 作成 & アクティベート 
 ```bash
-virtualenv -p python3 venv
+python3 -m venv venv
 ```
 
 ```bash
-source venv/bin/activate  
+source venv/bin/activate
+```
+
+#### setuptools をアップグレード
+```bash
+pip install --upgrade pip setuptools
 ```
 
 #### apache-beam をインストール
@@ -206,7 +217,7 @@ pip install apache-beam[gcp]
 
 #### Cloud Shell Editor のフォルダ
 左のフォルダペインで以下のフォルダを展開しておきましょう。
-`cloudshell_open > gcp-getting-started-lab-jp > gig > gig2`
+`cloudshell_open > gcp-getting-started-lab-jp > gig > gig01-02`
 
 
 ## データの取り込み
