@@ -83,6 +83,60 @@ Resolving deltas: 100% (657/657), done.
 
 ### ローカル環境でのアプリの動作確認
 
+次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリ [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/main.py) をローカル環境で実行しています。
+
+```
+cd $HOME/gcp-getting-started-lab-jp/microservices/helloworld
+python3 main.py
+```
+
+*コマンドの出力例*
+```
+ * Serving Flask app "main" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://0.0.0.0:8080/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 185-356-817
+``` 
+
+アプリケーションはフォアグラウンドで実行を続けているので、新しい Cloud Shell 端末を開いて、そちらからアプリケーションにリクエストを送信します。
+
+次のコマンドを実行します。
+
+```
+curl http://localhost:8080
+```
+
+*コマンドの出力例*
+```
+Hello world service.
+```
+
+次は、POST メソッドでデータを送信します。次のコマンドを実行します。
+
+```
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Google Cloud Platform"}' \
+  -s http://localhost:8080/api/v1/hello
+```
+
+*コマンドの出力例*
+```
+{
+  "message": "Hello, Google Cloud Platform!"
+}
+```
+
+### Cloud Build によるコンテナイメージのビルド
+
+### Cloud Run にイメージをデプロイ
+
+
 ## Cloud Datastore によるデータの永続化
 
 ## Cloud PubSub によるイベントメッセージの交換
