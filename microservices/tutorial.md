@@ -83,7 +83,7 @@ Resolving deltas: 100% (657/657), done.
 
 ### ローカル環境でのアプリの動作確認
 
-次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリ [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/main.py) をローカル環境で実行しています。
+次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリケーション [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/main.py) をローカル環境で実行しています。この API は、名前を受け取って、対応する定型メッセージを返します。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/hello_world
@@ -394,5 +394,57 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
 
 ## Cloud PubSub によるイベントメッセージの交換
+
+このセクションで実施する内容
+
+- コンテナイメージのビルドとデプロイ
+- PubSub トピックの作成とトークン作成ロールの設定
+- Push サブスクリプションの作成
+- Cloud Storage の Pub/Sub 通知設定と動作確認
+
+### コンテナイメージのビルドとデプロイ
+
+ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。
+PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
+
+### PubSub トピックの作成とトークン作成ロールの設定
+
+```
+gcloud pubsub topics create storage-event
+
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format "value(projectNumber)")
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
+  --role=roles/iam.serviceAccountTokenCreator
+```
+
+### Push サブスクリプションの作成
+
+```
+SERVICE_ACCOUNT_NAME="cloud-run-invoker"
+gcloud iam service-accounts create $SERVICE_ACCOUNT_NAME \
+  --display-name "Cloud Run Invoker"
+```
+```
+SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+```
+
+```
+SERVICE_NAME="storage-logging-service"
+SERVICE_URL=$(gcloud run services list --platform managed \
+  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+  --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+  --role=roles/run.invoker \
+  --platform=managed --region=us-central1
+
+gcloud pubsub subscriptions create push-order-to-customer \
+  --topic order-service-event \
+  --push-endpoint=$SERVICE_URL/api/v1/pubsub \
+  --push-auth-service-account=$SERVICE_ACCOUNT_EMAIL
+```
+
+### Cloud Storage の Pub/Sub 通知設定と動作確認
 
 ## Cloud Scheduler による定期的な処理の実行
