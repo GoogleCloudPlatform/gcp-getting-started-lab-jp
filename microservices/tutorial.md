@@ -139,6 +139,8 @@ curl -X POST \
 次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
+> Dockerfile の末尾 `CMD exec gunicorn ...` から分かるように、このイメージでは、[Gunicorn](https://gunicorn.org/) を用いてアプリケーションを起動します。
+
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/helloworld
 gcloud builds submit --tag gcr.io/$PROJECT_ID/helloworld-service
@@ -209,7 +211,9 @@ Service URL: https://helloworld-service-tf5atlwfza-uc.a.run.app
 
 最後に表示された `Service URL` がデプロイされたサービスのエンドポイントになります。
 
-次のコマンドで、サービス名に対するエンドポイントを取得することもできます。ここでは、環境変数 `SERVICE_URL` にエンドポイントを保存しています。
+### デプロイしたサービスの動作確認
+
+次のコマンドを実行します。ここでは、サービス `helloworld-service` に対するエンドポイントを取得して、環境変数 `SERVICE_URL` に保存しています。
 
 ```
 SERVICE_NAME="helloworld-service"
@@ -231,6 +235,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -d '{"name":"Google Cloud Platform"}' \
   -s ${SERVICE_URL}/api/v1/hello 
 ```
+
 *コマンドの出力例*
 ```
 {"message":"Hello, Google Cloud Platform!"}
@@ -242,8 +247,65 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 > GCP 上で稼働するアプリケーションからアクセスする際は、アプリケーションに紐づいたサービスアカウントの権限でトークンを取得します。
 外部のクライアントからアクセスする際は、OAuth 2.0 を用いて Google アカウントのユーザー認証を行うことで、トークンが取得できるようになります。
 
+Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メニューを開くと、デプロイされたサービスの状態やアクセスログを確認することができます。
+一定時間アクセスが無いと、コンテナが自動停止する様子もログから確認できます。
 
 ## Cloud Datastore によるデータの永続化
+
+このセクションで実施する内容
+
+- コンテナイメージのビルドとデプロイ
+- デプロイしたサービスの動作確認
+
+### コンテナイメージのビルドとデプロイ
+
+ここでは、ユーザーが自分の名前とメッセージを登録できる、簡易的なメッセージボードのアプリケーションをデプロイします。登録したデータは、Cloud Datastore に保存されます。
+
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/Dockerfile) に
+従って、コンテナイメージをビルドしています。
+
+```
+cd $HOME/gcp-getting-started-lab-jp/microservices/message_board
+gcloud builds submit --tag gcr.io/$PROJECT_ID/message-board-service
+```
+
+*コマンドの出力例*
+```
+Creating temporary tarball archive of 5 file(s) totalling 4.0 KiB before compression.
+Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/1609062140.736345-217a1fac5e4a4cdf8c5a2a5e8e1f8dfa.tgz]
+
+...中略...
+
+DONE
+------------------------------------------------------------------------------------------------------------------------
+
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                IMAGES                                                         STATUS
+18ee06e6-bb5e-49e7-9d8a-b233a20fa3f0  2020-12-27T09:47:38+00:00  31S       gs://microservices-hands-on_cloudbuild/source/1609062456.723272-599b79cc128348d7a17c165a7f817d20.tgz  gcr.io/microservices-hands-on/message-board-service (+1 more)  SUCCESS
+```
+
+> Cloud Datastore にアクセスするために [requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/requirements.txt) で、google-cloud-datastore パッケージをインストールしています。
+
+次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`message-board-service` を指定しています。
+
+```
+gcloud run deploy message-board-service \
+  --image gcr.io/$PROJECT_ID/message-board-service \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+```
+
+*コマンドの出力例*
+```
+Deploying container to Cloud Run service [message-board-service] in project [microservices-hands-on] region [us-central1]
+✓ Deploying new service... Done.              
+  ✓ Creating Revision... Revision deployment finished. Waiting for health check to begin.
+  ✓ Routing traffic...
+Done.
+Service [message-board-service] revision [message-board-service-00001-xoy] has been deployed and is serving 100 percent of traffic.
+Service URL: https://message-board-service-tf5atlwfza-uc.a.run.app
+```
+
+### デプロイしたサービスの動作確認
 
 ## Cloud PubSub によるイベントメッセージの交換
 
