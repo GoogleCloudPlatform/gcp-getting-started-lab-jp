@@ -409,9 +409,17 @@ PubSub からのメッセージは、Push サブスクリプションを用い�
 
 ### PubSub トピックの作成とトークン作成ロールの設定
 
+次のコマンドを実行します。ここでは、`storage-event` という名前の PubSub トピックを作成しています。
+
 ```
 gcloud pubsub topics create storage-event
+```
 
+この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、PubSub は内部的に API 認証のアクセストークンを取得する必要があります。このため、PubSub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを取得する権限を設定しておきます。
+
+次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、PubSub のサービスアカウントが、プロジェクト全体に対して、`iam.serviceAccountTokenCreator` ロールを持つように設定しています。
+
+```
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format "value(projectNumber)")
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member=serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com \
