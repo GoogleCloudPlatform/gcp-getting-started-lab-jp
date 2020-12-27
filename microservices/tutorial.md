@@ -83,10 +83,10 @@ Resolving deltas: 100% (657/657), done.
 
 ### ローカル環境でのアプリの動作確認
 
-次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリ [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/main.py) をローカル環境で実行しています。
+次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリ [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/main.py) をローカル環境で実行しています。
 
 ```
-cd $HOME/gcp-getting-started-lab-jp/microservices/helloworld
+cd $HOME/gcp-getting-started-lab-jp/microservices/hello_world
 python3 main.py
 ```
 
@@ -136,14 +136,14 @@ curl -X POST \
 
 ### Cloud Build によるコンテナイメージのビルド
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/Dockerfile) に
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 > Dockerfile の末尾 `CMD exec gunicorn ...` から分かるように、このイメージでは、[Gunicorn](https://gunicorn.org/) を用いてアプリケーションを起動します。
 
 ```
-cd $HOME/gcp-getting-started-lab-jp/microservices/helloworld
-gcloud builds submit --tag gcr.io/$PROJECT_ID/helloworld-service
+cd $HOME/gcp-getting-started-lab-jp/microservices/hello_world
+gcloud builds submit --tag gcr.io/$PROJECT_ID/hello-world-service
 ```
 
 *コマンドの出力例*
@@ -158,7 +158,7 @@ DONE
 ID                                    CREATE_TIME                DURATION  SOURCE                                                              
                                  IMAGES                                                      STATUS
 40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082
-d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/helloworld-service (+1 more)  SUCCESS
+d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
 ```
 
 ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを
@@ -174,12 +174,12 @@ gcloud container images list
 *コマンドの出力例*
 ```
 NAME
-gcr.io/microservices-hands-on/helloworld-service
+gcr.io/microservices-hands-on/hello-world-service
 ```
 
 特定のイメージのタグを表示します。
 ```
-gcloud container images list-tags gcr.io/$PROJECT_ID/helloworld-service
+gcloud container images list-tags gcr.io/$PROJECT_ID/hello-world-service
 ```
 *コマンドの出力例*
 ```
@@ -189,34 +189,34 @@ DIGEST        TAGS    TIMESTAMP
 
 ### Cloud Run にイメージをデプロイ
 
-次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`helloworld-service` を指定しています。
+次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`hello-world-service` を指定しています。
 
 ```
-gcloud run deploy helloworld-service \
-  --image gcr.io/$PROJECT_ID/helloworld-service \
+gcloud run deploy hello-world-service \
+  --image gcr.io/$PROJECT_ID/hello-world-service \
   --platform=managed --region=us-central1 \
   --no-allow-unauthenticated
 ```
 
 *コマンドの出力例*
 ```
-Deploying container to Cloud Run service [helloworld-service] in project [microservices-hands-on] region [us-central1]
+Deploying container to Cloud Run service [hello-world-service] in project [microservices-hands-on] region [us-central1]
 ✓ Deploying new service... Done.                                                           
   ✓ Creating Revision...
   ✓ Routing traffic...
 Done.
-Service [helloworld-service] revision [helloworld-service-00001-rix] has been deployed and is serving 100 percent of traffic.
-Service URL: https://helloworld-service-tf5atlwfza-uc.a.run.app
+Service [hello-world-service] revision [hello-world-service-00001-rix] has been deployed and is serving 100 percent of traffic.
+Service URL: https://hello-world-service-tf5atlwfza-uc.a.run.app
 ```
 
 最後に表示された `Service URL` がデプロイされたサービスのエンドポイントになります。
 
 ### デプロイしたサービスの動作確認
 
-次のコマンドを実行します。ここでは、サービス `helloworld-service` に対するエンドポイントを取得して、環境変数 `SERVICE_URL` に保存しています。
+次のコマンドを実行します。ここでは、サービス `hello-world-service` に対するエンドポイントを取得して、環境変数 `SERVICE_URL` に保存しています。
 
 ```
-SERVICE_NAME="helloworld-service"
+SERVICE_NAME="hello-world-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
   --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
 echo $SERVICE_URL
@@ -224,7 +224,7 @@ echo $SERVICE_URL
 
 *コマンドの出力例*
 ```
-https://helloworld-service-tf5atlwfza-uc.a.run.app
+https://hello-world-service-tf5atlwfza-uc.a.run.app
 ```
 
 POST メソッドでデータを送信して、動作を確認します。次のコマンドを実行します。
