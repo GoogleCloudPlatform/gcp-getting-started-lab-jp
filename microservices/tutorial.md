@@ -155,10 +155,8 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16090
 
 DONE
 -----------------------------------------------------------------------------------------------------------------------------------------------
-ID                                    CREATE_TIME                DURATION  SOURCE                                                              
-                                 IMAGES                                                      STATUS
-40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082
-d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                                       IMAGES                                                       STATUS
+40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
 ```
 
 ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを
@@ -281,8 +279,7 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16090
 DONE
 ------------------------------------------------------------------------------------------------------------------------
 
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                IMAGES                                                         STATUS
-18ee06e6-bb5e-49e7-9d8a-b233a20fa3f0  2020-12-27T09:47:38+00:00  31S       gs://microservices-hands-on_cloudbuild/source/1609062456.723272-599b79cc128348d7a17c165a7f817d20.tgz  gcr.io/microservices-hands-on/message-board-service (+1 more)  SUCCESS
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                               IMAGES                                                       STATUS18ee06e6-bb5e-49e7-9d8a-b233a20fa3f0  2020-12-27T09:47:38+00:00  31S       gs://microservices-hands-on_cloudbuild/source/1609062456.723272-599b79cc128348d7a17c165a7f817d20.tgz  gcr.io/microservices-hands-on/message-board-service (+1 more)  SUCCESS
 ```
 
 次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`message-board-service` を指定しています。
