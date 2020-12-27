@@ -132,7 +132,60 @@ curl -X POST \
 }
 ```
 
+動作確認ができたら、Ctrl+C でアンプルアプリを停止します。
+
 ### Cloud Build によるコンテナイメージのビルド
+
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/Dockerfile)に
+従って、コンテナイメージをビルドしています。
+
+```
+cd $HOME/gcp-getting-started-lab-jp/microservices/helloworld
+gcloud builds submit --tag gcr.io/$PROJECT_ID/helloworld-service
+```
+
+*コマンドの出力例*
+```
+Creating temporary tarball archive of 4 file(s) totalling 1.8 KiB before compression.
+Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082d92ec804586ae303353057a9dc0.tgz]
+
+...中略...
+
+DONE
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ID                                    CREATE_TIME                DURATION  SOURCE                                                              
+                                 IMAGES                                                      STATUS
+40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082
+d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/helloworld-service (+1 more)  SUCCESS
+```
+
+ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを
+開いて確認することができます。
+
+ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを
+開いて、保存されたイメージを確認することができます。次のコマンドで確認することもできます。
+
+イメージの一覧を表示します。
+```
+gcloud container images list
+```
+*コマンドの出力例*
+```
+NAME
+gcr.io/microservices-hands-on/helloworld-service
+```
+
+特定のイメージのタグを表示します。
+```
+gcloud container images list-tags gcr.io/microservices-hands-on/helloworld-service
+```
+*コマンドの出力例*
+```
+DIGEST        TAGS    TIMESTAMP
+894a35cdfc88  latest  2020-12-27T06:40:16
+```
+
+
 
 ### Cloud Run にイメージをデプロイ
 
