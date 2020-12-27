@@ -26,6 +26,13 @@ PROJECT_ID=[your project ID]
 gcloud config set project $PROJECT_ID
 ```
 
+「Cloud Shell の承認」というポップアップが表示されますので、「承認」をクリックしてください。
+
+*コマンドの出力例*
+```
+Updated property [core/project].
+```
+
 **注意：作業中に新しい Cloud Shell 端末を開いた場合は、必ず、最初にこのコマンドを実行してください。**
 
 ### API の有効化
@@ -40,6 +47,11 @@ gcloud services enable \
   workflows.googleapis.com
 ```
 
+*コマンドの出力例*
+```
+Operation "operations/acf.411c0bde-0c11-47af-979a-2cc1680b5650" finished successfully.
+```
+
 ### ソースコードのダウンロード
 
 次のコマンドを実行します。ここでは、Cloud Shell 端末のホームディレクトリーにこの GitHub リポジトリの内容をクローンしています。
@@ -47,4 +59,15 @@ gcloud services enable \
 ```
 cd $HOME
 git clone https://github.com/enakai00/gcp-getting-started-lab-jp
+```
+
+*コマンドの出力例*
+```
+Cloning into 'gcp-getting-started-lab-jp'...
+remote: Enumerating objects: 161, done.
+remote: Counting objects: 100% (161/161), done.
+remote: Compressing objects: 100% (109/109), done.
+remote: Total 1355 (delta 73), reused 89 (delta 35), pack-reused 1194
+Receiving objects: 100% (1355/1355), 8.93 MiB | 4.78 MiB/s, done.
+Resolving deltas: 100% (657/657), done.
 ```
