@@ -393,6 +393,9 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
+Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」
+から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
+
 ## Cloud PubSub によるイベントメッセージの交換
 
 ## Cloud Scheduler による定期的な処理の実行
