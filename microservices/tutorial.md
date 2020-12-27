@@ -218,7 +218,7 @@ Service URL: https://helloworld-service-tf5atlwfza-uc.a.run.app
 ```
 SERVICE_NAME="helloworld-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
 echo $SERVICE_URL
 ```
 
@@ -349,6 +349,9 @@ Cloud Console から「[データストア](https://console.cloud.google.com/dat
 次のコマンドを実行します。ここでは、ユーザー名 `Bob` のメッセージを登録しています。
 
 ```
+SERVICE_NAME="message-board-service"
+SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"name":"Bob", "message":"I am at lunch now."}' \
