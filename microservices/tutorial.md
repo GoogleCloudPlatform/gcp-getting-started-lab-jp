@@ -71,3 +71,20 @@ remote: Total 1355 (delta 73), reused 89 (delta 35), pack-reused 1194
 Receiving objects: 100% (1355/1355), 8.93 MiB | 4.78 MiB/s, done.
 Resolving deltas: 100% (657/657), done.
 ```
+
+## Cloud Run を用いた REST API サービスの構築
+
+このセクションで実施する内容
+
+- ローカル環境でのアプリの動作確認
+- Cloud Build によるコンテナイメージのビルド
+- Cloud Run にイメージをデプロイ
+- デプロイしたサービスの動作確認
+
+### ローカル環境でのアプリの動作確認
+
+## Cloud Datastore によるデータの永続化
+
+## Cloud PubSub によるイベントメッセージの交換
+
+## Cloud Scheduler による定期的な処理の実行
