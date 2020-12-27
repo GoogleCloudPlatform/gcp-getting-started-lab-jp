@@ -259,9 +259,9 @@ Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メ�
 
 ここでは、ユーザーが自分の名前とメッセージを登録できる、簡易的なメッセージボードのアプリケーションをデプロイします。登録したデータは、Cloud Datastore に保存されます。
 
-> Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
+> Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/Dockerfile) に
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 ```
@@ -312,7 +312,7 @@ Service URL: https://message-board-service-tf5atlwfza-uc.a.run.app
     query.order = ['timestamp']             # Add a sort condition.
 ```
 
-この検索に必要なインデックス [`index.yaml`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/index.yaml) を事前に定義しておく必要があります。次のコマンドを実行して、インデックスを定義します。
+この検索に必要なインデックス [`index.yaml`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/index.yaml) を事前に定義しておく必要があります。次のコマンドを実行して、インデックスを定義します。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/message_board
