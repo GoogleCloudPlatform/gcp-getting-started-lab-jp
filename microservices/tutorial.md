@@ -103,7 +103,7 @@ python3 main.py
  * Debugger PIN: 185-356-817
 ``` 
 
-アプリケーションはフォアグラウンドで実行を続けているので、新しい Cloud Shell 端末を開いて、そちらからアプリケーションにリクエストを送信します。
+アプリケーションはフォアグラウンドで実行を続けているので、新しい Cloud Shell 端末を開いて、そちらから curl コマンドでアプリケーションにリクエストを送信します。
 
 次のコマンドを実行します。
 
@@ -136,7 +136,7 @@ curl -X POST \
 
 ### Cloud Build によるコンテナイメージのビルド
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/Dockerfile)に
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/helloworld/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 ```
@@ -177,7 +177,7 @@ gcr.io/microservices-hands-on/helloworld-service
 
 特定のイメージのタグを表示します。
 ```
-gcloud container images list-tags gcr.io/microservices-hands-on/helloworld-service
+gcloud container images list-tags gcr.io/$PROJECT_ID/helloworld-service
 ```
 *コマンドの出力例*
 ```
@@ -185,9 +185,62 @@ DIGEST        TAGS    TIMESTAMP
 894a35cdfc88  latest  2020-12-27T06:40:16
 ```
 
-
-
 ### Cloud Run にイメージをデプロイ
+
+次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`helloworld-service` を指定しています。
+
+```
+gcloud run deploy helloworld-service \
+  --image gcr.io/$PROJECT_ID/helloworld-service \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+```
+
+*コマンドの出力例*
+```
+Deploying container to Cloud Run service [helloworld-service] in project [microservices-hands-on] region [us-central1]
+✓ Deploying new service... Done.                                                           
+  ✓ Creating Revision...
+  ✓ Routing traffic...
+Done.
+Service [helloworld-service] revision [helloworld-service-00001-rix] has been deployed and is serving 100 percent of traffic.
+Service URL: https://helloworld-service-tf5atlwfza-uc.a.run.app
+```
+
+最後に表示された `Service URL` がデプロイされたサービスのエンドポイントになります。
+
+次のコマンドで、サービス名に対するエンドポイントを取得することもできます。ここでは、環境変数 `SERVICE_URL` にエンドポイントを保存しています。
+
+```
+SERVICE_NAME="helloworld-service"
+SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+echo $SERVICE_URL
+```
+
+*コマンドの出力例*
+```
+https://helloworld-service-tf5atlwfza-uc.a.run.app
+```
+
+POST メソッドでデータを送信して、動作を確認します。次のコマンドを実行します。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Google Cloud Platform"}' \
+  -s ${SERVICE_URL}/api/v1/hello 
+```
+*コマンドの出力例*
+```
+{"message":"Hello, Google Cloud Platform!"}
+```
+
+ここでは、`gcloud auth print-identity-token` で取得したアクセストークンを用いて認証を行っています。
+この場合は、gcloud コマンドを実行したユーザーアカウントの権限でトークンが取得されます。
+
+> GCP 上で稼働するアプリケーションからアクセスする際は、アプリケーションに紐づいたサービスアカウントの権限でトークンを取得します。
+外部のクライアントからアクセスする際は、OAuth 2.0 を用いて Google アカウントのユーザー認証を行うことで、トークンが取得できるようになります。
 
 
 ## Cloud Datastore によるデータの永続化
