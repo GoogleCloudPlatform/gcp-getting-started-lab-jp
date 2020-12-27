@@ -355,6 +355,10 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -s ${SERVICE_URL}/api/v1/store | jq .
 ```
 
+> 最後の `jq` コマンドは出力された JSON 文字列を整形するためのものです。JSON 文字列以外を受け取った場合は、
+`parse error: Invalid numeric literal at line 1, column 10` のようなメッセージが表示されます。
+このような場合は、`jq` コマンドを取り除いて、整形前の出力メッセージを確認してください。
+
 *コマンドの出力例*
 ```
 {
@@ -363,10 +367,6 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   "timestamp": "Sun, 27 Dec 2020 10:08:56 GMT"
 }
 ```
-
-> 最後の `jq` コマンドは出力された JSON 文字列を整形するためのものです。JSON 文字列以外を受け取った場合は、
-`parse error: Invalid numeric literal at line 1, column 10` のようなメッセージが表示されます。
-このような場合は、`jq` コマンドを取り除いて、整形前の出力メッセージを確認してください。
 
 次のコマンドを実行します。ここでは、ユーザー名 `Bob` のメッセージを取り出しています。
 
