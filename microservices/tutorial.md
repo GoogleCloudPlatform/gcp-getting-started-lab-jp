@@ -261,6 +261,8 @@ Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メ�
 
 ここでは、ユーザーが自分の名前とメッセージを登録できる、簡易的なメッセージボードのアプリケーションをデプロイします。登録したデータは、Cloud Datastore に保存されます。
 
+> Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
+
 次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
@@ -282,8 +284,6 @@ DONE
 ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                IMAGES                                                         STATUS
 18ee06e6-bb5e-49e7-9d8a-b233a20fa3f0  2020-12-27T09:47:38+00:00  31S       gs://microservices-hands-on_cloudbuild/source/1609062456.723272-599b79cc128348d7a17c165a7f817d20.tgz  gcr.io/microservices-hands-on/message-board-service (+1 more)  SUCCESS
 ```
-
-> Cloud Datastore にアクセスするために [requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/requirements.txt) で、google-cloud-datastore パッケージをインストールしています。
 
 次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`message-board-service` を指定しています。
 
@@ -335,7 +335,7 @@ target project:  [microservices-hands-on]
 Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「インデックス」
 を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
 
-> 適切なインデックスを作成せずに検索を実行するとエラーが発生します。その際、コンテナの実行ログに必要なインデックスの定義を示すエラーメッセージが表示されます。
+> 適切なインデックスを作成せずに検索を実行するとエラーが発生します。その際、コンテナの実行ログに、必要なインデックスの定義を示すエラーメッセージが表示されます。
 
 　*エラーメッセージの例*
   ```
