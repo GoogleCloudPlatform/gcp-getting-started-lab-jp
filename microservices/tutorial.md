@@ -1,6 +1,6 @@
 # ハンズオン：Microservices development on GCP
 
-## 事前準備
+## 1. 事前準備
 
 ### GCP プロジェクトの作成
 
@@ -72,7 +72,7 @@ Receiving objects: 100% (1355/1355), 8.93 MiB | 4.78 MiB/s, done.
 Resolving deltas: 100% (657/657), done.
 ```
 
-## Cloud Run を用いた REST API サービスの構築
+## 2. Cloud Run を用いた REST API サービスの構築
 
 このセクションで実施する内容
 
@@ -250,7 +250,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メニューを開くと、デプロイされたサービスの状態やアクセスログを確認することができます。
 一定時間アクセスが無いと、コンテナが自動停止する様子もログから確認できます。
 
-## Cloud Datastore によるデータの永続化
+## 3. Cloud Datastore によるデータの永続化
 
 このセクションで実施する内容
 
@@ -306,6 +306,89 @@ Service URL: https://message-board-service-tf5atlwfza-uc.a.run.app
 ```
 
 ### デプロイしたサービスの動作確認
+
+このアプリケーションは、Datastore に対して、次のような検索処理を行います。
+
+```
+    query = ds_client.query(kind='Message') # Create a query object for kind 'Message'.
+    query.add_filter('name', '=', name)     # Add a filter condition.
+    query.order = ['timestamp']             # Add a sort condition.
+```
+
+この検索に必要なインデックス [`index.yaml`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hmessage_board/index.yaml) を事前に定義しておく必要があります。次のコマンドを実行して、インデックスを定義します。
+
+```
+cd $HOME/gcp-getting-started-lab-jp/microservices/message_board
+gcloud datastore indexes create index.yaml --quiet
+```
+
+*コマンドの出力例*
+```
+Configurations to update:
+descriptor:      [index.yaml]
+type:            [datastore indexes]
+target project:  [microservices-hands-on]
+.... 100%...done.
+```
+
+コマンド出力からは、インデックスの作成が完了したように見えますが、実際にはバックグラウンドで作成処理が継続しています。
+Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「インデックス」
+を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
+
+> 適切なインデックスを作成せずに検索を実行するとエラーが発生します。その際、コンテナの実行ログに必要なインデックスの定義を示すエラーメッセージが表示されます。
+
+　*エラーメッセージの例*
+  ```
+  2020-12-27 19:10:06.645 JST  details = "no matching index found. recommended index is:
+  2020-12-27 19:10:06.645 JST - kind: Message
+  2020-12-27 19:10:06.645 JST  properties:
+  2020-12-27 19:10:06.645 JST  - name: name
+  2020-12-27 19:10:06.645 JST  - name: timestamp
+  ```
+
+次のコマンドを実行します。ここでは、ユーザー名 `Bob` のメッセージを登録しています。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Bob", "message":"I am at lunch now."}' \
+  -s ${SERVICE_URL}/api/v1/store | jq .
+```
+
+*コマンドの出力例*
+```
+{
+  "message": "I am at lunch now.",
+  "name": "Bob",
+  "timestamp": "Sun, 27 Dec 2020 10:08:56 GMT"
+}
+```
+
+> 最後の `jq` コマンドは出力された JSON 文字列を整形するためのものです。JSON 文字列以外を受け取った場合は、
+`parse error: Invalid numeric literal at line 1, column 10` のようなメッセージが表示されます。
+このような場合は、`jq` コマンドを取り除いて、整形前の出力メッセージを確認してください。
+
+次のコマンドを実行します。ここでは、ユーザー名 `Bob` のメッセージを取り出しています。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Bob"}' \
+  -s ${SERVICE_URL}/api/v1/retrieve | jq .
+```
+
+*コマンドの出力例*
+```
+{
+  "messages": [
+    {
+      "message": "I am at lunch now.",
+      "timestamp": "Sun, 27 Dec 2020 10:08:56 GMT"
+    }
+  ],
+  "name": "Bob"
+}
+```
 
 ## Cloud PubSub によるイベントメッセージの交換
 
