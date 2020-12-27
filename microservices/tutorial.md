@@ -155,7 +155,7 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16090
 
 DONE
 -----------------------------------------------------------------------------------------------------------------------------------------------
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                                       IMAGES                                                       STATUS
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                               IMAGES                                                       STATUS
 40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
 ```
 
