@@ -180,41 +180,44 @@ firebase deploy
 
 ### Web アプリケーションの動作確認
 
+はじめに、Web アプリケーションの画面右上にある「Sing in with Google」をクリックして、プロジェクトオーナーの Google アカウントでログインします。
 
-Open the `Hosting URL` url on your browser. Click [Sign in with Google] and sign in
-with your Google account. You must use the account that is the GCP project owner.
+### カスタマー情報の作成
 
-### Create a new customer entry
+画面左のメニュー「Customer」をクリックして、プルダウンメニューから「limit」を選びます。
 
-Click "Customer" on the left menu, and select "limit" from the pull down menu.
-Set "customer_id" and "limit" as in the screenshot and click [Send!].
-You can choose the synchronous service (Sync) or the asynchronous service (Async)
-with the slide switch. The result will be the same for both services.
+「customer_id」と「limit」を下記のスクリーンショットと同様に入力して、「Send!」をクリックします。
 
-<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot01.png" width="720px">
+<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/transactional-microservice-examples/main/frontend/docs/img/screenshot01.png" width="720px">
 
-### Submit an order using the asynchronous service
+「Response」の部分に、サービスからの応答メッセージが表示されます。画面上のスライドスイッチで「Sync（同期サービス）」「Async（非同期サービス）」を選択することができますが、この処理については、どちらでも同じ結果が得られます。
 
-Click "Order" on the left menu. Choose "Async" with the slide switch, and select
-"create" from the pull down menu. Set "customer_id" and "number" as in the screenshot
-and click [Send!]. The response shows that the order status is "pending" for now.
-Take note of the "order_id".
+### 非同期サービスを用いてトランザクションを実行
 
-<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot02.png" width="720px">
+画面左のメニュー「Order」をクリックして、スライドスイッチの「Async（非同期サービス）」を選択します。また、プルダウンメニューから「create」を選びます。
 
-### Get the order status
+「customer_id」と「number」を下記のスクリーンショットと同様に入力して、「Send!」をクリックします。
 
-Select "get" from the pull down menu. Set "customer_id" and "order_id" as in the
-screenshot. The "order_id" should be replaced with the one that you took note in the
-previous step. Click [Send!]. If the order status is still "pending", wait a few minutes
-and click [Send!] again. Eventually, the status becomes "accepted".
+<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/transactional-microservice-examples/main/frontend/docs/img/screenshot02.png" width="720px">
 
-<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot03.png" width="720px">
+「Response」の部分を見ると、オーダーの状態は「pending」になっていることがわかります。ここに表示された「order_id」をメモしておきます。
 
-### Submit an order using the synchronous service
+### オーダーの状態を確認
 
-Click "Order" on the left menu. Choose "Sync" with the slide switch, and select
-"process" (not "create") from the pull down menu. Set "customer_id" and "number" as in
-the screenshot and click [Send!]. The response shows that the order status is "accepted".
+プルダウンメニューから「get」を選びます。
 
-<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot04.png" width="720px">
+「customer_id」と「order_id」を下記のスクリーンショットと同様に入力して、「Send!」をクリックします。（「order_id」には、先ほどメモしたオーダー ID を入力してください。）
+
+<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/transactional-microservice-examples/main/frontend/docs/img/screenshot03.png" width="720px">
+
+1〜2分待ってから実行すると、オーダーの状態は「accepted」になります。
+
+### 同期サービスを用いてトランザクションを実行
+
+画面左のメニュー「Order」をクリックして、スライドスイッチの「Sync（同期サービス）」を選択します。また、プルダウンメニューから「process」を選びます。（「create」ではなく、「process」を選ぶ点に注意してください。）
+
+「customer_id」と「number」を下記のスクリーンショットと同様に入力して、「Send!」をクリックします。
+
+<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/transactional-microservice-examples/main/frontend/docs/img/screenshot04.png" width="720px">
+
+「Response」の部分を見ると、オーダーの状態は「accepted」になっていることがわかります。
