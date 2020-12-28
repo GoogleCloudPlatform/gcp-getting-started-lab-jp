@@ -46,7 +46,7 @@ git clone https://github.com/GoogleCloudPlatform/transactional-microservice-exam
 - Cloud Run へのサービスのデプロイ
 - Cloud Pub/Sub の設定
 - Cloud Scheduler の設定
-- トランザクション処理の動作検証
+- 非同期トランザクションの動作確認
 
 ### Cloud Run へのサービスのデプロイ
 
@@ -166,9 +166,132 @@ SERVICE_URL=$(gcloud run services list --platform managed \
 gcloud scheduler jobs create http event-publisher-scheduler \
        --schedule='* * * * *' \
        --http-method=GET \
-       --uri=$SERVICE_URL \
+       --uri=$SERVICE_URL/api/v1/event/publish \
        --oidc-service-account-email=$SERVICE_ACCOUNT_EMAIL \
        --oidc-token-audience=$SERVICE_URL/api/v1/event/publish
+```
+
+### 非同期トランザクションの動作確認
+
+```
+SERVICE_NAME="customer-service-async"
+CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+SERVICE_NAME="order-service-async"
+ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01", "limit":10000}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/limit | jq .
+
+
+{
+  "credit": 0,
+  "customer_id": "customer01",
+  "limit": 10000
+}
+
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01"}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+
+
+{
+  "credit": 0,
+  "customer_id": "customer01",
+  "limit": 10000
+}
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01", "number":10}' \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/create | jq .
+
+ORDER_ID="ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0"
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+
+{
+  "customer_id": "customer01",
+  "number": 10,
+  "order_id": "ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0",
+  "status": "pending"
+}
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+
+
+{
+  "customer_id": "customer01",
+  "number": 10,
+  "order_id": "ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0",
+  "status": "accepted"
+}
+
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01"}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+
+{
+  "credit": 1000,
+  "customer_id": "customer01",
+  "limit": 10000
+}
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01", "number":95}' \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/create | jq .
+
+{
+  "customer_id": "customer01",
+  "number": 95,
+  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
+  "status": "pending"
+}
+
+
+ORDER_ID="fa29381d-e349-4cef-b8e7-da296a4d87a6"
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+
+
+{
+  "customer_id": "customer01",
+  "number": 95,
+  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
+  "status": "rejected"
+}
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01"}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+  
+{
+  "credit": 1000,
+  "customer_id": "customer01",
+  "limit": 10000
+}
 ```
 
 ## 3. Synchronous orchestration パターン
