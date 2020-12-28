@@ -39,7 +39,7 @@ cd $HOME
 git clone https://github.com/GoogleCloudPlatform/transactional-microservice-examples
 ```
 
-## 2. Choreography-based saga パターン
+## 2. Choreography-based saga パターンによるトランザクションの実装
 
 このセクションで実施する内容
 
@@ -381,8 +381,180 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 クレジットの使用量は先ほどと変わっていないことがわかります。
 
-## 3. Synchronous orchestration パターン
+## 3. Synchronous orchestration パターンによるトランザクションの実装
+
+このセクションで実施する内容
+
+- Cloud Run へのサービスのデプロイ
+- Workflows へのワークフローのデプロイ
+- 同期トランザクションの動作確認
+
+### Cloud Run へのサービスのデプロイ
+
+次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-sync`）、Customer サービス（サービス名 `customer-sync`）、
+および、Order processor サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
+
+```
+cd $HOME/transactional-microservice-examples/services/order-sync
+gcloud builds submit --tag gcr.io/$PROJECT_ID/order-service-sync
+gcloud run deploy order-service-sync \
+  --image gcr.io/$PROJECT_ID/order-service-sync \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+cd $HOME/transactional-microservice-examples/services/customer-sync
+gcloud builds submit --tag gcr.io/$PROJECT_ID/customer-service-sync
+gcloud run deploy customer-service-sync \
+  --image gcr.io/$PROJECT_ID/customer-service-sync \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+cd $HOME/transactional-microservice-examples/services/order-processor
+gcloud builds submit --tag gcr.io/$PROJECT_ID/order-processor-service
+gcloud run deploy order-processor-service \
+  --image gcr.io/$PROJECT_ID/order-processor-service \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated \
+  --set-env-vars "PROJECT_ID=$PROJECT_ID"
+```
+
+> Workflows は現在ベータ版のためクライアントライブラリーが用意されておらず、Order processor サービスから
+ワークフローを実行する際は、REST API を直接に呼び出しています。この際、API の URL にプロジェクト ID が含まれるため、
+上記のコマンドの最終行では、環境変数 PROJECT_ID を通じて Project ID をコードに受け渡しています。
+
+### Workflows へのワークフローのデプロイ
+
+ワークフローから Cloud Run 上のサービス（Order サービス `order-service-sync`、および、Customer サービス `customer-service-sync`）
+の API を呼び出す際は、適切な権限を持ったサービスアカウントを紐づける必要があります。ここでは、
+先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用します。
+
+次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、
+サービス `order-service-sync`、および、`customer-service-sync` に対して、`run.invoker` と `run.viewer` の
+ロールを持つように設定しています。
+
+```
+SERVICE_ACCOUNT_NAME="cloud-run-invoker"
+SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+
+SERVICE_NAME="order-service-sync"
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+    --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+    --role=roles/run.invoker \
+    --platform=managed --region=us-central1
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+    --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+    --role=roles/run.viewer \
+    --platform=managed --region=us-central1
+
+SERVICE_NAME="customer-service-sync"
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+    --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+    --role=roles/run.invoker \
+    --platform=managed --region=us-central1
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+    --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+    --role=roles/run.viewer \
+    --platform=managed --region=us-central1
+```
+
+> Workflows から Cloud Run のサービスを呼び出す際は、`run.invoker` に加えて、`run.viewer` のロールが
+必要になります。
+
+次のコマンドを実行して、ワークフローのテンプレート [order_workflow.yaml.template](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/order-processor/order_workflow.yaml.template)に、
+Order サービスと Customer サービスのエンドポイントを書き込んで、デプロイ可能なワークフローのファイルを作成します。
+
+```
+SERVICE_NAME="customer-service-sync"
+CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+SERVICE_NAME="order-service-sync"
+ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    
+cd $HOME/transactional-microservice-examples/services/order-processor
+cp order_workflow.yaml.template order_workflow.yaml
+sed -i "s#ORDER-SERVICE-URL#${ORDER_SERVICE_URL}#" order_workflow.yaml
+sed -i "s#CUSTOMER-SERVICE-URL#${CUSTOMER_SERVICE_URL}#" order_workflow.yaml
+```
+
+次のコマンドを実行して、ワークフローをデプロイします。ここでは、サービスアカウント `cloud-run-invoker` の権限で
+ワークフローを実行するように設定しています。
+
+```
+gcloud beta workflows deploy order_workflow \
+  --source=order_workflow.yaml \
+  --service-account=$SERVICE_ACCOUNT_EMAIL
+```
+
+デプロイしたワークフローの情報は、Cloud Console の「[ワークフロー](https://console.cloud.google.com/workflows)」メニューから
+確認することができます。
+
+### 同期トランザクションの動作確認
+
+```
+SERVICE_NAME="customer-service-sync"
+CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+
+SERVICE_NAME="order-service-sync"
+ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+
+SERVICE_NAME="order-processor-service"
+ORDER_PROCESSOR_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
 
 
-## 4. Firebase hosting による Web アプリケーションの利用
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer02", "limit":10000}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/limit | jq .
+
+{
+  "credit": 0,
+  "customer_id": "customer02",
+  "limit": 10000
+}
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer02", "number":10}' \
+  -s ${ORDER_PROCESSOR_URL}/api/v1/order/process | jq .
+
+{
+  "customer_id": "customer02",
+  "number": 10,
+  "order_id": "61c0726f-5e36-4d0a-a828-240469eddd60",
+  "status": "accepted"
+}
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer02"}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+
+{
+  "credit": 1000,
+  "customer_id": "customer02",
+  "limit": 10000
+}
+
+
+
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer02", "number":95}' \
+  -s ${ORDER_PROCESSOR_URL}/api/v1/order/process | jq .
+  
+{
+  "customer_id": "customer02",
+  "number": 95,
+  "order_id": "8cc2b711-c1be-471a-8adf-188cd5d583bd",
+  "status": "rejected"
+}
+```
+
+## 4. Firebase hosting による Web アプリケーションのデプロイ
 
