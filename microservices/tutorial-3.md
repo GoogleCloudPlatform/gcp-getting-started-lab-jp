@@ -210,7 +210,7 @@ firebase deploy
 
 <img src="https://raw.githubusercontent.com/GoogleCloudPlatform/transactional-microservice-examples/main/frontend/docs/img/screenshot03.png" width="720px">
 
-1〜2分待ってから実行すると、オーダーの状態は「accepted」になります。
+トランザクションが完了するまで、オーダーの状態は「pending」になります。1〜2分待ってから実行すると、オーダーの状態は「accepted」に変わります。
 
 ### 同期サービスを用いてトランザクションを実行
 
