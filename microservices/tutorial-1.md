@@ -1,4 +1,4 @@
-# ハンズオン：Microservices development on GCP
+# ハンズオン：GCP のサーバーレスコンポーネントを利用したマイクロサービス開発入門
 
 ## 1. 事前準備
 
