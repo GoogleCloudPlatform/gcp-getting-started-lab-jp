@@ -1,4 +1,4 @@
-# ハンズオン：Transactional workflows in microservices architecture (Frontend application)
+# ハンズオン：マイクロサービスにおけるトランザクションの実装（２）
 
 ## 1. 事前準備
 
