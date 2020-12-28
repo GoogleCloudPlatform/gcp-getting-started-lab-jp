@@ -83,7 +83,7 @@ Resolving deltas: 100% (657/657), done.
 
 ### ローカル環境でのアプリの動作確認
 
-次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリケーション [main.py](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/main.py) をローカル環境で実行しています。この API は、名前を受け取って、対応する定型メッセージを返します。
+次のコマンドを実行します。ここでは、簡単な REST API を提供するサンプルアプリケーション [main.py](hello_world/main.py) をローカル環境で実行しています。この API は、名前を受け取って、対応する定型メッセージを返します。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/hello_world
