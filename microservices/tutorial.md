@@ -551,32 +551,69 @@ Created subscription [projects/microservices-hands-on/subscriptions/push-storage
 
 ### Cloud Storage の Pub/Sub 通知設定と動作確認
 
+Cloud Storage のバケットを作成して、ファイルがアップロードされると Pub/Sub にイベントを発行するように通知設定を行います。
+
+はじめに次のコマンドを実行して、バケットを作成します。
+
 ```
 BUCKET=gs://${PROJECT_ID}-photostore
 gsutil mb -l us-central1 $BUCKET
 ```
 
+*コマンドの出力例*
 ```
 Creating gs://microservices-hands-on-photostore/...
 ```
+
+次のコマンドを実行して、トピック `storage-event` への通知設定を行います。ファイルのアップロードだけではなく、削除や更新などの際もイベントが発行されます。
 
 ```
 gsutil notification create -t storage-event -f json $BUCKET
 ```
 
+*コマンドの出力例*
 ```
 Created notification config projects/_/buckets/microservices-hands-on-photostore/notificationConfigs/1
 ```
+
+次のコマンドを実行して、バケットにファイルをアップロードします。
 
 ```
 curl -s -o /tmp/faulkner.jpg https://cloud.google.com/vision/docs/images/faulkner.jpg
 gsutil cp /tmp/faulkner.jpg $BUCKET/
 ```
+
+*コマンドの出力例*
 ```
 Copying file:///tmp/faulkner.jpg [Content-Type=image/jpeg]...
 - [1 files][163.1 KiB/163.1 KiB]
 Operation completed over 1 objects/163.1 KiB.
 ```
+
+> サービス `storage-logging-service` は、次のコードで受け取ったイベントを処理します。メッセージのメタデータから、
+ファイルのアップロードイベント（`OBJECT_FINALIZE`）を識別して、メッセージ本体に含まれるデータにタイムスタンプを加えたものを Datastore に保存します。
+
+[`main.py`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/storage_logging/main.py)
+```
+    envelope = request.get_json()
+    message = envelope['message']
+    attributes = message['attributes'] # Event meta data
+    if attributes['eventType'] != 'OBJECT_FINALIZE':
+        resp = {'message': 'This is Not a file upload event.'}
+        return resp, 200
+
+    data = json.loads(base64.b64decode(message['data']).decode('utf-8')) # Event body
+    data['timestamp'] = datetime.datetime.utcnow()  # Add timestamp
+
+    incomplete_key = ds_client.key('StorageLog')   # Create a new key for kind 'StorageLog'.
+    event_entity = datastore.Entity(key=incomplete_key) # Create a new entity.
+    event_entity.update(data)                 # Update the entity's contents.
+    ds_client.put(event_entity)               # Store the entity in Datastore.
+```
+
+Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」
+から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルを
+アップロードした際に保存されたエンティティが確認できます。
 
 ## 5. Cloud Scheduler による定期的な処理の実行
 
