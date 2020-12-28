@@ -393,6 +393,9 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」
 から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
 
+> Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメント
+では、「種類」と訳されていることもあります。
+
 ## 4. Cloud PubSub による非同期通信
 
 このセクションで実施する内容
@@ -615,7 +618,22 @@ Cloud Console の「[データストア](https://console.cloud.google.com/datast
 から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルを
 アップロードした際に保存されたエンティティが確認できます。
 
-## 5. Cloud Scheduler による定期的な処理の実行
+## 5. Cloud Scheduler による定期処理
+
+このセクションで実施する内容
+
+- Cloud Scheduler の設定と動作確認
+
+### Cloud Scheduler の設定と動作確認
+
+先ほどのセクションでデプロイしたサービス `storage-logging-service` には、API `api/v1/purge` を GET メソッドで呼び出すと、
+3分以上前のログを Datastore から削除する機能が実装されています。Cloud Scheduler を用いて、この機能を定期実行します。
+
+Cloud Scheduler から Cloud Run にデプロイしたサービスを呼び出すには、適切な権限を持ったサービスアカウントを紐づけておく必要があります。
+ここでは、以前のセクションで作成したサービスアカウント `cloud-run-invoker` を再利用することにします。
+
+はじめに次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、
+Cloud Run にデプロイしたサービス `storage-logging-service` に対して、`run.invoker` ロールを持つように設定しています。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
@@ -627,6 +645,7 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
     --platform=managed --region=us-central1
 ```
 
+*コマンドの出力例*
 ```
 Updated IAM policy for service [storage-logging-service].
 bindings:
@@ -636,6 +655,10 @@ bindings:
 etag: BwW3fMnVPdw=
 version: 1
 ```
+
+次のコマンドを実行して、Cloud Scheduler に新しいジョブスケジュールを定義します。ここでは、
+サービスアカウント `cloud-run-invoker` を用いて、サービス `storage-logging-service` の API `api/v1/purge` を
+１分ごとに呼び出すように設定しています。
 
 ```
 SERVICE_URL=$(gcloud run services list --platform managed \
@@ -647,3 +670,10 @@ gcloud scheduler jobs create http event-publisher-scheduler \
        --oidc-service-account-email=$SERVICE_ACCOUNT_EMAIL \
        --oidc-token-audience=$SERVICE_URL/api/v1/purge
 ```       
+
+Cloud Console の「[Cloud Scheduler](https://console.cloud.google.com/scheduler)」メニューからジョブの定義と
+実行結果を確認します。「今すぐ実行」をクリックして、ジョブを実行することもできます。ジョブの実行に成功すると、3分以上前に
+保存されたログが Datastore から削除されています。Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの
+「エンティティ」から、「種類」に「StorageLog」を選択して、古いエンティティが削除されていることを確認してください。
+
+>エンティティの確認画面では、画面右上のリフレッシュボタンを押すと最新の情報が反映されます。
