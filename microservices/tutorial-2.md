@@ -591,6 +591,3 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 先ほどと同様に、すぐに最終結果が返ります。ここでは、オーダーの状態は、`rejected` に
 なっています。
-
-## 4. Firebase hosting による Web アプリケーションのデプロイ
-
