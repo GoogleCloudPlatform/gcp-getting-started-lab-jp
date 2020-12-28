@@ -460,7 +460,7 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
 > Workflows から Cloud Run のサービスを呼び出す際は、`run.invoker` に加えて、`run.viewer` のロールが
 必要になります。
 
-次のコマンドを実行して、ワークフローのテンプレート [order_workflow.yaml.template](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/order-processor/order_workflow.yaml.template)に、
+次のコマンドを実行して、ワークフローのテンプレート [order_workflow.yaml.template](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/order-processor/order_workflow.yaml.template) に、
 Order サービスと Customer サービスのエンドポイントを書き込んで、デプロイ可能なワークフローのファイルを作成します。
 
 ```
