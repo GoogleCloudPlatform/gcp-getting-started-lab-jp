@@ -173,6 +173,8 @@ gcloud scheduler jobs create http event-publisher-scheduler \
 
 ### 非同期トランザクションの動作確認
 
+次のコマンドを実行して、Order サービス、Customer サービス、それぞれのエンドポイントを環境変数に保存します。
+
 ```
 SERVICE_NAME="customer-service-async"
 CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
@@ -180,119 +182,204 @@ CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
 SERVICE_NAME="order-service-async"
 ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
     --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+```
 
+次のコマンドを実行して、新規のカスタマー情報を作成します。ここでは、クレジットの利用上限を 10,000 に設定しています。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer01", "limit":10000}' \
   -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/limit | jq .
+```
 
-
+*実行結果の例*
+```
 {
   "credit": 0,
   "customer_id": "customer01",
   "limit": 10000
 }
+```
 
+次のコマンドを実行して、カスタマー情報を取得します。作成時と同じ情報が得られます。
 
-
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer01"}' \
   -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+```
 
-
+*実行結果の例*
+```
 {
   "credit": 0,
   "customer_id": "customer01",
   "limit": 10000
 }
+```
 
+次のコマンドを実行して、新規のオーダーリクエストを発行します。ここでは、発注数を 10 に指定しています。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer01", "number":10}' \
   -s ${ORDER_SERVICE_URL}/api/v1/order/create | jq .
+```
 
-ORDER_ID="ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0"
-
-curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  -H "Content-Type: application/json" \
-  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
-  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
-
+*実行結果の例*
+```
 {
   "customer_id": "customer01",
   "number": 10,
   "order_id": "ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0",
   "status": "pending"
 }
+```
 
+上記の実行結果では、オーダー ID `ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0` が割り当てられており、
+オーダーの状態は `pending` になっています。
+
+この後で使用するため、次のコマンドを実行して、表示されたオーダー ID を環境変数に保存します。
+（オーダー ID の値は実際の出力結果に合わせて変更してください。）
+
+```
+ORDER_ID="ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0"
+```
+
+次のコマンドを実行して、オーダーの状態を確認します。
+
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
   -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+```
 
+*実行結果の例*
+```
+{
+  "customer_id": "customer01",
+  "number": 10,
+  "order_id": "ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0",
+  "status": "pending"
+}
+```
 
+オーダーの状態が `pending` の場合は、トランザクションの処理がまだ完了していません。
+1〜2 分待ってから、再度、次のコマンドを実行してオーダーの状態を確認します。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+```
+
+*実行結果の例*
+```
 {
   "customer_id": "customer01",
   "number": 10,
   "order_id": "ca7eff1e-b8ed-47f3-a79b-95ffda31f3b0",
   "status": "accepted"
 }
+```
 
+オーダーの状態が `accepted` になっていれば、トランザクションは完了しています。
 
+次のコマンドを実行して、カスタマー情報を確認します。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer01"}' \
   -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+```
 
-{
-  "credit": 1000,
-  "customer_id": "customer01",
-  "limit": 10000
-}
-
-curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  -H "Content-Type: application/json" \
-  -d '{"customer_id":"customer01", "number":95}' \
-  -s ${ORDER_SERVICE_URL}/api/v1/order/create | jq .
-
-{
-  "customer_id": "customer01",
-  "number": 95,
-  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
-  "status": "pending"
-}
-
-
-ORDER_ID="fa29381d-e349-4cef-b8e7-da296a4d87a6"
-
-curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  -H "Content-Type: application/json" \
-  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
-  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
-
-
-{
-  "customer_id": "customer01",
-  "number": 95,
-  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
-  "status": "rejected"
-}
-
-curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  -H "Content-Type: application/json" \
-  -d '{"customer_id":"customer01"}' \
-  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
-  
+*実行結果の例*
+```
 {
   "credit": 1000,
   "customer_id": "customer01",
   "limit": 10000
 }
 ```
+
+オーダーが受け入れらたので、クレジットの使用量が 1,000 に増加しています。
+（Customer サービスには、「オーダー数 x 100」のクレジットを使用するというビジネスロジックが
+実装されています。）
+
+
+続いて、クレジットの利用上限を超えるオーダーをリクエストを発行してみます。次のコマンドを実行して、
+発注数を 95 に指定したオーダーリクエストを発行します。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01", "number":95}' \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/create | jq .
+```
+
+*実行結果の例*
+```
+{
+  "customer_id": "customer01",
+  "number": 95,
+  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
+  "status": "pending"
+}
+```
+
+次のコマンドを実行して、表示されたオーダー ID（この例では `fa29381d-e349-4cef-b8e7-da296a4d87a6`）を
+環境変数に保存します。
+
+```
+ORDER_ID="fa29381d-e349-4cef-b8e7-da296a4d87a6"
+```
+
+1〜2 分待ってから、次のコマンドを実行してオーダーの状態を確認します。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d "{\"customer_id\":\"customer01\", \"order_id\":\"$ORDER_ID\"}" \
+  -s ${ORDER_SERVICE_URL}/api/v1/order/get | jq .
+```
+
+*実行結果の例*
+```
+{
+  "customer_id": "customer01",
+  "number": 95,
+  "order_id": "fa29381d-e349-4cef-b8e7-da296a4d87a6",
+  "status": "rejected"
+}
+```
+
+オーダーの状態は、`rejected` になっていることがわかります。
+
+次のコマンドを実行してユーザー情報を確認します。
+
+```
+curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":"customer01"}' \
+  -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+```
+
+*実行結果の例*
+```
+{
+  "credit": 1000,
+  "customer_id": "customer01",
+  "limit": 10000
+}
+```
+
+クレジットの使用量は先ほどと変わっていないことがわかります。
 
 ## 3. Synchronous orchestration パターン
 
