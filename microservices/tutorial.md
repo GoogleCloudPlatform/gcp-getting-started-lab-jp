@@ -504,7 +504,7 @@ gcloud iam service-accounts create $SERVICE_ACCOUNT_NAME \
 Created service account [cloud-run-invoker].
 ```
 
-サービスアカウントは、e-mail アドレスで識別されます。次のコマンドを実行して、サービスアカウント `cloud-run-invoker` の e-mail アドレスを環境変数に保存しておきます。
+サービスアカウントは e-mail アドレスで識別されます。次のコマンドを実行して、サービスアカウント `cloud-run-invoker` の e-mail アドレスを環境変数に保存しておきます。
 
 ```
 SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
