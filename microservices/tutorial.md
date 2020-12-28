@@ -407,12 +407,59 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。
 PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
 
+次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/storage_logging/Dockerfile) に
+従って、コンテナイメージをビルドしています。
+
+```
+cd $HOME/gcp-getting-started-lab-jp/microservices/storage_logging
+gcloud builds submit --tag gcr.io/$PROJECT_ID/storage-logging-service
+```
+
+*コマンドの出力例*
+```
+Creating temporary tarball archive of 4 file(s) totalling 2.3 KiB before compression.
+Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/1609114643.194448-6fd1aaa87c1641ffa5366058e6cf6312.tgz]
+
+...中略...
+
+DONE
+------------------------------------------------------------------------------------------------------------------------
+
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                IMAGES                                                           STATUS
+6fb28c89-a470-440f-a107-b3049be5d77e  2020-12-28T00:17:25+00:00  33S       gs://microservices-hands-on_cloudbuild/source/1609114643.194448-6fd1aaa87c1641ffa5366058e6cf6312.tgz  gcr.io/microservices-hands-on/storage-logging-service (+1 more)  SUCCESS
+```
+
+次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`storage-logging-service` を指定しています。
+
+```
+gcloud run deploy storage-logging-service \
+  --image gcr.io/$PROJECT_ID/storage-logging-service \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+```
+
+*コマンドの出力例*
+```
+Deploying container to Cloud Run service [storage-logging-service] in project [microservices-hands-on] region [us-central1]
+✓ Deploying new service... Done.                                                           
+  ✓ Creating Revision...
+  ✓ Routing traffic...
+Done.
+Service [storage-logging-service] revision [storage-logging-service-00001-qed] has been deployed and is serving 100 percent of traffic.
+Service URL: https://storage-logging-service-tf5atlwfza-uc.a.run.app
+```
+
 ### PubSub トピックの作成とトークン作成ロールの設定
 
 次のコマンドを実行します。ここでは、`storage-event` という名前の PubSub トピックを作成しています。
 
 ```
 gcloud pubsub topics create storage-event
+```
+
+*コマンドの出力例*
+```
+Created topic [projects/microservices-hands-on/topics/storage-event].
 ```
 
 この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、PubSub は内部的に API 認証のアクセストークンを取得する必要があります。このため、PubSub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを取得する権限を設定しておきます。
@@ -426,31 +473,78 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --role=roles/iam.serviceAccountTokenCreator
 ```
 
+*コマンドの出力例*
+```
+Updated IAM policy for project [microservices-hands-on].
+bindings:
+
+...（中略）...
+
+- members:
+  - serviceAccount:service-104350195296@gcp-sa-pubsub.iam.gserviceaccount.com
+  role: roles/iam.serviceAccountTokenCreator
+
+...（以下省略）...
+```
+
 ### Push サブスクリプションの作成
+
+先ほど作成したトピック `storage-event` に Push サブスクリプションを作成して、`storage-logging-service` の API を呼び出すように設定します。この際、Cloud Run の API を呼び出す権限を持ったサービスアカウントを作成して、Push サブスクリプションに紐づけておく必要があります。
+
+まずはじめに、次のコマンドで新しいサービスアカウント `cloud-run-invoker` を作成します。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
 gcloud iam service-accounts create $SERVICE_ACCOUNT_NAME \
   --display-name "Cloud Run Invoker"
 ```
+
+*コマンドの出力例*
+```
+Created service account [cloud-run-invoker].
+```
+
+サービスアカウントは、e-mail アドレスで識別されます。次のコマンドを実行して、サービスアカウント `cloud-run-invoker` の e-mail アドレスを環境変数に保存しておきます。
+
 ```
 SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
+次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、Cloud Run にデプロイしたサービス `storage-logging-service` に対して、`run.invoker` ロールを持つように設定しています。
+
 ```
 SERVICE_NAME="storage-logging-service"
-SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
-
 gcloud run services add-iam-policy-binding $SERVICE_NAME \
   --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
   --role=roles/run.invoker \
   --platform=managed --region=us-central1
+```
 
-gcloud pubsub subscriptions create push-order-to-customer \
-  --topic order-service-event \
+*コマンドの出力例*
+```
+Updated IAM policy for service [storage-logging-service].
+bindings:
+- members:
+  - serviceAccount:cloud-run-invoker@microservices-hands-on.iam.gserviceaccount.com
+  role: roles/run.invoker
+etag: BwW3e2-7tbA=
+version: 1
+```
+
+最後に、次のコマンドを実行して、Push サブスクリプション `push-storage-event` を作成します。ここでは、サービスアカウント `cloud-run-invoker` の権限で `storage-logging-service` サービスの API `api/v1/pubsub` にメッセージを POST するように設定しています。
+
+```
+SERVICE_URL=$(gcloud run services list --platform managed \
+  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+gcloud pubsub subscriptions create push-storage-event \
+  --topic storage-event \
   --push-endpoint=$SERVICE_URL/api/v1/pubsub \
   --push-auth-service-account=$SERVICE_ACCOUNT_EMAIL
+```
+
+*コマンドの出力例*
+```
+Created subscription [projects/microservices-hands-on/subscriptions/push-storage-event].
 ```
 
 ### Cloud Storage の Pub/Sub 通知設定と動作確認
