@@ -136,7 +136,7 @@ curl -X POST \
 
 ### Cloud Build によるコンテナイメージのビルド
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/hello_world/Dockerfile) に
+次のコマンドを実行します。ここでは、[Dockerfile](hello_world/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 > Dockerfile の末尾 `CMD exec gunicorn ...` から分かるように、このイメージでは、[Gunicorn](https://gunicorn.org/) を用いてアプリケーションを起動します。
@@ -259,9 +259,9 @@ Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メ�
 
 ここでは、ユーザーが自分の名前とメッセージを登録できる、簡易的なメッセージボードのアプリケーションをデプロイします。登録したデータは、Cloud Datastore に保存されます。
 
-> Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
+> Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](message_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/Dockerfile) に
+次のコマンドを実行します。ここでは、[Dockerfile](message_board/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 ```
@@ -312,7 +312,7 @@ Service URL: https://message-board-service-tf5atlwfza-uc.a.run.app
     query.order = ['timestamp']             # Add a sort condition.
 ```
 
-この検索に必要なインデックス [`index.yaml`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/message_board/index.yaml) を事前に定義しておく必要があります。次のコマンドを実行して、インデックスを定義します。
+この検索に必要なインデックス [`index.yaml`](message_board/index.yaml) を事前に定義しておく必要があります。次のコマンドを実行して、インデックスを定義します。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/message_board
@@ -410,7 +410,7 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。
 PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
 
-次のコマンドを実行します。ここでは、[Dockerfile](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/storage_logging/Dockerfile) に
+次のコマンドを実行します。ここでは、[Dockerfile](storage_logging/Dockerfile) に
 従って、コンテナイメージをビルドしています。
 
 ```
@@ -596,7 +596,7 @@ Operation completed over 1 objects/163.1 KiB.
 > サービス `storage-logging-service` は、次のコードで受け取ったイベントを処理します。メッセージのメタデータから、
 ファイルのアップロードイベント（`OBJECT_FINALIZE`）を識別して、メッセージ本体に含まれるデータにタイムスタンプを加えたものを Datastore に保存します。
 
-[`main.py`](https://github.com/enakai00/gcp-getting-started-lab-jp/blob/master/microservices/storage_logging/main.py)
+[`main.py`](storage_logging/main.py)
 ```
     envelope = request.get_json()
     message = envelope['message']
