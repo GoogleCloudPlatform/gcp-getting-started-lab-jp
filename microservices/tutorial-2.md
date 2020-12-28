@@ -491,63 +491,96 @@ gcloud beta workflows deploy order_workflow \
 
 ### 同期トランザクションの動作確認
 
-```
-SERVICE_NAME="customer-service-sync"
-CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+次のコマンドを実行して、Order サービス、Customer サービス、および、Order processor サービス、
+それぞれのエンドポイントを環境変数に保存します。
 
+```
 SERVICE_NAME="order-service-sync"
 ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
+    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+
+SERVICE_NAME="customer-service-sync"
+CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
     --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
 
 SERVICE_NAME="order-processor-service"
 ORDER_PROCESSOR_URL=$(gcloud run services list --platform managed \
     --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+```
 
+次のコマンドを実行して、新規のカスタマー情報を作成します。ここでは、クレジットの利用上限を 10,000 に設定しています。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer02", "limit":10000}' \
   -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/limit | jq .
+```
 
+*実行結果の例*
+```
 {
   "credit": 0,
   "customer_id": "customer02",
   "limit": 10000
 }
+```
 
+次のコマンドを実行して、新規のオーダーリクエストを発行します。ここでは、発注数を 10 に指定しています。
+Order サービスではなく、Order processor サービスにリクエストを送信している点に注意してください。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer02", "number":10}' \
   -s ${ORDER_PROCESSOR_URL}/api/v1/order/process | jq .
+```
 
+*実行結果の例*
+```
 {
   "customer_id": "customer02",
   "number": 10,
   "order_id": "61c0726f-5e36-4d0a-a828-240469eddd60",
   "status": "accepted"
 }
+```
 
+ワークフローを用いて、同期的にトランザクションがおこなわれるため、すぐに最終結果が返ります。
+ここでは、オーダーの状態は、`accepted` になっていることがわかります。
 
+次のコマンドを実行して、カスタマー情報を確認します。
+
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer02"}' \
   -s ${CUSTOMER_SERVICE_URL}/api/v1/customer/get | jq .
+```
 
+*実行結果の例*
+```
 {
   "credit": 1000,
   "customer_id": "customer02",
   "limit": 10000
 }
+```
 
+オーダーが受け入れらたので、クレジットの使用量が 1,000 に増加しています。
 
+続いて、クレジットの利用上限を超えるオーダーをリクエストを発行します。
+次のコマンドを実行して、 発注数を 95 に指定したオーダーリクエストを発行します。
 
+```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"customer_id":"customer02", "number":95}' \
   -s ${ORDER_PROCESSOR_URL}/api/v1/order/process | jq .
-  
+``` 
+
+*実行結果の例*
+```
 {
   "customer_id": "customer02",
   "number": 95,
@@ -555,6 +588,9 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   "status": "rejected"
 }
 ```
+
+先ほどと同様に、すぐに最終結果が返ります。ここでは、オーダーの状態は、`rejected` に
+なっています。
 
 ## 4. Firebase hosting による Web アプリケーションのデプロイ
 
