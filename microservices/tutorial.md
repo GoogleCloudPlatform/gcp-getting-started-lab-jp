@@ -547,6 +547,66 @@ gcloud pubsub subscriptions create push-storage-event \
 Created subscription [projects/microservices-hands-on/subscriptions/push-storage-event].
 ```
 
+作成したトピック、および、サブスクリプションの情報は、Cloud Console の「[Pub/Sub](https://console.cloud.google.com/cloudpubsub)」メニューから確認できます。
+
 ### Cloud Storage の Pub/Sub 通知設定と動作確認
 
-## Cloud Scheduler による定期的な処理の実行
+```
+BUCKET=gs://${PROJECT_ID}-photostore
+gsutil mb -l us-central1 $BUCKET
+```
+
+```
+Creating gs://microservices-hands-on-photostore/...
+```
+
+```
+gsutil notification create -t storage-event -f json $BUCKET
+```
+
+```
+Created notification config projects/_/buckets/microservices-hands-on-photostore/notificationConfigs/1
+```
+
+```
+curl -s -o /tmp/faulkner.jpg https://cloud.google.com/vision/docs/images/faulkner.jpg
+gsutil cp /tmp/faulkner.jpg $BUCKET/
+```
+```
+Copying file:///tmp/faulkner.jpg [Content-Type=image/jpeg]...
+- [1 files][163.1 KiB/163.1 KiB]
+Operation completed over 1 objects/163.1 KiB.
+```
+
+## 5. Cloud Scheduler による定期的な処理の実行
+
+```
+SERVICE_ACCOUNT_NAME="cloud-run-invoker"
+SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+SERVICE_NAME="storage-logging-service"
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+    --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
+    --role=roles/run.invoker \
+    --platform=managed --region=us-central1
+```
+
+```
+Updated IAM policy for service [storage-logging-service].
+bindings:
+- members:
+  - serviceAccount:cloud-run-invoker@microservices-hands-on.iam.gserviceaccount.com
+  role: roles/run.invoker
+etag: BwW3fMnVPdw=
+version: 1
+```
+
+```
+SERVICE_URL=$(gcloud run services list --platform managed \
+  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+gcloud scheduler jobs create http event-publisher-scheduler \
+       --schedule='* * * * *' \
+       --http-method=GET \
+       --uri=$SERVICE_URL/api/v1/purge \
+       --oidc-service-account-email=$SERVICE_ACCOUNT_EMAIL \
+       --oidc-token-audience=$SERVICE_URL/api/v1/purge
+```       
