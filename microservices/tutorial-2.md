@@ -39,7 +39,7 @@ cd $HOME
 git clone https://github.com/GoogleCloudPlatform/transactional-microservice-examples
 ```
 
-## 2. Choreography-based saga パターンによるトランザクションの実装
+## 2. Choreography-based saga パターンによる非同期トランザクションの実装
 
 このセクションで実施する内容
 
@@ -381,7 +381,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 クレジットの使用量は先ほどと変わっていないことがわかります。
 
-## 3. Synchronous orchestration パターンによるトランザクションの実装
+## 3. Synchronous orchestration パターンによる同期トランザクションの実装
 
 このセクションで実施する内容
 
