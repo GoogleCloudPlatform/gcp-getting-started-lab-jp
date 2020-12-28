@@ -661,9 +661,10 @@ version: 1
 １分ごとに呼び出すように設定しています。
 
 ```
+SERVICE_NAME="storage-logging-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
   --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
-gcloud scheduler jobs create http event-publisher-scheduler \
+gcloud scheduler jobs create http log-purge-job \
        --schedule='* * * * *' \
        --http-method=GET \
        --uri=$SERVICE_URL/api/v1/purge \
