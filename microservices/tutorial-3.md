@@ -1,11 +1,11 @@
-# ハンズオン：Transactional workflows in microservices architecture
+# ハンズオン：Transactional workflows in microservices architecture (Frontend application)
 
 ## 1. 事前準備
 
 ### 前提ハンズオンの完了
 
-このハンズオンは、[tutorial-1.md](tutorial-1.md) の内容を完了した後に、続けて実施する前提になります。
-[tutorial-1.md](tutorial-1.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
+このハンズオンは、[tutorial-2.md](tutorial-2.md) の内容を完了した後に、続けて実施する前提になります。
+[tutorial-2.md](tutorial-2.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
 
 ### Cloud Shell の起動
 
@@ -27,3 +27,22 @@ Updated property [core/project].
 ```
 
 **注意：作業中に新しい Cloud Shell 端末を開いた場合は、必ず、最初にこのコマンドを実行してください。**
+
+>GitHub リポジトリの内容は、Cloud Shell のディレクトリー `$HOME/transactional-microservice-examples` に
+クローンしてあるものとします。
+
+## 2. Firebase hosting による Web アプリケーションのデプロイ
+
+このセクションで実施する内容
+
+- OAuth 2.0 クライアントの作成
+- Web アプリケーションのビルドとデプロイ
+- Web アプリケーションの動作確認
+
+### OAuth 2.0 クライアントの作成
+
+
+### Web アプリケーションのビルドとデプロイ
+
+### Web アプリケーションの動作確認
+
