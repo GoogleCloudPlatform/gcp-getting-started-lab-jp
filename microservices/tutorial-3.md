@@ -79,7 +79,142 @@ Cloud Console の[「APIとサービス」](https://console.cloud.google.com/api
 CLIENT_ID=[Client ID]
 ```
 
+次のコマンドを実行して、Web アプリケーションからアクセスする Cloud Run のサービスを再デプロイします。
+
+```
+gcloud run deploy order-service-async \
+  --image gcr.io/$PROJECT_ID/order-service-async \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+gcloud run deploy customer-service-async \
+  --image gcr.io/$PROJECT_ID/customer-service-async \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+gcloud run deploy order-service-sync \
+  --image gcr.io/$PROJECT_ID/order-service-sync \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+gcloud run deploy customer-service-sync \
+  --image gcr.io/$PROJECT_ID/customer-service-sync \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated
+
+gcloud run deploy order-processor-service \
+  --image gcr.io/$PROJECT_ID/order-processor-service \
+  --platform=managed --region=us-central1 \
+  --no-allow-unauthenticated \
+  --set-env-vars "PROJECT_ID=$PROJECT_ID"
+```
+
+> この作業は、先ほど作成したクライアント ID を Cloud Run のサービスから認識させるために必要になります。
+
 ### Web アプリケーションのビルドとデプロイ
+
+次のコマンドを実行して、Web アプリケーションをビルドします。
+
+```
+cd $HOME/transactional-microservice-examples/frontend
+gcloud builds submit . --config=cloudbuild.yaml
+```
+
+ビルドされたバイナリーは、Cloud Storage に保存されています。
+次のコマンドを実行して、Cloud Shell のローカルディレクトリーにコピーします。
+
+```
+gsutil -m cp -r gs://${PROJECT_ID}-web-frontend-example-assets/build ./web_frontend_example/
+```
+
+Firebase hosting の管理操作を行うため、次のコマンドを実行して、Google アカウントの認証を行います。
+
+```
+firebase login --reauth --no-localhost
+```
+
+認証用のリンクが表示されるので、ブラウザーでリンクを開き、プロジェクトオーナーの Google アカウントで認証してください。
+表示された認証コードをコピペして、Cloud Shell に入力すると認証が完了します。
+
+> 認証用のリンクを開いた際に「認証エラー（エラー 400: invalid_request / Required parameter is missing: response_type）」
+と表示された場合は、リンクのURLが正しく入力されていない可能性があります。テキストエディタなどにリンクをペーストして、正しくリンクが
+コピーできているか確認してください。
+
+次のコマンドを実行して、Firebase hosting の環境を初期化します。
+
+```
+cd $HOME/transactional-microservice-examples/frontend
+mkdir firebase_hosting
+cd firebase_hosting
+firebase init hosting
+```
+
+最後のコマンドを実行すると、セットアップメニューが表示されるので、次の手順に従って、設定を完了してください。
+
+1. 「Add Firebase to an existing Google Cloud Platform project」を選択します。
+
+2. 「Please input the ID of the Google Cloud Project you would like to add Firebase:」に対して、
+このハンズオンで使用しているプロジェクト ID を入力します。
+
+3. 「What do you want to use as your public directory?」は、[Enter] で次に進みます。
+
+4. 「Configure as a single-page app (rewrite all urls to /index.html)?」は、[Enter] で次に進みます。
+
+5. 「Set up automatic builds and deploys with GitHub?」は、[Enter] で次に進みます。
+
+6. 「Firebase initialization complete!」と表示されれば、セットアップは完了です。
+
+次のコマンドを実行して、ビルドした Web アプリケーションを Firebase hosting にデプロイします。
+ここでは、先ほど環境変数 `CLIENT_ID` に設定したクライアント ID を HTML ファイルに書き込んだ上でデプロイしています。
+
+```
+cp -r ../web_frontend_example/build/web/* public/
+sed -i "s/__CLIENT_ID__/$CLIENT_ID/" public/index.html
+cp ../firebase/firebase.json ./
+firebase deploy
+```
+
+`Hosting URL` に表示された URL（`https://[Project ID].web.app`）をブラウザで開くと、
+デプロイした Web アプリケーションが利用できます。
+
 
 ### Web アプリケーションの動作確認
 
+
+Open the `Hosting URL` url on your browser. Click [Sign in with Google] and sign in
+with your Google account. You must use the account that is the GCP project owner.
+
+### Create a new customer entry
+
+Click "Customer" on the left menu, and select "limit" from the pull down menu.
+Set "customer_id" and "limit" as in the screenshot and click [Send!].
+You can choose the synchronous service (Sync) or the asynchronous service (Async)
+with the slide switch. The result will be the same for both services.
+
+<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot01.png" width="720px">
+
+### Submit an order using the asynchronous service
+
+Click "Order" on the left menu. Choose "Async" with the slide switch, and select
+"create" from the pull down menu. Set "customer_id" and "number" as in the screenshot
+and click [Send!]. The response shows that the order status is "pending" for now.
+Take note of the "order_id".
+
+<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot02.png" width="720px">
+
+### Get the order status
+
+Select "get" from the pull down menu. Set "customer_id" and "order_id" as in the
+screenshot. The "order_id" should be replaced with the one that you took note in the
+previous step. Click [Send!]. If the order status is still "pending", wait a few minutes
+and click [Send!] again. Eventually, the status becomes "accepted".
+
+<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot03.png" width="720px">
+
+### Submit an order using the synchronous service
+
+Click "Order" on the left menu. Choose "Sync" with the slide switch, and select
+"process" (not "create") from the pull down menu. Set "customer_id" and "number" as in
+the screenshot and click [Send!]. The response shows that the order status is "accepted".
+
+<img src="https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/frontend/docs/img/screenshot04.png" width="720px">
