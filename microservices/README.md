@@ -4,4 +4,4 @@
 
 This directory contains hands-on lab material for microservices development on GCP.
 
-See [tutorial.md](tutorial.md) for more details.
+See [tutorial-1.md](tutorial-1.md) and [tutorial-2.md](tutorial-2.md) for more details.
