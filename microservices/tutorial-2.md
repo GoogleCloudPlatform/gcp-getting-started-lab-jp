@@ -39,7 +39,7 @@ cd $HOME
 git clone https://github.com/GoogleCloudPlatform/transactional-microservice-examples
 ```
 
-## 2. Choreography-saga パターン
+## 2. Choreography-based saga パターン
 
 このセクションで実施する内容
 
