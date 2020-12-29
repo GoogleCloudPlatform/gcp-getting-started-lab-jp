@@ -388,7 +388,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
+Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「[エンティティ](https://console.cloud.google.com/datastore/entities)」から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
 
 > Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメントでは、「種類」と訳されていることもあります。
 
