@@ -164,9 +164,9 @@ ID                                    CREATE_TIME                DURATION  SOURC
 
 ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを開いて確認することができます。
 
-ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを開いて、保存されたイメージを確認することができます。次のコマンドで確認することもできます。
+ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを開いて、保存されたイメージを確認することができます。次のように、コマンドで確認することもできます。
 
-イメージの一覧を表示します。
+次のコマンドを実行して、イメージの一覧を表示します。
 ```
 gcloud container images list
 ```
@@ -176,7 +176,7 @@ NAME
 gcr.io/microservices-hands-on/hello-world-service
 ```
 
-特定のイメージのタグを表示します。
+次のコマンドを実行して、特定のイメージのタグを表示します。
 ```
 gcloud container images list-tags gcr.io/$PROJECT_ID/hello-world-service
 ```
