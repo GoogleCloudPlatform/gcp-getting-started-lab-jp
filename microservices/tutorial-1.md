@@ -226,6 +226,8 @@ echo $SERVICE_URL
 https://hello-world-service-tf5atlwfza-uc.a.run.app
 ```
 
+>表示されるエンドポイントの URL は、デプロイ時にユニークなアドレスが自動で割り当てられます。
+
 POST メソッドでデータを送信して、動作を確認します。次のコマンドを実行します。
 
 ```
