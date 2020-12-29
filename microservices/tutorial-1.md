@@ -322,9 +322,11 @@ gcloud datastore indexes create index.yaml --quiet
 *コマンドの出力例*
 ```
 Configurations to update:
+
 descriptor:      [index.yaml]
 type:            [datastore indexes]
 target project:  [microservices-hands-on]
+
 .... 100%...done.
 ```
 
