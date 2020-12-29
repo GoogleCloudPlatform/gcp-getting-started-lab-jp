@@ -607,7 +607,7 @@ Operation completed over 1 objects/163.1 KiB.
     ds_client.put(event_entity)               # Store the entity in Datastore.
 ```
 
-Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルをアップロードした際に保存されたエンティティが確認できます。
+Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「[エンティティ](https://console.cloud.google.com/datastore/entities)」から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルをアップロードした際に保存されたエンティティが確認できます。
 
 ## 5. Cloud Scheduler による定期処理
 
