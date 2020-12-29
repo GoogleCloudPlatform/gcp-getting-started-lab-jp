@@ -12,8 +12,7 @@ GCP プロジェクトを新規作成します。このハンズオンは、プ�
 
 ### Cloud Datastore の有効化
 
-Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューを
-開いて、「DATASTORE モードを選択」をクリックします。
+Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューを開いて、「DATASTORE モードを選択」をクリックします。
   
 「ロケーションを選択」には「us-east1 (South Carolina)」を選択して、「データベースを作成」をクリックします。
 
@@ -21,8 +20,7 @@ Cloud Console から「[データストア](https://console.cloud.google.com/dat
 
 これ以降の作業は、基本的には、Cloud Shell 端末でのコマンド操作で行います。
 
-Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。
-（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
+Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
 
 ```
 PROJECT_ID=[your project ID]
@@ -164,11 +162,9 @@ ID                                    CREATE_TIME                DURATION  SOURC
 40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
 ```
 
-ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを
-開いて確認することができます。
+ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを開いて確認することができます。
 
-ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを
-開いて、保存されたイメージを確認することができます。次のコマンドで確認することもできます。
+ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを開いて、保存されたイメージを確認することができます。次のコマンドで確認することもできます。
 
 イメージの一覧を表示します。
 ```
@@ -247,11 +243,9 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 ここでは、`gcloud auth print-identity-token` で取得したアクセストークンを用いて認証を行っています。
 この場合は、gcloud コマンドを実行したユーザーアカウントの権限でトークンが取得されます。
 
-> GCP 上で稼働するアプリケーションからアクセスする際は、アプリケーションに紐づいたサービスアカウントの権限でトークンを取得します。
-外部のクライアントからアクセスする際は、OAuth 2.0 を用いて Google アカウントのユーザー認証を行うことで、トークンが取得できるようになります。
+> GCP 上で稼働するアプリケーションからアクセスする際は、アプリケーションに紐づいたサービスアカウントの権限でトークンを取得します。外部のクライアントからアクセスする際は、OAuth 2.0 を用いて Google アカウントのユーザー認証を行うことで、トークンが取得できるようになります。
 
-Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メニューを開くと、デプロイされたサービスの状態やアクセスログを確認することができます。
-一定時間アクセスが無いと、コンテナが自動停止する様子もログから確認できます。
+Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メニューを開くと、デプロイされたサービスの状態やアクセスログを確認することができます。一定時間アクセスが無いと、コンテナが自動停止する様子もログから確認できます。
 
 ## 3. Cloud Datastore によるデータの永続化
 
@@ -266,8 +260,7 @@ Cloud Console から「[Cloud Run](https://console.cloud.google.com/run/)」メ�
 
 > Python のアプリケーションから Cloud Datastore にアクセスするには、google-cloud-datastore パッケージに含まれるクライアントライブラリを使用します。そのため、コンテナイメージを作成する際に、[requirements.txt](message_board/requirements.txt) で google-cloud-datastore パッケージをインストールしています。
 
-次のコマンドを実行します。ここでは、[Dockerfile](message_board/Dockerfile) に
-従って、コンテナイメージをビルドしています。
+次のコマンドを実行します。ここでは、[Dockerfile](message_board/Dockerfile) に従って、コンテナイメージをビルドしています。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/message_board
@@ -333,9 +326,7 @@ target project:  [microservices-hands-on]
 .... 100%...done.
 ```
 
-コマンド出力からは、インデックスの作成が完了したように見えますが、実際にはバックグラウンドで作成処理が継続しています。
-Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「インデックス」
-を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
+コマンド出力からは、インデックスの作成が完了したように見えますが、実際にはバックグラウンドで作成処理が継続しています。Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「インデックス」を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
 
 > 適切なインデックスを作成せずに検索を実行するとエラーが発生します。その際、コンテナの実行ログに、必要なインデックスの定義を示すエラーメッセージが表示されます。
 
@@ -360,9 +351,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -s ${SERVICE_URL}/api/v1/store | jq .
 ```
 
-> 最後の `jq` コマンドは出力された JSON 文字列を整形するためのものです。JSON 文字列以外を受け取った場合は、
-`parse error: Invalid numeric literal at line 1, column 10` のようなメッセージが表示されます。
-このような場合は、`jq` コマンドを取り除いて、整形前の出力メッセージを確認してください。
+> 最後の `jq` コマンドは出力された JSON 文字列を整形するためのものです。JSON 文字列以外を受け取った場合は、`parse error: Invalid numeric literal at line 1, column 10` のようなメッセージが表示されます。このような場合は、`jq` コマンドを取り除いて、整形前の出力メッセージを確認してください。
 
 *コマンドの出力例*
 ```
@@ -395,11 +384,9 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」
-から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
+Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
 
-> Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメント
-では、「種類」と訳されていることもあります。
+> Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメントでは、「種類」と訳されていることもあります。
 
 ## 4. Cloud PubSub による非同期通信
 
@@ -412,11 +399,9 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 
 ### コンテナイメージのビルドとデプロイ
 
-ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。
-PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
+ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
 
-次のコマンドを実行します。ここでは、[Dockerfile](storage_logging/Dockerfile) に
-従って、コンテナイメージをビルドしています。
+次のコマンドを実行します。ここでは、[Dockerfile](storage_logging/Dockerfile) に従って、コンテナイメージをビルドしています。
 
 ```
 cd $HOME/gcp-getting-started-lab-jp/microservices/storage_logging
@@ -598,8 +583,7 @@ Copying file:///tmp/faulkner.jpg [Content-Type=image/jpeg]...
 Operation completed over 1 objects/163.1 KiB.
 ```
 
-> サービス `storage-logging-service` は、次のコードで受け取ったイベントを処理します。メッセージのメタデータから、
-ファイルのアップロードイベント（`OBJECT_FINALIZE`）を識別して、メッセージ本体に含まれるデータにタイムスタンプを加えたものを Datastore に保存します。
+> サービス `storage-logging-service` は、次のコードで受け取ったイベントを処理します。メッセージのメタデータから、ファイルのアップロードイベント（`OBJECT_FINALIZE`）を識別して、メッセージ本体に含まれるデータにタイムスタンプを加えたものを Datastore に保存します。
 
 [`main.py`](storage_logging/main.py)
 ```
@@ -619,9 +603,7 @@ Operation completed over 1 objects/163.1 KiB.
     ds_client.put(event_entity)               # Store the entity in Datastore.
 ```
 
-Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」
-から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルを
-アップロードした際に保存されたエンティティが確認できます。
+Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から、イベントの情報が記録されていることを確認します。「種類」に「StorageLog」を選択すると、先ほどファイルをアップロードした際に保存されたエンティティが確認できます。
 
 ## 5. Cloud Scheduler による定期処理
 
@@ -631,14 +613,11 @@ Cloud Console の「[データストア](https://console.cloud.google.com/datast
 
 ### Cloud Scheduler の設定と動作確認
 
-先ほどのセクションでデプロイしたサービス `storage-logging-service` には、API `api/v1/purge` を GET メソッドで呼び出すと、
-3分以上前のログを Datastore から削除する機能が実装されています。Cloud Scheduler を用いて、この機能を定期実行します。
+先ほどのセクションでデプロイしたサービス `storage-logging-service` には、API `api/v1/purge` を GET メソッドで呼び出すと、3分以上前のログを Datastore から削除する機能が実装されています。Cloud Scheduler を用いて、この機能を定期実行します。
 
-Cloud Scheduler から Cloud Run にデプロイしたサービスを呼び出すには、適切な権限を持ったサービスアカウントを紐づけておく必要があります。
-ここでは、以前のセクションで作成したサービスアカウント `cloud-run-invoker` を再利用することにします。
+Cloud Scheduler から Cloud Run にデプロイしたサービスを呼び出すには、適切な権限を持ったサービスアカウントを紐づけておく必要があります。ここでは、以前のセクションで作成したサービスアカウント `cloud-run-invoker` を再利用することにします。
 
-はじめに次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、
-Cloud Run にデプロイしたサービス `storage-logging-service` に対して、`run.invoker` ロールを持つように設定しています。
+はじめに次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、Cloud Run にデプロイしたサービス `storage-logging-service` に対して、`run.invoker` ロールを持つように設定しています。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
@@ -661,9 +640,7 @@ etag: BwW3fMnVPdw=
 version: 1
 ```
 
-次のコマンドを実行して、Cloud Scheduler に新しいジョブスケジュールを定義します。ここでは、
-サービスアカウント `cloud-run-invoker` を用いて、サービス `storage-logging-service` の API `api/v1/purge` を
-１分ごとに呼び出すように設定しています。
+次のコマンドを実行して、Cloud Scheduler に新しいジョブスケジュールを定義します。ここでは、サービスアカウント `cloud-run-invoker` を用いて、サービス `storage-logging-service` の API `api/v1/purge` を１分ごとに呼び出すように設定しています。
 
 ```
 SERVICE_NAME="storage-logging-service"
@@ -677,9 +654,6 @@ gcloud scheduler jobs create http log-purge-job \
        --oidc-token-audience=$SERVICE_URL/api/v1/purge
 ```       
 
-Cloud Console の「[Cloud Scheduler](https://console.cloud.google.com/scheduler)」メニューからジョブの定義と
-実行結果を確認します。「今すぐ実行」をクリックして、ジョブを実行することもできます。ジョブの実行に成功すると、3分以上前に
-保存されたログが Datastore から削除されています。Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの
-「エンティティ」から、「種類」に「StorageLog」を選択して、古いエンティティが削除されていることを確認してください。
+Cloud Console の「[Cloud Scheduler](https://console.cloud.google.com/scheduler)」メニューからジョブの定義と実行結果を確認します。「今すぐ実行」をクリックして、ジョブを実行することもできます。ジョブの実行に成功すると、3分以上前に保存されたログが Datastore から削除されています。Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から、「種類」に「StorageLog」を選択して、古いエンティティが削除されていることを確認してください。
 
 >エンティティの確認画面では、画面右上のリフレッシュボタンを押すと最新の情報が反映されます。
