@@ -40,7 +40,7 @@ Updated property [core/project].
 
 ### API の有効化
 
-次のコマンドを実行します。ここでは、Cloud Build, Cloud Run, Cloud Scheduler, Workflows, の API を有効化しています。
+次のコマンドを実行します。ここでは、Cloud Build, Cloud Run, Cloud Scheduler, Workflows の API を有効化しています。
 
 ```
 gcloud services enable \
