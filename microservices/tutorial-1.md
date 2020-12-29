@@ -388,7 +388,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「[エンティティ](https://console.cloud.google.com/datastore/entities)」から確認できます。「種類」に「Message」を選択すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
+Datastore に保存されたデータは、Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「[エンティティ](https://console.cloud.google.com/datastore/entities)」から確認できます。「種類」に「Message」を入力すると、先ほど保存したデータが表示されます。「名前/ID」の列は自動で割り当てられた Key を示します。
 
 > Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメントでは、「種類」と訳されていることもあります。
 
@@ -658,6 +658,6 @@ gcloud scheduler jobs create http log-purge-job \
        --oidc-token-audience=$SERVICE_URL/api/v1/purge
 ```       
 
-Cloud Console の「[Cloud Scheduler](https://console.cloud.google.com/scheduler)」メニューからジョブの定義と実行結果を確認します。「今すぐ実行」をクリックして、ジョブを実行することもできます。ジョブの実行に成功すると、3分以上前に保存されたログが Datastore から削除されています。Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「エンティティ」から、「種類」に「StorageLog」を選択して、古いエンティティが削除されていることを確認してください。
+Cloud Console の「[Cloud Scheduler](https://console.cloud.google.com/cloudscheduler)」メニューからジョブの定義と実行結果を確認します。「今すぐ実行」をクリックして、ジョブを実行することもできます。ジョブの実行に成功すると、3分以上前に保存されたログが Datastore から削除されています。Cloud Console の「[データストア](https://console.cloud.google.com/datastore)」メニューの「[エンティティ](https://console.cloud.google.com/datastore/entities)」から、「種類」に「StorageLog」を入力して、古いエンティティが削除されていることを確認してください。
 
 >エンティティの確認画面では、画面右上のリフレッシュボタンを押すと最新の情報が反映されます。
