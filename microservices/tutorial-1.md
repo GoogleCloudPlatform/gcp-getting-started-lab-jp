@@ -59,7 +59,7 @@ Operation "operations/acf.411c0bde-0c11-47af-979a-2cc1680b5650" finished success
 
 ```
 cd $HOME
-git clone https://github.com/enakai00/gcp-getting-started-lab-jp
+git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp
 ```
 
 *コマンドの出力例*
