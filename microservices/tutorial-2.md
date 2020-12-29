@@ -48,7 +48,7 @@ git clone https://github.com/GoogleCloudPlatform/transactional-microservice-exam
 
 ### Cloud Run へのサービスのデプロイ
 
-次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-async`）、Customer サービス（サービス名 `customer-async`）、および、Event publisher サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
+次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-service-async`）、Customer サービス（サービス名 `customer-service-async`）、および、Event publisher サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
 
 ```
 cd $HOME/transactional-microservice-examples/services/order-async
@@ -376,7 +376,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 ### Cloud Run へのサービスのデプロイ
 
-次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-sync`）、Customer サービス（サービス名 `customer-sync`）、および、Order processor サービス（サービス名 `order-processor`）について、それぞれのイメージのビルドとデプロイを行っています。
+次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-service-sync`）、Customer サービス（サービス名 `customer-service-sync`）、および、Order processor サービス（サービス名 `order-processor-service`）について、それぞれのイメージのビルドとデプロイを行っています。
 
 ```
 cd $HOME/transactional-microservice-examples/services/order-sync
