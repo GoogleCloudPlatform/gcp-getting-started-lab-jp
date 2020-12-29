@@ -392,18 +392,18 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 
 > Cloud Datastore では、一般のデータベースのテーブルに相当するものを「Kind」と呼びます。日本語では「カインド」といいますが、公式の日本語ドキュメントでは、「種類」と訳されていることもあります。
 
-## 4. Cloud PubSub による非同期通信
+## 4. Cloud Pub/Sub による非同期通信
 
 このセクションで実施する内容
 
 - コンテナイメージのビルドとデプロイ
-- PubSub トピックの作成とトークン作成ロールの設定
+- Pub/Sub トピックの作成とトークン作成ロールの設定
 - Push サブスクリプションの作成
 - Cloud Storage の Pub/Sub 通知設定と動作確認
 
 ### コンテナイメージのビルドとデプロイ
 
-ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubSub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。PubSub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
+ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubS/ub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。Pub/Sub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
 
 次のコマンドを実行します。ここでは、[Dockerfile](storage_logging/Dockerfile) に従って、コンテナイメージをビルドしています。
 
@@ -446,9 +446,9 @@ Service [storage-logging-service] revision [storage-logging-service-00001-qed] h
 Service URL: https://storage-logging-service-tf5atlwfza-uc.a.run.app
 ```
 
-### PubSub トピックの作成とトークン作成ロールの設定
+### Pub/Sub トピックの作成とトークン作成ロールの設定
 
-次のコマンドを実行します。ここでは、`storage-event` という名前の PubSub トピックを作成しています。
+次のコマンドを実行します。ここでは、`storage-event` という名前の Pub/Sub トピックを作成しています。
 
 ```
 gcloud pubsub topics create storage-event
@@ -459,9 +459,9 @@ gcloud pubsub topics create storage-event
 Created topic [projects/microservices-hands-on/topics/storage-event].
 ```
 
-この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、PubSub は内部的に API 認証のアクセストークンを取得する必要があります。このため、PubSub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを取得する権限を設定しておきます。
+この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、Pub/Sub は内部的に API 認証のアクセストークンを取得する必要があります。このため、Pub/Sub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを取得する権限を設定しておきます。
 
-次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、PubSub のサービスアカウントが、プロジェクト全体に対して、`iam.serviceAccountTokenCreator` ロールを持つように設定しています。
+次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、Pub/Sub のサービスアカウントが、プロジェクト全体に対して、`iam.serviceAccountTokenCreator` ロールを持つように設定しています。
 
 ```
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format "value(projectNumber)")
