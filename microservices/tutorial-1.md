@@ -110,7 +110,7 @@ python3 main.py
 
 >Cloud Shell 端末画面の上部にある「＋」ボタンで新しいタブが開きます。
 
-次のコマンドを実行します。
+次のコマンドを実行します。ベース URL に GET メソッドでアクセスすると、サービス名を示すメッセージが返ります。
 
 ```
 curl http://localhost:8080
@@ -121,7 +121,7 @@ curl http://localhost:8080
 Hello world service.
 ```
 
-次は、POST メソッドでデータを送信します。次のコマンドを実行します。
+次は、POST メソッドで API `api/v1/hello` にデータを送信します。次のコマンドを実行します。
 
 ```
 curl -X POST \
