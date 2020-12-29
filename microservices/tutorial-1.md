@@ -6,6 +6,9 @@
 
 GCP プロジェクトを新規作成します。このハンズオンは、プロジェクトオーナーの権限で作業を進める前提ですので、自分専用のプロジェクトを用意するようにしてください。
 
+**参考**
+- [Cloud Console を開く](https://console.cloud.google.com/)
+- [Cloud Shell の使用方法](https://cloud.google.com/shell/docs/using-cloud-shell)
 
 ### Cloud Datastore の有効化
 
