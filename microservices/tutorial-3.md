@@ -48,7 +48,7 @@ Cloud Console の[「APIとサービス」](https://console.cloud.google.com/api
 
 1. 「OAuth 同意画面」では、次の情報を入力した後に、「保存して次へ」をクリックします。
 
- - アプリ名：任意の名称（例えば、`transaction demo`）を入力します。
+ - アプリ名：任意の名前（例えば、`transaction demo`）を入力します。
  - ユーザーサポートメール：プロジェクトオーナーの Google アカウントのメールアドレスを選択します。
  - デベロッパーの連絡先情報：任意のメールアドレスを入力します。
 
@@ -67,7 +67,9 @@ Cloud Console の[「APIとサービス」](https://console.cloud.google.com/api
 
 1. 「アプリケーションの種類」に「ウェブアプリケーション」を選択します。
 
-2. 「認証済のJavaScript生成元」の下にある「URIを追加」をクリックして、URI に `https://[PROJECT ID].web.app` を入力します。（`[PROJECT ID]` の部分は、実際のプロジェクト ID に置き換えてください。）
+2. 「名前」に任意の名前（例えば、`web client`）を入力します。
+
+2. 「承認済のJavaScript生成元」の下にある「URIを追加」をクリックして、URI に `https://[PROJECT ID].web.app` を入力します。（`[PROJECT ID]` の部分は、実際のプロジェクト ID に置き換えてください。）
 
 3. 「作成」をクリックします。
 
