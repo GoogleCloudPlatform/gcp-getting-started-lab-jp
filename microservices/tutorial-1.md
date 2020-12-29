@@ -34,7 +34,7 @@ gcloud config set project $PROJECT_ID
 Updated property [core/project].
 ```
 
-**注意：作業中に新しい Cloud Shell 端末を開いた場合は、必ず、最初にこのコマンドを実行してください。**
+**注意：作業中に新しい Cloud Shell 端末を開いた場合は、必ず、最初に上記のコマンドを実行して、環境変数 PROJECT_ID とデフォルトプロジェクトを正しく設定ください。**
 
 ### API の有効化
 
