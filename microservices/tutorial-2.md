@@ -4,15 +4,13 @@
 
 ### 前提ハンズオンの完了
 
-このハンズオンは、[tutorial-1.md](tutorial-1.md) の内容を完了した後に、続けて実施する前提になります。
-[tutorial-1.md](tutorial-1.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
+このハンズオンは、[tutorial-1.md](tutorial-1.md) の内容を完了した後に、続けて実施する前提になります。[tutorial-1.md](tutorial-1.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
 
 ### Cloud Shell の起動
 
 これ以降の作業は、基本的には、Cloud Shell 端末でのコマンド操作で行います。
 
-Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。
-（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
+Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
 
 ```
 PROJECT_ID=[your project ID]
@@ -50,8 +48,7 @@ git clone https://github.com/GoogleCloudPlatform/transactional-microservice-exam
 
 ### Cloud Run へのサービスのデプロイ
 
-次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-async`）、Customer サービス（サービス名 `customer-async`）、
-および、Event publisher サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
+次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-async`）、Customer サービス（サービス名 `customer-async`）、および、Event publisher サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
 
 ```
 cd $HOME/transactional-microservice-examples/services/order-async
@@ -81,16 +78,14 @@ gcloud run deploy event-publisher \
 フォーマットで、Project ID を含めて指定する必要があります。上記のコマンドの最終行では、環境変数 `PROJECT_ID` を通じて Project ID を
 コードに受け渡しています。
 
-次のコマンドを実行して、Event publisher サービスがイベントデータベースの検索に使用する
-インデックス [index.yaml](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/event-publisher/index.yaml) を作成します。
+次のコマンドを実行して、Event publisher サービスがイベントデータベースの検索に使用するインデックス [index.yaml](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/event-publisher/index.yaml) を作成します。
 
 ```
 cd $HOME/transactional-microservice-examples/services/event-publisher
 gcloud datastore indexes create index.yaml --quiet
 ```
 
-Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「インデックス」
-を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
+Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「[インデックス](https://console.cloud.google.com/datastore/indexes)」を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
 
 ### Cloud Pub/Sub の設定
 
@@ -101,10 +96,7 @@ gcloud pubsub topics create order-service-event
 gcloud pubsub topics create customer-service-event
 ```
 
-次のコマンドを実行して、Order サービスがイベントを発行するトピック `order-service-event` に対して、Customer サービスの API を
-呼び出す Push サブスクリプション `push-order-to-customer` を定義します。ここでは、先のハンズオンで作成した
-サービスアカウント `cloud-run-invoker` を再利用して、Customer サービスの API を呼び出す権限を設定した上で、P
-ush サブスクリプションに紐づけています。
+次のコマンドを実行して、Order サービスがイベントを発行するトピック `order-service-event` に対して、Customer サービスの API を呼び出す Push サブスクリプション `push-order-to-customer` を定義します。ここでは、先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用して、Customer サービスの API を呼び出す権限を設定した上で、Push サブスクリプションに紐づけています。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
@@ -127,8 +119,7 @@ gcloud pubsub subscriptions create push-order-to-customer \
 
 同様の処理を Customer サービスがイベントを発行するトピック `customer-service-event` に対しても行います。
 
-次のコマンドを実行して、トピック `customer-service-event` に対して、Order サービスの API を
-呼び出す Push サブスクリプション `push-customer-to-order` を定義します。
+次のコマンドを実行して、トピック `customer-service-event` に対して、Order サービスの API を呼び出す Push サブスクリプション `push-customer-to-order` を定義します。
 
 ```
 SERVICE_NAME="order-service-async"
@@ -148,11 +139,7 @@ gcloud pubsub subscriptions create push-customer-to-order \
 
 ### Cloud Scheduler の設定
 
-次のコマンドを実行して、Cloud Scheduler のジョブスケジュールを設定します。ここでは、
-Event publisher サービス `event-publisher` を 1 分ごとに呼び出して、イベントデータベースに
-記録されたイベントメッセージを Pub/Sub に発行するように設定しています。
-また、先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用して、
-Event publisher サービスの API を呼び出す権限を設定した上で、ジョブスケジュールに紐づけています。
+次のコマンドを実行して、Cloud Scheduler のジョブスケジュールを設定します。ここでは、Event publisher サービス `event-publisher` を 1 分ごとに呼び出して、イベントデータベースに記録されたイベントメッセージを Pub/Sub に発行するように設定しています。また、先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用して、Event publisher サービスの API を呼び出す権限を設定した上で、ジョブスケジュールに紐づけています。
 
 ```
 SERVICE_NAME="event-publisher"
@@ -268,8 +255,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-オーダーの状態が `pending` の場合は、トランザクションの処理がまだ完了していません。
-1〜2 分待ってから、再度、次のコマンドを実行してオーダーの状態を確認します。
+オーダーの状態が `pending` の場合は、トランザクションの処理がまだ完了していません。1〜2 分待ってから、再度、次のコマンドを実行してオーダーの状態を確認します。
 
 ```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
@@ -308,13 +294,10 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-オーダーが受け入れらたので、クレジットの使用量が 1,000 に増加しています。
-（Customer サービスには、「オーダー数 x 100」のクレジットを使用するというビジネスロジックが
-実装されています。）
+オーダーが受け入れらたので、クレジットの使用量が 1,000 に増加しています。（Customer サービスには、「オーダー数 x 100」のクレジットを使用するというビジネスロジックが実装されています。）
 
 
-続いて、クレジットの利用上限を超えるオーダーをリクエストを発行してみます。次のコマンドを実行して、
-発注数を 95 に指定したオーダーリクエストを発行します。
+続いて、クレジットの利用上限を超えるオーダーをリクエストを発行してみます。次のコマンドを実行して、発注数を 95 に指定したオーダーリクエストを発行します。
 
 ```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
@@ -333,8 +316,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-次のコマンドを実行して、表示されたオーダー ID（この例では `fa29381d-e349-4cef-b8e7-da296a4d87a6`）を
-環境変数に保存します。
+次のコマンドを実行して、表示されたオーダー ID（この例では `fa29381d-e349-4cef-b8e7-da296a4d87a6`）を環境変数に保存します。
 
 ```
 ORDER_ID="fa29381d-e349-4cef-b8e7-da296a4d87a6"
@@ -391,8 +373,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 ### Cloud Run へのサービスのデプロイ
 
-次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-sync`）、Customer サービス（サービス名 `customer-sync`）、
-および、Order processor サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
+次のコマンドを実行します。ここでは、Order サービス（サービス名 `order-sync`）、Customer サービス（サービス名 `customer-sync`）、および、Order processor サービス（サービス名 `event-publisher`）について、それぞれのイメージのビルドとデプロイを行っています。
 
 ```
 cd $HOME/transactional-microservice-examples/services/order-sync
@@ -418,19 +399,13 @@ gcloud run deploy order-processor-service \
   --set-env-vars "PROJECT_ID=$PROJECT_ID"
 ```
 
-> Workflows は現在ベータ版のためクライアントライブラリーが用意されておらず、Order processor サービスから
-ワークフローを実行する際は、REST API を直接に呼び出しています。この際、API の URL にプロジェクト ID が含まれるため、
-上記のコマンドの最終行では、環境変数 PROJECT_ID を通じて Project ID をコードに受け渡しています。
+> Workflows は現在ベータ版のためクライアントライブラリーが用意されておらず、Order processor サービスからワークフローを実行する際は、REST API を直接に呼び出しています。この際、API の URL にプロジェクト ID が含まれるため、上記のコマンドの最終行では、環境変数 PROJECT_ID を通じて Project ID をコードに受け渡しています。
 
 ### Workflows へのワークフローのデプロイ
 
-ワークフローから Cloud Run 上のサービス（Order サービス `order-service-sync`、および、Customer サービス `customer-service-sync`）
-の API を呼び出す際は、適切な権限を持ったサービスアカウントを紐づける必要があります。ここでは、
-先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用します。
+ワークフローから Cloud Run 上のサービス（Order サービス `order-service-sync`、および、Customer サービス `customer-service-sync`）の API を呼び出す際は、適切な権限を持ったサービスアカウントを紐づける必要があります。ここでは、先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用します。
 
-次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、
-サービス `order-service-sync`、および、`customer-service-sync` に対して、`run.invoker` と `run.viewer` の
-ロールを持つように設定しています。
+次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、サービスアカウント `cloud-run-invoker` が、サービス `order-service-sync`、および、`customer-service-sync` に対して、`run.invoker` と `run.viewer` のロールを持つように設定しています。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
@@ -457,11 +432,9 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
     --platform=managed --region=us-central1
 ```
 
-> Workflows から Cloud Run のサービスを呼び出す際は、`run.invoker` に加えて、`run.viewer` のロールが
-必要になります。
+> Workflows から Cloud Run のサービスを呼び出す際は、`run.invoker` に加えて、`run.viewer` のロールが必要になります。
 
-次のコマンドを実行して、ワークフローのテンプレート [order_workflow.yaml.template](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/order-processor/order_workflow.yaml.template) に、
-Order サービスと Customer サービスのエンドポイントを書き込んで、デプロイ可能なワークフローのファイルを作成します。
+次のコマンドを実行して、ワークフローのテンプレート [order_workflow.yaml.template](https://github.com/GoogleCloudPlatform/transactional-microservice-examples/blob/main/services/order-processor/order_workflow.yaml.template) に、Order サービスと Customer サービスのエンドポイントを書き込んで、デプロイ可能なワークフローのファイルを作成します。
 
 ```
 SERVICE_NAME="customer-service-sync"
@@ -477,8 +450,7 @@ sed -i "s#ORDER-SERVICE-URL#${ORDER_SERVICE_URL}#" order_workflow.yaml
 sed -i "s#CUSTOMER-SERVICE-URL#${CUSTOMER_SERVICE_URL}#" order_workflow.yaml
 ```
 
-次のコマンドを実行して、ワークフローをデプロイします。ここでは、サービスアカウント `cloud-run-invoker` の権限で
-ワークフローを実行するように設定しています。
+次のコマンドを実行して、ワークフローをデプロイします。ここでは、サービスアカウント `cloud-run-invoker` の権限でワークフローを実行するように設定しています。
 
 ```
 gcloud beta workflows deploy order_workflow \
@@ -486,13 +458,11 @@ gcloud beta workflows deploy order_workflow \
   --service-account=$SERVICE_ACCOUNT_EMAIL
 ```
 
-デプロイしたワークフローの情報は、Cloud Console の「[ワークフロー](https://console.cloud.google.com/workflows)」メニューから
-確認することができます。
+デプロイしたワークフローの情報は、Cloud Console の「[ワークフロー](https://console.cloud.google.com/workflows)」メニューから確認することができます。
 
 ### 同期トランザクションの動作確認
 
-次のコマンドを実行して、Order サービス、Customer サービス、および、Order processor サービス、
-それぞれのエンドポイントを環境変数に保存します。
+次のコマンドを実行して、Order サービス、Customer サービス、および、Order processor サービス、それぞれのエンドポイントを環境変数に保存します。
 
 ```
 SERVICE_NAME="order-service-sync"
@@ -526,8 +496,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-次のコマンドを実行して、新規のオーダーリクエストを発行します。ここでは、発注数を 10 に指定しています。
-Order サービスではなく、Order processor サービスにリクエストを送信している点に注意してください。
+次のコマンドを実行して、新規のオーダーリクエストを発行します。ここでは、発注数を 10 に指定しています。Order サービスではなく、Order processor サービスにリクエストを送信している点に注意してください。
 
 ```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
@@ -546,8 +515,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-ワークフローを用いて、同期的にトランザクションがおこなわれるため、すぐに最終結果が返ります。
-ここでは、オーダーの状態は、`accepted` になっていることがわかります。
+ワークフローを用いて、同期的にトランザクションがおこなわれるため、すぐに最終結果が返ります。ここでは、オーダーの状態は、`accepted` になっていることがわかります。
 
 次のコマンドを実行して、カスタマー情報を確認します。
 
@@ -569,8 +537,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 
 オーダーが受け入れらたので、クレジットの使用量が 1,000 に増加しています。
 
-続いて、クレジットの利用上限を超えるオーダーをリクエストを発行します。
-次のコマンドを実行して、 発注数を 95 に指定したオーダーリクエストを発行します。
+続いて、クレジットの利用上限を超えるオーダーをリクエストを発行します。次のコマンドを実行して、 発注数を 95 に指定したオーダーリクエストを発行します。
 
 ```
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
@@ -589,5 +556,4 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 }
 ```
 
-先ほどと同様に、すぐに最終結果が返ります。ここでは、オーダーの状態は、`rejected` に
-なっています。
+先ほどと同様に、すぐに最終結果が返ります。ここでは、オーダーの状態は、`rejected` になっています。
