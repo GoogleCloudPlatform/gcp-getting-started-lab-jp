@@ -488,7 +488,7 @@ bindings:
 
 先ほど作成したトピック `storage-event` に Push サブスクリプションを作成して、Cloud Run にデプロイしたサービス `storage-logging-service` の API を呼び出すように設定します。この際、Cloud Run の API を呼び出す権限を持ったサービスアカウントを作成して、Push サブスクリプションに紐づけておく必要があります。
 
-まずはじめに、次のコマンドで新しいサービスアカウント `cloud-run-invoker` を作成します。
+まずはじめに、次のコマンドを実行して、新しいサービスアカウント `cloud-run-invoker` を作成します。
 
 ```
 SERVICE_ACCOUNT_NAME="cloud-run-invoker"
