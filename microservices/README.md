@@ -1,4 +1,4 @@
-# GCP Hands on material for microservices development
+# GCP Hands-on material for microservices development
 
 **This is not an official Google product**.
 
