@@ -142,6 +142,9 @@ gcloud pubsub subscriptions create push-customer-to-order \
 次のコマンドを実行して、Cloud Scheduler のジョブスケジュールを設定します。ここでは、Event publisher サービス `event-publisher` を 1 分ごとに呼び出して、イベントデータベースに記録されたイベントメッセージを Pub/Sub に発行するように設定しています。また、先のハンズオンで作成したサービスアカウント `cloud-run-invoker` を再利用して、Event publisher サービスの API を呼び出す権限を設定した上で、ジョブスケジュールに紐づけています。
 
 ```
+SERVICE_ACCOUNT_NAME="cloud-run-invoker"
+SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+
 SERVICE_NAME="event-publisher"
 gcloud run services add-iam-policy-binding $SERVICE_NAME \
     --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
