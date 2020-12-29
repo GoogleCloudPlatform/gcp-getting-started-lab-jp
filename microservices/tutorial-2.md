@@ -6,6 +6,9 @@
 
 このハンズオンは、[tutorial-1.md](tutorial-1.md) の内容を完了した後に、続けて実施する前提になります。[tutorial-1.md](tutorial-1.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
 
+**参考**：ここで使用するアプリケーションの仕組み（トランザクション処理の実装方法）については、下記の README が参考になります。
+- [Lab: Using GCP services to execute transactional workflows in microservices architecture](https://github.com/GoogleCloudPlatform/transactional-microservice-examples)
+
 ### Cloud Shell の起動
 
 これ以降の作業は、基本的には、Cloud Shell 端末でのコマンド操作で行います。
