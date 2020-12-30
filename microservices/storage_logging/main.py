@@ -38,7 +38,7 @@ def storage_event():
     message = envelope['message']
     attributes = message['attributes'] # Event meta data
     if attributes['eventType'] != 'OBJECT_FINALIZE':
-        resp = {'message': 'This is Not a file upload event.'}
+        resp = {'message': 'This is not a file upload event.'}
         return resp, 200
 
     data = json.loads(base64.b64decode(message['data']).decode('utf-8')) # Event body
