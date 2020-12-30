@@ -242,8 +242,7 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
 {"message":"Hello, Google Cloud Platform!"}
 ```
 
-ここでは、`gcloud auth print-identity-token` で取得したアクセストークンを用いて認証を行っています。
-この場合は、gcloud コマンドを実行したユーザーアカウントの権限でトークンが取得されます。
+ここでは、`gcloud auth print-identity-token` で取得したトークンを用いて認証を行っています。この場合は、gcloud コマンドを実行したユーザーアカウントの権限でトークンが取得されます。
 
 > GCP 上で稼働するアプリケーションからアクセスする際は、アプリケーションに紐づいたサービスアカウントの権限でトークンを取得します。外部のクライアントからアクセスする際は、OAuth 2.0 を用いて Google アカウントのユーザー認証を行うことで、トークンが取得できるようになります。
 
