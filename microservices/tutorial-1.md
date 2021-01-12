@@ -164,7 +164,7 @@ ID                                    CREATE_TIME                DURATION  SOURC
 
 ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを開いて確認することができます。
 
-ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Regstry](https://console.cloud.google.com/gcr/)」メニューを開いて、保存されたイメージを確認することができます。次のように、コマンドで確認することもできます。
+ビルド済のイメージは、Cloud Container Registry に保存されています。Cloud Console から「[Container Registry](https://console.cloud.google.com/gcr/)」メニューを開いて、保存されたイメージを確認することができます。次のように、コマンドで確認することもできます。
 
 次のコマンドを実行して、イメージの一覧を表示します。
 ```
@@ -402,7 +402,7 @@ Datastore に保存されたデータは、Cloud Console の「[データスト�
 
 ### コンテナイメージのビルドとデプロイ
 
-ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を PubS/ub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。Pub/Sub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
+ここでは、Cloud Storage にファイルが保存されると、そのファイルに関する情報を Pub/Sub 経由で受け取って、Cloud Datastore に記録するアプリケーションをデプロイします。Pub/Sub からのメッセージは、Push サブスクリプションを用いて、REST API で受け取ります。
 
 次のコマンドを実行します。ここでは、[Dockerfile](storage_logging/Dockerfile) に従って、コンテナイメージをビルドしています。
 
