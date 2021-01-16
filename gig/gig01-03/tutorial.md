@@ -9,8 +9,18 @@
 <walkthrough-project-setup>
 </walkthrough-project-setup>
 
-
 ## ハンズオンの内容
+
+### 目的
+
+Firestore と Firebase を使って実装が複雑になりがちな認証、クライアントとのリアルタイム同期がスムーズに行えることを体験します。
+
+### シナリオ
+
+1. Firebase Hosting を使って静的ファイルをホスティング
+2. Firestore のデータを更新してリアルタイムにデータが更新されることを確認
+3. Firebase Authentication にて認証
+4. Firestore Security Rules を用いてログイン済みユーザのみが閲覧可能なデータを作成
 
 ### 対象プロダクト
 
@@ -24,25 +34,26 @@
 ### 下記の内容をハンズオン形式で学習します。
 
 - 環境準備: 10 分
-  - プロジェクト作成
+  - GCPプロジェクト作成
   - gcloud コマンドラインツール設定
-  - Firebase 有効化設定
-  - GCP 機能 (API) 有効化設定
+  - Firestore API 有効化
+  - Firestore Database 初期設定
+  - Firebase プロジェクト作成
 
-- []
-
-- [App Engine (GAE)](https://cloud.google.com/appengine) を用いたアプリケーション開発：60 分
-  - アプリケーションの作成
-  - Firestore を使う
-  - サーバーレス VPC アクセスの設定
-  - Memorystore for Redis を使う
-  - チャレンジ問題
+- Firebase を用いた Web アプリケーション作成: 25分
+  - Firebase CLI のインストール
+  - アプリケーションのデプロイ(Firebase Hosting)
+  - Firestore をクライアント側と同期
+  - アプリケーションの認証
+  - Firestore Security Rules を用いたセキュアなデータ管理
 
 - クリーンアップ：10 分
   - プロジェクトごと削除
-  - （オプション）個別リソースの削除
-    - Firestore の削除
-    - Memorystore の削除
+  - (オプション) 個別リソースの削除
+    - Firebase プロジェクトの削除
+      - 可能なのか
+        - yes => まるごと削除
+        - no => Firestore の削除, Firebase のアプリケーションの登録解除, Firestore Security Rulesの削除
 
 ## 環境準備
 
