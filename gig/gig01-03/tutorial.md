@@ -36,18 +36,19 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 - 環境準備: 10 分
   - GCPプロジェクト作成
   - gcloud コマンドラインツール設定
+  - Firebase CLI のインストール
   - Firestore API 有効化
-  - Firestore Database 初期設定
-  - Firebase プロジェクト作成
 
 - Firebase を用いた Web アプリケーション作成: 25分
-  - Firebase CLI のインストール
+  - Firebase CLI の初期化
+  - Firebase プロジェクト作成
+  - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
   - Firestore をクライアント側と同期
   - アプリケーションの認証
   - Firestore Security Rules を用いたセキュアなデータ管理
 
-- クリーンアップ：10 分
+- クリーンアップ: 10 分
   - プロジェクトごと削除
   - (オプション) 個別リソースの削除
     - Firebase プロジェクトの削除
@@ -60,30 +61,52 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
 
 最初に、ハンズオンを進めるための環境準備を行います。
+前回と同様の内容なので、設定完了の方はスキップしてください。
 
 下記の設定を進めていきます。
 
 - gcloud コマンドラインツール設定
-- GAE 有効化設定
-- GCP 機能（API）有効化設定
+- Firebase CLI のインストール
+- Firebase プロジェクト作成
+- Firestore API 有効化
+  - Firestore 初期設定
 
-## gcloud コマンドラインツール
+## gcloud コマンドラインツール設定
 
-GCP は、CLI、GUI、Rest API から操作が可能です。ハンズオンでは主に CLI を使い作業を行いますが、GUI で確認する URL も合わせて掲載します。
+### GCP プロジェクト ID を環境変数に設定
 
-### gcloud コマンドラインツールとは?
+`GOOGLE_CLOUD_PROJECT` に GCP プロジェクト ID を設定します。
 
-gcloud コマンドライン インターフェースは、GCP でメインとなる CLI ツールです。このツールを使用すると、コマンドラインから、またはスクリプトや他の自動化により、多くの一般的なプラットフォーム タスクを実行できます。
+```bash
+export GOOGLE_CLOUD_PROJECT="{{project-id}}"
+```
 
-たとえば、gcloud CLI を使用して、以下のようなものを作成、管理できます。
+### gcloud コマンドラインツールから利用するデフォルトプロジェクトを設定
 
-- Google App Engine アプリケーション
-- Google Compute Engine 仮想マシン
-- Google Kubernetes Engine クラスタ
+プロジェクトを設定します。
 
-**ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
+```bash
+gcloud config set project ${GOOGLE_CLOUD_PROJECT}
+```
 
-<walkthrough-footnote>次に gcloud CLI をハンズオンで利用するための設定を行います。</walkthrough-footnote>
+以下のコマンドで、現在の設定を確認できます。
+
+```bash
+gcloud config list
+```
+
+## Firebase CLI のインストール
+
+```bash
+npm install -g firebase-tools
+```
+
+## Firestore API 有効化
+
+<walkthrough-enable-apis apis="firestore"></walkthrough-enable-apis>
+
+## Firebase プロジェクト作成
+
 
 
 ## TBD
