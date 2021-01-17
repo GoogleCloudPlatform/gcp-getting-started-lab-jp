@@ -103,7 +103,12 @@ npm install -g firebase-tools
 
 ## Firestore API 有効化
 
-<walkthrough-enable-apis apis="firestore"></walkthrough-enable-apis>
+今回のハンズオンでは Firestore ネイティブモードを使用します。
+
+1. [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}})に移動します
+2. ![switch to native mode](gig/gig01-03/static/screenshot/firestore-select-mode.png) の画面よりネイティブモードを選択します
+3. ![select to nam5](gig/gig01-03/static/screenshot/firestore-select-region.png) の画面より nam5 リージョンを選択します
+
 
 ## Firebase プロジェクト作成
 
