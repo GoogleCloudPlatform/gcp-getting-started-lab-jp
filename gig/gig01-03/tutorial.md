@@ -109,6 +109,8 @@ npm install -g firebase-tools
 1. [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}})に移動します
 2. ![switch to native mode](https://storage.googleapis.com/gig-03/static/screenshot/firestore-select-mode.png) の画面よりネイティブモードを選択します
 3. ![select to nam5](https://storage.googleapis.com/gig-03/static/screenshot/firestore-select-region.png) の画面より nam5 リージョンを選択します
+4. リージョンを選択後、 *データベースを作成* ボタンをクリックします
+5. `データベースを作成しています。` というメッセージが表示され、Firestore のデータベースを表示するページにリダイレクトされます
 
 ## Firebase プロジェクト作成
 
