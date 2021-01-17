@@ -119,19 +119,35 @@ npm install -g firebase-tools
 6. ![firebase disalbe ga](https://storage.googleapis.com/gig-03/static/screenshot/firebase-disable-ga.png)今回はGoogle Analyticsを使用しないので、こちらは一旦 *有効にする* のボタンをOFFにして *Firebaseを追加* をクリックします
 7. **新しいプロジェクトの準備ができました** と表示されたらプロジェクトの作成は完了です
 
+これにて環境準備は完了です。
 
-Firebase のプロジェクトは GCP のプロジェクト作成時点では作成されていないので、新規に Firebase プロジェクトを作成します。以下のコマンドにより
+## Firebase を用いた Web アプリケーション作成
+
+<walkthrough-tutorial-duration duration=25></walkthrough-tutorial-duration>
+
+Firebase Project 上に Web アプリケーションを作成し、
+
+- Firebase Hosting
+- Firebase Authentication
+- Firestore Security Rules
+
+を連携していきます。
+
+## Firebase CLI の初期化
+
+Firebase CLI が使用できるように初期化を行います。
 
 ```bash
-firebase projects:create
+firebase login --no-localhost
 ```
 
+1. ブラウザで表示されたURLを開きます
+2. アカウントの選択画面が表示されるので Google Account を指定します
+3. ![allow Firebase CLI](https://storage.googleapis.com/gig-03/static/screenshot/allow-firebase-cli.png) *許可* をクリックします
+4. ![firebase authentication code](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-code.png) 認証コードが表示されるので、コピーし、CLIの `Paste authorization code here:` の項目にペーストします
+5. `Success! Logged in as 選択した Google Account` が表示されれば完了です
 
-`? Please specify a unique project id (warning: cannot be modified afterward) [6-30 characters]:`
-
-と聞かれるので GCP プロジェクト ID を入力してください。
-
-
+<walkthrough-footnote>`firebase login` を完了させることで、 `firebase projects:list` のように各種firebaseコマンドが利用できます</walkthrough-footnote>
 
 ## TBD
 
