@@ -314,9 +314,7 @@ firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
 
 ### Firestore Security Rules に `public` Collection の公開を設定する
 
-Cloud Editor にて Firestore Security Rules の設定ファイル `firestore.rules` を開きます。
-
-<walkthrough-editor-open-file filePath="firestore.rules">"firesture.rules" を開く</walkthrough-editor-open-file>
+Cloud Editor にて Firestore Security Rules の設定ファイル <walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/gig/gig01-03/firestore.rules">"firestore.rules"</walkthrough-editor-open-file> を開きます。 (fileへのリンクが開かない場合は、エディタのファイルペインより、直接選択してください。)
 
 
 ## TBD
