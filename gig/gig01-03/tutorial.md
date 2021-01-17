@@ -285,7 +285,13 @@ Firebase でアプリケーションを開始するためには(言い換える�
 firebase apps:create WEB gig-03
 ```
 
-*App Information* として `App ID` が出力されます。この ID を使って Firebase 上のアプリの初期設定を行います。
+*App Information* として `App ID` が出力されます。この `App ID` を使って
+
+```bash
+firebase apps:sdkconfig WEB APP_ID_PLACEHOLDER
+```
+
+`APP_ID_PLACEHOLDER` の部分を差し替えて Firebase SDK で使用する設定を取得できるか確認しておきましょう。(今回は `<script src="/__/firebase/init.js"></script>` を使用しているのでこの設定を個別に設定する箇所はありません。)
 
 ## はじめてのデプロイ
 
@@ -340,16 +346,21 @@ firebase deploy --only firestore:rules
 
 ### Firestore のデータがブラウザに反映されているか確認
 
-UIのタブに戻れば Firestore のデータが同期されているはずです
+ブラウザに戻って一度リロードすれば Firestore のデータが同期されています。
 
-#### Tips: local で変更を確認する
+### Firestore のデータをUIから変更してリアルタイム同期させる
+
+1. [Firestore の UI](https://console.cloud.google.com/firestore/data/?project={{project-id}})に移動します
+2. 先程作成したデータの `title` の値(`gig-03`)を適当に変更してみてください
+3. ブラウザに戻るとリアルタイムに値が変更されているのが確認できます
+
+#### Tips: ローカルマシンで変更を確認する
 
 ```
 firebase serve
 ```
 
-コマンドを叩くと [localhost:5000](http://localhost:5000) にサーバが立ち上がり、UI (index.html) の中身をローカル上で確認することも可能です。
-
+コマンドを叩くと [localhost:5000](http://localhost:5000) にサーバが立ち上がり、UI (index.html) のローカル上で確認することも可能です。
 
 ## TBD
 
