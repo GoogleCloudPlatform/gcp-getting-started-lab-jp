@@ -148,7 +148,11 @@ firebase login --no-localhost
 4. ![firebase authorization code](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authorization-code.png) 認可コードが表示されるので、コピーし、CLIの `Paste authorization code here:` の項目にペーストします
 5. `Success! Logged in as 選択した Google Account` が表示されれば完了です
 
-<walkthrough-footnote>`firebase login` を完了させることで、 `firebase projects:list` のように各種firebaseコマンドが利用できます</walkthrough-footnote>
+```bash
+firebase projects:list
+```
+
+こちらのコマンドで権限のある Firebase Project の一覧を確認できます。
 
 ## TBD
 
