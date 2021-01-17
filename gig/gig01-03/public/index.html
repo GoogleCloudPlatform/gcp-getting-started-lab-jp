@@ -64,6 +64,9 @@
           });
           document.getElementById('sign-out').appendChild(btn);
         } else {
+          document.querySelectorAll('#authenticated-only-data li').forEach(v => {
+            v.remove();
+          });
           document.getElementById('user').textContent = '未ログイン状態です.';
           document.getElementById('sign-out').innerHTML = '';
         }
