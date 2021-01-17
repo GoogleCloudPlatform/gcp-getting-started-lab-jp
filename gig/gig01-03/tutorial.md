@@ -50,6 +50,7 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
     - Firestore に初期データを投入
     - Firestore Security Rules を設定
     - Firestore のデータがブラウザに反映されているか確認
+  - Firebase Authentication の有効化
 
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
@@ -362,6 +363,12 @@ firebase serve
 
 コマンドを叩くと [localhost:5000](http://localhost:5000) にサーバが立ち上がり、UI (index.html) のローカル上で確認することも可能です。
 
+## Firebase Authentication の有効化
+
+1. [Firebase Authentication の設定ページ](https://console.firebase.google.com/project/{{project-id}}/authentication/providers) に移動します
+2. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
+3. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
+
 ## TBD
 
 - firebase hostingを使ってHTMLをpublishしてUIを作成する
@@ -383,7 +390,11 @@ firebase serve
 
 ## TO-DO
 
-- projectの準備
+- sign-up URLへのリンクをブラウザに表示
+- sign-inしていたらユーザ名を表示
+- privateなデータを追加
+- privateなsecurity rulesを追加
+- 後片付け
 
 ## misc
 
