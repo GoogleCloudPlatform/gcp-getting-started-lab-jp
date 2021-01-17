@@ -44,6 +44,8 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 - Firebase を用いた Web アプリケーション作成: 25分
   - Firebase CLI の初期化
   - Firebase プロジェクトの初期化
+  - Firebase Web アプリの追加
+  - はじめてのデプロイ
 
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
@@ -271,6 +273,30 @@ i  Writing gitignore file to .gitignore...
 
 が表示されれば完了です。
 
+## Firebase Web アプリの追加
+
+Firebase でアプリケーションを開始するためには(言い換えるとブラウザ、または Android , iOS 上で Firebase の機能を使ったアプリケーションを開発するためには)、はじめに Firebase プロジェクト上にアプリケーションを作成する必要があります。
+
+```bash
+firebase apps:create WEB gig-03
+```
+
+*App Information* として `App ID` が出力されます。この ID を使って Firebase 上のアプリの初期設定を行います。
+
+## はじめてのデプロイ
+
+Firebase Hosting の channel 機能を使ってはじめてのデプロイをやってみましょう。
+
+```bash
+firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
+```
+
+- `hosting:channel:deploy` コマンド: 本番デプロイのような形ではなく、一時的に有効なURLを作成して、動作確認を行うためのコマンドです
+- `{{project-id}}-first-deploy` 引数 : git で言うところの branch のような概念で、 Firebase Project に対して任意の Hosting 用 Channel を作成することが可能です
+- `--expires 30m` : 30分後に消失する設定です
+
+<walkthrough-footnote>こちらのコマンドに関しては [Advent Calender の Gossy-san の記事](https://gossy-86158.medium.com/firebase-update-summary-2020-98fd5e8f10e5)でも取り上げられているので詳細は是非こちらを御覧ください</walkthrough-footnote>
+
 
 ## TBD
 
@@ -294,3 +320,8 @@ i  Writing gitignore file to .gitignore...
 ## TO-DO
 
 - projectの準備
+
+## misc
+
+- <script src="/__/firebase/init.js"></script> を使うことで firebaseConfig の設定を省くことが可能
+
