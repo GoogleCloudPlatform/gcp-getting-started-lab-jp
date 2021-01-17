@@ -49,6 +49,7 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firestore のデータをリアルタイムに同期
     - Firestore に初期データを投入
     - Firestore Security Rules を設定
+    - Firestore のデータがブラウザに反映されているか確認
 
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
@@ -315,6 +316,39 @@ firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
 ### Firestore Security Rules に `public` Collection の公開を設定する
 
 Cloud Editor にて Firestore Security Rules の設定ファイル <walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/gig/gig01-03/firestore.rules">"firestore.rules"</walkthrough-editor-open-file> を開きます。 (fileへのリンクが開かない場合は、エディタのファイルペインより、直接選択してください。)
+
+```
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /public/{document=**} {
+      allow read: if true;
+    }
+  }
+}
+```
+
+上記の内容でファイルの中身を入れ替えます。
+
+- `match /public/{document=**}` : `public` Collection 配下のすべてのドキュメントを示します
+- `allow read: if true;` : すべてのユーザが read 可能です
+
+変更した内容を以下のコマンドを使ってデプロイしておきましょう。
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+### Firestore のデータがブラウザに反映されているか確認
+
+UIのタブに戻れば Firestore のデータが同期されているはずです
+
+#### Tips: local で変更を確認する
+
+```
+firebase serve
+```
+
+コマンドを叩くと [localhost:5000](http://localhost:5000) にサーバが立ち上がり、UI (index.html) の中身をローカル上で確認することも可能です。
 
 
 ## TBD

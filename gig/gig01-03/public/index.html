@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="/__/firebase/7.23.0/firebase.js"></script>
+    <script src="/__/firebase/init.js"></script>
+  </head>
+  <body>
+    <script>
+      const db = firebase.firestore();
+      db.collection('public').onSnapshot(v => {
+        document.querySelectorAll('#public-data li').forEach(v => {
+          v.remove();
+        });
+        v.forEach(v => {
+          const li = document.createElement('li'),
+            data = v.data();
+          li.appendChild(
+            document.createTextNode(`title: ${data.title}, startedAt: ${data.datetime.toDate()}`)
+          );
+          document.getElementById('public-data').appendChild(li);
+        })
+      });
+    </script>
+    <h1>Hello, G.I.G #3 Hands-On</h1>
+    <h2>Firestore Data</h2>
+    <h3>Public Data</h3>
+    <ul id="public-data"></ul>
+  </body>
+</html>
