@@ -1,7 +1,0 @@
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /public/{document=**} {
-      allow read: if true;
-    }
-  }
-}
