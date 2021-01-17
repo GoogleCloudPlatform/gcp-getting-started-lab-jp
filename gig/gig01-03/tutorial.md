@@ -43,6 +43,8 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 
 - Firebase を用いた Web アプリケーション作成: 25分
   - Firebase CLI の初期化
+  - Firebase プロジェクトの初期化
+
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
   - Firestore をクライアント側と同期
@@ -134,7 +136,7 @@ npm install -g firebase-tools
 
 <walkthrough-tutorial-duration duration=25></walkthrough-tutorial-duration>
 
-Firebase Project 上に Web アプリケーションを作成し、
+Firebase プロジェクト上に Web アプリケーションを作成し、
 
 - Firebase Hosting
 - Firebase Authentication
@@ -161,6 +163,114 @@ firebase projects:list
 ```
 
 こちらのコマンドで権限のある Firebase Project の一覧を確認できます。
+
+## Firebase プロジェクトの初期化
+
+```bash
+firebase init
+```
+
+対話式のコマンドが立ち上がります。
+
+### 1. 使用する Firebase CLI の選択
+
+```
+? Which Firebase CLI features do you want to set up for this folder? Press Space to select features, then Enter to confirm your choices.
+ ◯ Database: Configure Firebase Realtime Database and deploy rules
+ ◉ Firestore: Deploy rules and create indexes for Firestore
+ ◯ Functions: Configure and deploy Cloud Functions
+❯◉ Hosting: Configure and deploy Firebase Hosting sites
+ ◯ Storage: Deploy Cloud Storage security rules
+ ◯ Emulators: Set up local emulators for Firebase features
+ ◯ Remote Config: Get, deploy, and rollback configurations for Remote Config
+```
+
+矢印キーまたは j k で上下に移動し、 `Firestore` , `Hosting` を space キーで選択肢、 Enter キーで決定します。
+
+### 2. Firebase プロジェクト名の入力
+
+```
+? Please select an option: (Use arrow keys)
+❯ Use an existing project
+  Create a new project
+  Add Firebase to an existing Google Cloud Platform project
+  Don't set up a default project
+```
+
+`Use an existing project` を選択肢、決定します。
+
+```
+? Please input the project ID you would like to use:
+```
+
+先程作成した Firebase プロジェクト名 ({{project-id}}) を入力し決定します。
+
+### 3. Firestore Security Rules の設定ファイルの名前の設定
+
+```
+? What file should be used for Firestore Rules? (firestore.rules)
+```
+
+デフォルトのまま変更せずに決定します。
+
+### 4. Firestore Indexes の設定ファイルの名前の設定
+
+```
+? What file should be used for Firestore indexes? (firestore.indexes.json)
+```
+
+デフォルトのまま変更せずに決定します。
+
+### 5. デプロイの際の公開用ディレクトリの名前の設定
+
+```
+? What do you want to use as your public directory? (public)
+```
+
+デフォルトのまま変更せずに決定します。
+
+### 6. single-page app の設定
+
+```
+? Configure as a single-page app (rewrite all urls to /index.html)? (y/N)
+```
+
+N (No) を入力して決定します。
+
+### 7. Github 連携の設定
+
+```
+? Set up automatic builds and deploys with GitHub? (y/N)
+```
+
+N (No) を入力して決定します。
+
+### 8. 404.html の上書き設定
+
+```
+? File public/404.html already exists. Overwrite? (y/N)
+```
+
+今回は 404.html を別途用意してあるので N (No) を入力して決定します。
+
+### 9. index.html の上書き設定
+
+```
+? File public/index.html already exists. Overwrite? (y/N)
+```
+
+今回は index.html を別途用意してあるので N (No) を入力して決定します。
+
+```
+i  Writing configuration info to firebase.json...
+i  Writing project information to .firebaserc...
+i  Writing gitignore file to .gitignore...
+
+✔  Firebase initialization complete!
+```
+
+が表示されれば完了です。
+
 
 ## TBD
 
