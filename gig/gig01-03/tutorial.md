@@ -124,7 +124,7 @@ npm install -g firebase-tools
 
 ## Firebase で使用するリージョンの設定
 
-1. [Firebase Console 内の Setting ページ](https://console.firebase.google.com/project/{{project-id}}/settings/general) に移動します
+1. [Firebase Console 一般設定](https://console.firebase.google.com/project/{{project-id}}/settings/general) に移動します
 2. ![Firebase default location](https://storage.googleapis.com/gig-03/static/screenshot/firebase-default-location.png) *デフォルトの GCP リソースロケーション* を `nam5` に設定します
 
 これにて環境準備は完了です。
