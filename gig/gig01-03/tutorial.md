@@ -41,7 +41,7 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firebase プロジェクト作成
   - Firebase で使用するリージョンの設定
 
-- Firebase を用いた Web アプリケーション作成: 25分
+- Firebase を用いた Web アプリケーション作成: 25 分
   - Firebase CLI の初期化
   - Firebase プロジェクトの初期化
   - Firebase Web アプリの追加
@@ -52,13 +52,9 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firebase Authentication の有効化
   - Firebase Authentication による認証
 
-- クリーンアップ: 10 分
-  - プロジェクトごと削除
-  - (オプション) 個別リソースの削除
-    - Firebase プロジェクトの削除
-      - 可能なのか
-        - yes => まるごと削除
-        - no => Firestore の削除, Firebase のアプリケーションの登録解除, Firestore Security Rulesの削除
+- クリーンアップ: 5 分
+  - GCP プロジェクトごと削除
+  - (オプション) Firebase プロジェクトの削除
 
 ## 環境準備
 
@@ -415,3 +411,19 @@ firebase auth:export users.json
 1. *ログアウト* をクリックします
 2. ログイン済みユーザのみが閲覧可能が非表示になっていることを確認します
 
+## クリーンアップ
+
+### GCP プロジェクの削除
+
+GCP プロジェクトをまるごと削除できる方は
+
+```
+gcloud projects delete {{project-id}}
+```
+
+にて削除を行います。
+
+### Firebase プロジェクトの削除
+
+1. [Firebase Console 一般設定](https://console.firebase.google.com/project/korekai-da/settings/general)に移動します
+2. 画面最下部までスクロールして、 *プロジェクトを削除* をクリックします
