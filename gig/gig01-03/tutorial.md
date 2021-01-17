@@ -38,10 +38,10 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - gcloud コマンドラインツール設定
   - Firebase CLI のインストール
   - Firestore API 有効化
+  - Firebase プロジェクト作成
 
 - Firebase を用いた Web アプリケーション作成: 25分
   - Firebase CLI の初期化
-  - Firebase プロジェクト作成
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
   - Firestore をクライアント側と同期
@@ -67,9 +67,9 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 
 - gcloud コマンドラインツール設定
 - Firebase CLI のインストール
-- Firebase プロジェクト作成
 - Firestore API 有効化
   - Firestore 初期設定
+- Firebase プロジェクト作成
 
 ## gcloud コマンドラインツール設定
 
@@ -110,6 +110,26 @@ npm install -g firebase-tools
 3. ![select to nam5](https://storage.googleapis.com/gig-03/static/screenshot/firestore-select-region.png) の画面より nam5 リージョンを選択します
 
 ## Firebase プロジェクト作成
+
+1. [Firebase Console](https://console.firebase.google.com/)に移動します
+2. ![create a new firebase project](https://storage.googleapis.com/gig-03/static/screenshot/firebase-create-project.png) *プロジェクトを追加* をクリックします
+3. ![name firebase project id](https://storage.googleapis.com/gig-03/static/screenshot/firebase-name-project-id.png) プロジェクト名にGCP プロジェクト ID を入力して *続行* をクリックします
+4. ![firebase billing plan](https://storage.googleapis.com/gig-03/static/screenshot/firebase-billing-plan.png)Blaze プラン (従量課金制) になっていることを確認し、 *プランを確認* をクリックします
+5. **続行** をクリックします
+6. ![firebase disalbe ga](https://storage.googleapis.com/gig-03/static/screenshot/firebase-disable-ga.png)今回はGoogle Analyticsを使用しないので、こちらは一旦 *有効にする* のボタンをOFFにして *Firebaseを追加* をクリックします
+7. **新しいプロジェクトの準備ができました** と表示されたらプロジェクトの作成は完了です
+
+
+Firebase のプロジェクトは GCP のプロジェクト作成時点では作成されていないので、新規に Firebase プロジェクトを作成します。以下のコマンドにより
+
+```bash
+firebase projects:create
+```
+
+
+`? Please specify a unique project id (warning: cannot be modified afterward) [6-30 characters]:`
+
+と聞かれるので GCP プロジェクト ID を入力してください。
 
 
 
