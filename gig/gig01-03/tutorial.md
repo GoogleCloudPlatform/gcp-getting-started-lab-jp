@@ -34,7 +34,7 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 ### 下記の内容をハンズオン形式で学習します。
 
 - 環境準備: 10 分
-  - GCPプロジェクト作成
+  - GCP プロジェクト作成
   - gcloud コマンドラインツール設定
   - Firebase CLI のインストール
   - Firestore API 有効化
