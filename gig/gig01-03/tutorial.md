@@ -377,7 +377,9 @@ service cloud.firestore {
 }
 ```
 
-上記の内容で書き換えます。
+上記の内容でファイルの中身をお入れ替えます。
+
+- `allow read: if request.auth.uid != null;` : ユーザIDが存在していれば read 可能です
 
 ## Firebase Authentication の有効化
 
