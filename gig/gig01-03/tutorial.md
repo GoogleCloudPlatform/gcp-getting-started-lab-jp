@@ -119,7 +119,7 @@ npm install -g firebase-tools
 
 1. [Firebase Console](https://console.firebase.google.com/)に移動します
 2. ![create a new firebase project](https://storage.googleapis.com/gig-03/static/screenshot/firebase-create-project.png) *プロジェクトを追加* をクリックします
-3. ![name firebase project id](https://storage.googleapis.com/gig-03/static/screenshot/firebase-name-project-id.png) プロジェクト名にGCP プロジェクト ID を入力して *続行* をクリックします
+3. ![name firebase project id](https://storage.googleapis.com/gig-03/static/screenshot/firebase-name-project-id.png) プロジェクト名にGCP プロジェクト ID ({{project-id}}) を入力して *続行* をクリックします
 4. ![firebase billing plan](https://storage.googleapis.com/gig-03/static/screenshot/firebase-billing-plan.png)Blaze プラン (従量課金制) になっていることを確認し、 *プランを確認* をクリックします
 5. **続行** をクリックします
 6. ![firebase disalbe ga](https://storage.googleapis.com/gig-03/static/screenshot/firebase-disable-ga.png)今回はGoogle Analyticsを使用しないので、こちらは一旦 *有効にする* のボタンをOFFにして *Firebaseを追加* をクリックします
