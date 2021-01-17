@@ -46,6 +46,9 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firebase プロジェクトの初期化
   - Firebase Web アプリの追加
   - はじめてのデプロイ
+  - Firestore のデータをリアルタイムに同期
+    - Firestore に初期データを投入
+    - Firestore Security Rules を設定
 
   - Firestore Database 初期設定
   - アプリケーションのデプロイ(Firebase Hosting)
@@ -295,7 +298,25 @@ firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
 - `{{project-id}}-first-deploy` 引数 : git で言うところの branch のような概念で、 Firebase Project に対して任意の Hosting 用 Channel を作成することが可能です
 - `--expires 30m` : 30分後に消失する設定です
 
+コマンドの出力に URL が出力されるので、ブラウザでアクセスしてみてください。
+
 <walkthrough-footnote>こちらのコマンドに関しては [Advent Calender の Gossy-san の記事](https://gossy-86158.medium.com/firebase-update-summary-2020-98fd5e8f10e5)でも取り上げられているので詳細は是非こちらを御覧ください</walkthrough-footnote>
+
+## Firestore のデータをリアルタイムに同期
+
+はじめてのデプロイではデータを何も登録していないので、画面上には何も表示されていませんでしたが、 Firebase にデータを登録して、リアルタイムに同期されることを確認しましょう。
+
+### Firestore にデータを登録
+
+1. [Firestore の UI](https://console.cloud.google.com/firestore/data/?project={{project-id}})に移動します
+2. ![firestore initial public data](https://storage.googleapis.com/gig-03/static/screenshot/firestore-first-public-data.png) 図のように公開するデータを入力します
+3. *保存* をクリックします
+
+### Firestore Security Rules に `public` Collection の公開を設定する
+
+Cloud Editor にて Firestore Security Rules の設定ファイル `firestore.rules` を開きます。
+
+<walkthrough-editor-open-file filePath="firestore.rules"></walkthrough-editor-open-file>
 
 
 ## TBD
