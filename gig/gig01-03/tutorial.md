@@ -415,6 +415,8 @@ firebase auth:export users.json
 
 ## クリーンアップ
 
+<walkthrough-tutorial-duration duration=5></walkthrough-tutorial-duration>
+
 ### GCP プロジェクトの削除
 
 GCP プロジェクトをまるごと削除できる方は
