@@ -61,7 +61,6 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
 
 最初に、ハンズオンを進めるための環境準備を行います。
-前回と同様の内容なので、設定完了の方はスキップしてください。
 
 下記の設定を進めていきます。
 
@@ -72,6 +71,8 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
 - Firebase プロジェクト作成
 
 ## gcloud コマンドラインツール設定
+
+前回と同様の内容なので、設定完了の方はスキップしてください。
 
 ### GCP プロジェクト ID を環境変数に設定
 
@@ -141,10 +142,10 @@ Firebase CLI が使用できるように初期化を行います。
 firebase login --no-localhost
 ```
 
-1. ブラウザで表示されたURLを開きます
+1. 上記コマンドの結果、表示されたURLをブラウザにて開きます
 2. アカウントの選択画面が表示されるので Google Account を指定します
 3. ![allow Firebase CLI](https://storage.googleapis.com/gig-03/static/screenshot/allow-firebase-cli.png) *許可* をクリックします
-4. ![firebase authentication code](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-code.png) 認証コードが表示されるので、コピーし、CLIの `Paste authorization code here:` の項目にペーストします
+4. ![firebase authorization code](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authorization-code.png) 認可コードが表示されるので、コピーし、CLIの `Paste authorization code here:` の項目にペーストします
 5. `Success! Logged in as 選択した Google Account` が表示されれば完了です
 
 <walkthrough-footnote>`firebase login` を完了させることで、 `firebase projects:list` のように各種firebaseコマンドが利用できます</walkthrough-footnote>
