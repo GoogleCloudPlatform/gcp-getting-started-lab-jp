@@ -316,7 +316,7 @@ firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
 
 Cloud Editor にて Firestore Security Rules の設定ファイル `firestore.rules` を開きます。
 
-<walkthrough-editor-open-file filePath="firestore.rules"></walkthrough-editor-open-file>
+<walkthrough-editor-open-file filePath="firestore.rules">"firesture.rules" を開く</walkthrough-editor-open-file>
 
 
 ## TBD
