@@ -293,7 +293,7 @@ firebase hosting:channel:deploy {{project-id}}-first-deploy --expires 30m
 ```
 
 - `hosting:channel:deploy` コマンド: 本番デプロイのような形ではなく、一時的に有効なURLを作成して、動作確認を行うためのコマンドです
-- `{{project-id}}-first-deploy` 引数 : git で言うところの branch のような概念で、 Firebase Project に対して任意の Hosting 用 Channel を作成することが可能です
+- `{{project-id}}-first-deploy` 引数 : git で言うところの branch のような概念で、 Firebase プロジェクトに対して任意の Hosting 用 Channel を作成することが可能です
 - `--expires 30m` : 30分後に消失する設定です
 
 コマンドの出力に URL が出力されるので、ブラウザでアクセスしてみてください。
@@ -415,7 +415,7 @@ firebase auth:export users.json
 
 ## クリーンアップ
 
-### GCP プロジェクの削除
+### GCP プロジェクトの削除
 
 GCP プロジェクトをまるごと削除できる方は
 
