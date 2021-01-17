@@ -47,16 +47,10 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firebase Web アプリの追加
   - はじめてのデプロイ
   - Firestore のデータをリアルタイムに同期
-    - Firestore に初期データを投入
-    - Firestore Security Rules を設定
-    - Firestore のデータがブラウザに反映されているか確認
   - Firebase Authentication の有効化
-
-  - Firestore Database 初期設定
-  - アプリケーションのデプロイ(Firebase Hosting)
-  - Firestore をクライアント側と同期
-  - アプリケーションの認証
-  - Firestore Security Rules を用いたセキュアなデータ管理
+  - ログイン済みユーザのみ閲覧可能なデータの追加
+  - Firebase Authentication の有効化
+  - Firebase Authentication による認証
 
 - クリーンアップ: 10 分
   - プロジェクトごと削除
@@ -395,49 +389,29 @@ service cloud.firestore {
 2. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
 3. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
 
+## Firebase Authentication による認証
 
-## TBD
+### ブラウザからサインアップ
 
-- firebase hostingを使ってHTMLをpublishしてUIを作成する
-- 未ログイン状態でUIに何も表示させてないことを確認
-  - ここ、reactにするか何にするか決める
-- publicなデータをfirestoreに突っ込む
-  1. firestoreのテーブル作成
-  2. firestoreに/publicにデータを入れる
-  3. firestoreに/privateにデータを入れる
-- publicなデータに対して、security ruleでpublic属性をつける
-- privateなデータに対して、security ruleでprivate属性をつける
-  - ログイン済みユーザのみが見れる状態にする
-- UIに戻ってpublicなデータが見れるか確認する
-- ログインの画面を出す
-- ログインする
-- ユーザが登録されているかをconsole上もしくはCLIで確認する
-  - ここ、何で確認できるか確認する
-- UIに戻ってprivateなデータが見れるか確認する
+1. ブラウザ上の*サインアップ / サインイン*をクリックします
+2. メールアドレス, あなたの名前, パスワード を入力します
+3. *保存* をクリックしてサインアップを完了させます
+4. トップページにリダイレクトされると、ログイン済みユーザのみが閲覧できるように設定した `private` Collection の内容が表示されています
 
-## TO-DO
+### 認証済みユーザの一覧を取得
 
-- sign-up URLへのリンクをブラウザに表示
-- private contents 用のJSをブラウザにカキコ
-- privateなデータを追加
-- privateなsecurity rulesを追加
-- sign-up してみる
-- sign-up できてるか確認するために export コマンドを使う
-- sign-in していたらユーザ名を表示
-- ログアウトしてみる
-- privateなデータが見えないようになっているか確認
-- 後片付け
+認証済みユーザの一覧を取得して、正しくログインできているか確認します。
 
-手順としては
+```bash
+firebase auth:export users.json
+```
 
-- private ユーザ用のデータ設定を入れる before Authentication configuration
-- authの有効化
-- ログインしてみる
-- データが表示されていることを確認
-- ユーザの一覧を取得して、sign upが完了しているか確認する
-- ログアウト
+`users.json` ファイルにユーザの一覧(ここでは今サインアップしたユーザ)が表示されます。
 
-## misc
+### ログアウト
 
-- <script src="/__/firebase/init.js"></script> を使うことで firebaseConfig の設定を省くことが可能
+ブラウザから Firebase Authentication でサインアップしたユーザをログアウトします。
+
+1. *ログアウト* をクリックします
+2. ログイン済みユーザのみが閲覧可能が非表示になっていることを確認します
 
