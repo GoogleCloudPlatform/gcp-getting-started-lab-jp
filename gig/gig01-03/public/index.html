@@ -22,6 +22,11 @@
           );
           document.getElementById('public-data').appendChild(li);
         });
+      }, e => {
+        document.querySelectorAll('#public-data li').forEach(v => {
+          v.remove();
+        });
+        console.warn(e);
       });
       // authenticated user only data handler
       db.collection('private').onSnapshot(v => {
@@ -36,6 +41,11 @@
           );
           document.getElementById('authenticated-only-data').appendChild(li);
         });
+      }, e => {
+        document.querySelectorAll('#authenticated-only-data li').forEach(v => {
+          v.remove();
+        });
+        console.warn(e);
       });
       // auth status handler
       firebase.auth().onAuthStateChanged(user => {
