@@ -53,7 +53,7 @@
           document.getElementById('user').textContent = `ようこそ${user.displayName}さん!!`;
           const btn = document.createElement('button');
           btn.appendChild(
-            document.createTextNode('ログアウトする')
+            document.createTextNode('ログアウト')
           );
           btn.addEventListener('click', () => {
             firebase.auth().signOut()

@@ -381,6 +381,12 @@ service cloud.firestore {
 
 - `allow read: if request.auth.uid != null;` : ユーザIDが存在していれば read 可能です
 
+変更した内容を以下のコマンドを使ってデプロイしておきましょう。
+
+```bash
+firebase deploy --only firestore:rules
+```
+
 ## Firebase Authentication の有効化
 
 1. [Firebase Authentication の設定ページ](https://console.firebase.google.com/project/{{project-id}}/authentication/providers) に移動します
@@ -395,6 +401,7 @@ service cloud.firestore {
 2. メールアドレス, あなたの名前, パスワード を入力します
 3. *保存* をクリックしてサインアップを完了させます
 4. トップページにリダイレクトされると、ログイン済みユーザのみが閲覧できるように設定した `private` Collection の内容が表示されています
+5. [Firestore の UI](https://console.cloud.google.com/firestore/data/?project={{project-id}})から `private` Collectionの内容を変更してリアルタイム同期を体感しましょう!
 
 ### 認証済みユーザの一覧を取得
 
