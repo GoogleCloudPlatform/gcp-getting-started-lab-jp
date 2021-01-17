@@ -363,11 +363,38 @@ firebase serve
 
 コマンドを叩くと [localhost:5000](http://localhost:5000) にサーバが立ち上がり、UI (index.html) のローカル上で確認することも可能です。
 
+## ログイン済みユーザのみ閲覧可能なデータの追加
+
+### Firestore へデータを追加
+
+1. [Firestore の UI](https://console.cloud.google.com/firestore/data/?project={{project-id}})に移動します
+2. ![Insert Data Authenticated Only into Firestore](https://storage.googleapis.com/gig-03/static/screenshot/firestore-private-data.png) `private` Collection を新たに作成し、新規にデータを追加します
+
+### ログイン済みユーザ用の Firestore Security Rules
+
+Cloud Editor にて Firestore Security Rules の設定ファイル <walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/gig/gig01-03/firestore.rules">"firestore.rules"</walkthrough-editor-open-file> を開きます。 (fileへのリンクが開かない場合は、エディタのファイルペインより、直接選択してください。)
+
+```
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /public/{document=**} {
+      allow read: if true;
+    }
+    match /private/{document=**} {
+      allow read: if request.auth.uid != null;
+    }
+  }
+}
+```
+
+上記の内容で書き換えます。
+
 ## Firebase Authentication の有効化
 
 1. [Firebase Authentication の設定ページ](https://console.firebase.google.com/project/{{project-id}}/authentication/providers) に移動します
 2. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
 3. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
+
 
 ## TBD
 
@@ -391,10 +418,24 @@ firebase serve
 ## TO-DO
 
 - sign-up URLへのリンクをブラウザに表示
-- sign-inしていたらユーザ名を表示
+- private contents 用のJSをブラウザにカキコ
 - privateなデータを追加
 - privateなsecurity rulesを追加
+- sign-up してみる
+- sign-up できてるか確認するために export コマンドを使う
+- sign-in していたらユーザ名を表示
+- ログアウトしてみる
+- privateなデータが見えないようになっているか確認
 - 後片付け
+
+手順としては
+
+- private ユーザ用のデータ設定を入れる before Authentication configuration
+- authの有効化
+- ログインしてみる
+- データが表示されていることを確認
+- ユーザの一覧を取得して、sign upが完了しているか確認する
+- ログアウト
 
 ## misc
 
