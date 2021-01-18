@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    h1 {
+      text-align: center
+    }
+  </style>
+  <head>
+    <meta charset="utf-8">
+    <title>G.I.G Hands-On #3</title>
+    <script src="/__/firebase/7.23.0/firebase.js"></script>
+    <script src="/__/firebase/init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth__ja.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.7.1/firebase-ui-auth.css" />
+    <script type="text/javascript">
+      const uiConfig = {
+        signInSuccessUrl: '/',
+        signInOptions: [
+          firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        ],
+      };
+      const ui = new firebaseui.auth.AuthUI(firebase.auth());
+      ui.start('#firebaseui-auth-container', uiConfig);
+      ui.disableAutoSignIn();
+    </script>
+  </head>
+  <body>
+    <h1>サインアップ / サインイン</h1>
+    <div id="firebaseui-auth-container"></div>
+  </body>
+</html>
