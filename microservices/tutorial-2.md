@@ -107,7 +107,7 @@ SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.
 
 SERVICE_NAME="customer-service-async"
 SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 
 gcloud run services add-iam-policy-binding $SERVICE_NAME \
   --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
@@ -127,7 +127,7 @@ gcloud pubsub subscriptions create push-order-to-customer \
 ```
 SERVICE_NAME="order-service-async"
 SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 
 gcloud run services add-iam-policy-binding $SERVICE_NAME \
   --member=serviceAccount:$SERVICE_ACCOUNT_EMAIL \
@@ -155,7 +155,7 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
     --platform=managed --region=us-central1
 
 SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:$SERVICE_NAME")
+    --format="table[no-heading](URL)" --filter="metadata.name:$SERVICE_NAME")
 gcloud scheduler jobs create http event-publisher-scheduler \
        --schedule='* * * * *' \
        --http-method=GET \
@@ -171,10 +171,10 @@ gcloud scheduler jobs create http event-publisher-scheduler \
 ```
 SERVICE_NAME="customer-service-async"
 CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 SERVICE_NAME="order-service-async"
 ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 ```
 
 次のコマンドを実行して、新規のカスタマー情報を作成します。ここでは、クレジットの利用上限を 10,000 に設定しています。
@@ -445,10 +445,10 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
 ```
 SERVICE_NAME="customer-service-sync"
 CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 SERVICE_NAME="order-service-sync"
 ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
     
 cd $HOME/transactional-microservice-examples/services/order-processor
 cp order_workflow.yaml.template order_workflow.yaml
@@ -473,15 +473,15 @@ gcloud beta workflows deploy order_workflow \
 ```
 SERVICE_NAME="order-service-sync"
 ORDER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 
 SERVICE_NAME="customer-service-sync"
 CUSTOMER_SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 
 SERVICE_NAME="order-processor-service"
 ORDER_PROCESSOR_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 ```
 
 次のコマンドを実行して、新規のカスタマー情報を作成します。ここでは、クレジットの利用上限を 10,000 に設定しています。
