@@ -329,7 +329,7 @@ target project:  [microservices-hands-on]
 .... 100%...done.
 ```
 
-コマンド出力からは、インデックスの作成が完了したように見えますが、実際にはバックグラウンドで作成処理が継続しています。Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「[インデックス](https://console.cloud.google.com/datastore/indexes)」を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。
+コマンド出力からは、インデックスの作成が完了したように見えますが、実際にはバックグラウンドで作成処理が継続しています。Cloud Console から「[データストア](https://console.cloud.google.com/datastore)」メニューの「[インデックス](https://console.cloud.google.com/datastore/indexes)」を開いてインデックスの作成状況を確認します。数分後に、緑のチェックマークが表示されるまでそのまま待ちます。（数分かかりますので、少し気長にお待ちください。）
 
 > 適切なインデックスを作成せずに検索を実行するとエラーが発生します。その際、コンテナの実行ログに、必要なインデックスの定義を示すエラーメッセージが表示されます。
 
