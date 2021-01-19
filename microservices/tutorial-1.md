@@ -217,7 +217,7 @@ Service URL: https://hello-world-service-tf5atlwfza-uc.a.run.app
 ```
 SERVICE_NAME="hello-world-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 echo $SERVICE_URL
 ```
 
@@ -347,7 +347,7 @@ target project:  [microservices-hands-on]
 ```
 SERVICE_NAME="message-board-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
-    --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+    --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 curl -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H "Content-Type: application/json" \
   -d '{"name":"Bob", "message":"I am at lunch now."}' \
@@ -531,7 +531,7 @@ version: 1
 
 ```
 SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 gcloud pubsub subscriptions create push-storage-event \
   --topic storage-event \
   --push-endpoint=$SERVICE_URL/api/v1/pubsub \
@@ -648,7 +648,7 @@ version: 1
 ```
 SERVICE_NAME="storage-logging-service"
 SERVICE_URL=$(gcloud run services list --platform managed \
-  --format="table[no-heading](URL)" --filter="SERVICE:${SERVICE_NAME}")
+  --format="table[no-heading](URL)" --filter="metadata.name:${SERVICE_NAME}")
 gcloud scheduler jobs create http log-purge-job \
        --schedule='* * * * *' \
        --http-method=GET \
