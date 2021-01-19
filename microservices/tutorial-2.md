@@ -407,7 +407,7 @@ gcloud run deploy order-processor-service \
   --set-env-vars "PROJECT_ID=$PROJECT_ID"
 ```
 
-> Workflows は現在ベータ版のためクライアントライブラリーが用意されておらず、Order processor サービスからワークフローを実行する際は、REST API を直接に呼び出しています。この際、API の URL にプロジェクト ID が含まれるため、上記のコマンドの最終行では、環境変数 PROJECT_ID を通じて Project ID をコードに受け渡しています。
+> Workflows は現在ベータ版のためクライアントライブラリーが用意されておらず、Order processor サービスからワークフローを実行する際は、REST API を直接に呼び出しています。この際、API の URL に Project ID が含まれるため、上記のコマンドの最終行では、環境変数 PROJECT_ID を通じて Project ID をコードに受け渡しています。
 
 ### Workflows へのワークフローのデプロイ
 
