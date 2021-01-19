@@ -39,7 +39,6 @@ Firestore と Firebase を使って実装が複雑になりがちな認証、ク
   - Firebase CLI のインストール
   - Firestore API 有効化
   - Firebase プロジェクト作成
-  - Firebase で使用するリージョンの設定
 
 - Firebase を用いた Web アプリケーション作成: 25 分
   - Firebase CLI の初期化
@@ -122,13 +121,6 @@ npm install -g firebase-tools
 6. ![firebase disalbe ga](https://storage.googleapis.com/gig-03/static/screenshot/firebase-disable-ga.png)今回はGoogle Analyticsを使用しないので、こちらは一旦 *有効にする* のボタンをOFFにして *Firebaseを追加* をクリックします
 7. **新しいプロジェクトの準備ができました** と表示されたらプロジェクトの作成は完了です
 
-## Firebase で使用するリージョンの設定
-
-1. [Firebase Console 一般設定](https://console.firebase.google.com/project/{{project-id}}/settings/general) に移動します
-2. ![Firebase default location](https://storage.googleapis.com/gig-03/static/screenshot/firebase-default-location.png) *デフォルトの GCP リソースロケーション* を `nam5` に設定します
-
-これにて環境準備は完了です。
-
 ## Firebase を用いた Web アプリケーション作成
 
 <walkthrough-tutorial-duration duration=25></walkthrough-tutorial-duration>
@@ -146,7 +138,7 @@ Firebase プロジェクト上に Web アプリケーションを作成し、
 Firebase CLI が使用できるように初期化を行います。
 
 ```bash
-firebase login --no-localhost
+firebase login --no-localhost --reauth
 ```
 
 1. 上記コマンドの結果、表示されたURLをブラウザにて開きます
@@ -390,8 +382,9 @@ firebase deploy --only firestore:rules
 ## Firebase Authentication の有効化
 
 1. [Firebase Authentication の設定ページ](https://console.firebase.google.com/project/{{project-id}}/authentication/providers) に移動します
-2. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
-3. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
+2. ![Get Started Firebase Authentication](https://storage.googleapis.com/gig-03/static/screenshot/get-started-firebase-auth.png) 初めて開く際は *始める* がページ上部に出ているので *始める* をクリックします
+3. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
+4. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
 
 ## Firebase Authentication による認証
 
@@ -434,7 +427,9 @@ gcloud projects delete {{project-id}}
 
 にて削除を行います。
 
-### Firebase プロジェクトの削除
+### [optional] Firebase プロジェクトの削除
+
+GCP のプロジェクトをまるごと削除できない方は Firebase のプロジェクトのみを削除します。
 
 1. [Firebase Console 一般設定](https://console.firebase.google.com/project/korekai-da/settings/general)に移動します
 2. 画面最下部までスクロールして、 *プロジェクトを削除* をクリックします
