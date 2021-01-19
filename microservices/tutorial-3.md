@@ -4,13 +4,11 @@
 
 ### 前提ハンズオンの完了
 
-このハンズオンは、[tutorial-2.md](tutorial-2.md) の内容を完了した後に、続けて実施する前提になります。
-[tutorial-2.md](tutorial-2.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
+このハンズオンは、[tutorial-2.md](tutorial-2.md) の内容を完了した後に、続けて実施する前提になります。[tutorial-2.md](tutorial-2.md) を完了したプロジェクト環境を利用して、このハンズオンを続けてください。
 
 ### Cloud Shell の起動
 
-Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。
-（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
+Cloud Shell を開いて、次のコマンドを実行します。ここでは、Project ID を環境変数にセットすると共に、gcloud コマンドのデフォルトプロジェクトに設定します。（`[your project ID]` の部分はハンズオンを進める環境の Project ID に置き換えてください。）
 
 ```
 PROJECT_ID=[your project ID]
@@ -26,8 +24,7 @@ Updated property [core/project].
 
 **注意：作業中に新しい Cloud Shell 端末を開いた場合は、必ず、最初にこのコマンドを実行してください。**
 
->GitHub リポジトリの内容は、Cloud Shell のディレクトリー `$HOME/transactional-microservice-examples` に
-クローンしてあるものとします。
+>GitHub リポジトリの内容は、Cloud Shell のディレクトリー `$HOME/transactional-microservice-examples` にクローンしてあるものとします。
 
 ## 2. Firebase hosting による Web アプリケーションのデプロイ
 
@@ -39,12 +36,9 @@ Updated property [core/project].
 
 ### OAuth 2.0 クライアントの作成
 
-Cloud Console の[「APIとサービス」](https://console.cloud.google.com/apis)メニューから
-[「OAuth同意画面」](https://console.developers.google.com/apis/credentials/consent)
-を開きます。
+Cloud Console の[「APIとサービス」](https://console.cloud.google.com/apis)メニューから[「OAuth同意画面」](https://console.developers.google.com/apis/credentials/consent)を開きます。
 
-「User Type」に「外部」選択して、「作成」をクリックすると、「アプリ登録の編集」のウィザード画面が表示されます。
-次の手順で設定を完了します。
+「User Type」に「外部」選択して、「作成」をクリックすると、「アプリ登録の編集」のウィザード画面が表示されます。次の手順で設定を完了します。
 
 1. 「OAuth 同意画面」では、次の情報を入力した後に、「保存して次へ」をクリックします。
 
@@ -59,11 +53,9 @@ Cloud Console の[「APIとサービス」](https://console.cloud.google.com/api
 4. 「概要」では、「ダッシュボードに戻る」をクリックして設定を完了します。
 
 
-Cloud Console の[「APIとサービス」](https://console.cloud.google.com/apis)メニューから
-[「認証情報」](https://console.developers.google.com/apis/credentials)を開きます。
+Cloud Console の[「APIとサービス」](https://console.cloud.google.com/apis)メニューから[「認証情報」](https://console.developers.google.com/apis/credentials)を開きます。
 
-「認証情報を作成」をクリックして、プルダウンメニューの「OAuthクライアントID」を選択すると、
-「OAuthクライアントIDの作成」の設定画面が表示されます。次の手順で設定を完了します。
+画面上部の「認証情報を作成」をクリックして、プルダウンメニューの「OAuthクライアントID」を選択すると、「OAuthクライアントIDの作成」の設定画面が表示されます。次の手順で設定を完了します。
 
 1. 「アプリケーションの種類」に「ウェブアプリケーション」を選択します。
 
@@ -135,8 +127,7 @@ Firebase hosting の管理操作を行うため、次のコマンドを実行し
 firebase login --reauth --no-localhost
 ```
 
-認証用のリンクが表示されるので、ブラウザーでリンクを開き、プロジェクトオーナーの Google アカウントで認証してください。
-表示された認証コードをコピペして、Cloud Shell に入力すると認証が完了します。
+認証用のリンクが表示されるので、ブラウザーでリンクを開き、プロジェクトオーナーの Google アカウントで認証してください。表示された認証コードをコピペして、Cloud Shell に入力すると認証が完了します。
 
 > Cloud Shellの端末に表示されたリンクをクリックすると、端末画面の右端でリンクの文字列が切れるため「認証エラー（エラー 400: invalid_request / Required parameter is missing: response_type）」と表示されることがあります。リンクをそのままクリックするのではなく、コピー＆ペーストでブラウザに入力してください。
 
@@ -164,8 +155,7 @@ firebase init hosting
 
 6. 「Firebase initialization complete!」と表示されれば、セットアップは完了です。
 
-次のコマンドを実行して、ビルドした Web アプリケーションを Firebase hosting にデプロイします。
-ここでは、先ほど環境変数 `CLIENT_ID` に設定したクライアント ID を HTML ファイルに書き込んだ上でデプロイしています。
+次のコマンドを実行して、ビルドした Web アプリケーションを Firebase hosting にデプロイします。ここでは、先ほど環境変数 `CLIENT_ID` に設定したクライアント ID を HTML ファイルに書き込んだ上でデプロイしています。
 
 ```
 cp -r ../web_frontend_example/build/web/* public/
@@ -174,8 +164,7 @@ cp ../firebase/firebase.json ./
 firebase deploy
 ```
 
-`Hosting URL` に表示された URL（`https://[Project ID].web.app`）をブラウザで開くと、
-デプロイした Web アプリケーションが利用できます。
+`Hosting URL` に表示された URL（`https://[Project ID].web.app`）をブラウザで開くと、デプロイした Web アプリケーションが利用できます。
 
 
 ### Web アプリケーションの動作確認
