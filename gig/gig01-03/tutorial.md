@@ -138,7 +138,7 @@ Firebase プロジェクト上に Web アプリケーションを作成し、
 Firebase CLI が使用できるように初期化を行います。
 
 ```bash
-firebase login --no-localhost
+firebase login --no-localhost --reauth
 ```
 
 1. 上記コマンドの結果、表示されたURLをブラウザにて開きます
