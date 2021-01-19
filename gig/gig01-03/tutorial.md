@@ -382,8 +382,9 @@ firebase deploy --only firestore:rules
 ## Firebase Authentication の有効化
 
 1. [Firebase Authentication の設定ページ](https://console.firebase.google.com/project/{{project-id}}/authentication/providers) に移動します
-2. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
-3. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
+2. ![Get Started Firebase Authentication](https://storage.googleapis.com/gig-03/static/screenshot/get-started-firebase-auth.png) 初めて開く際は *始める* がページ上部に出ているので *始める* をクリックします
+3. ![Firebase All Authentication Providers](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-providers.png) から `メール / パスワード` の右側の鉛筆アイコンをクリックします
+4. ![Firebase Mail and Password Authentication Provider Configuration](https://storage.googleapis.com/gig-03/static/screenshot/firebase-authentication-email-provider.jpg) *有効にする* をONにして *保存* をクリックします
 
 ## Firebase Authentication による認証
 
