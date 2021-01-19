@@ -427,7 +427,9 @@ gcloud projects delete {{project-id}}
 
 にて削除を行います。
 
-### Firebase プロジェクトの削除
+### [optional] Firebase プロジェクトの削除
+
+GCP のプロジェクトをまるごと削除できない方は Firebase のプロジェクトのみを削除します。
 
 1. [Firebase Console 一般設定](https://console.firebase.google.com/project/korekai-da/settings/general)に移動します
 2. 画面最下部までスクロールして、 *プロジェクトを削除* をクリックします
