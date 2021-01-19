@@ -164,6 +164,8 @@ gcloud scheduler jobs create http event-publisher-scheduler \
        --oidc-token-audience=$SERVICE_URL/api/v1/event/publish
 ```
 
+>Cloud Scheduler に対する Cloud Run の API 呼び出し権限の設定が完了するまで少し時間がかかります。そのため、最初の数回はジョブの実行に失敗することがあります。 
+
 ### 非同期トランザクションの動作確認
 
 次のコマンドを実行して、Order サービス、Customer サービス、それぞれのエンドポイントを環境変数に保存します。
