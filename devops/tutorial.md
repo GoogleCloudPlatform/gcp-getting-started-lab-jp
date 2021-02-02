@@ -94,6 +94,23 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
+<walkthrough-footnote>CLI（gcloud）で利用するプロジェクトの指定が完了しました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
+
+## GCP 環境設定
+
+GCP では利用したい機能ごとに、有効化を行う必要があります。
+ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
+
+### ハンズオンで利用する GCP の API を有効化する
+
+```bash
+gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com iamcredentials.googleapis.com
+```
+
+**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+
+<walkthrough-footnote>必要な機能が使えるようになりました。次にコマンドラインツールに関する残りの設定を行います。</walkthrough-footnote>
+
 ## gcloud コマンドラインツール設定 - リージョン、ゾーン
 
 ### デフォルトリージョンを設定
@@ -111,21 +128,6 @@ gcloud config set compute/region asia-northeast1
 ```bash
 gcloud config set compute/zone asia-northeast1-c
 ```
-
-<walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
-
-## GCP 環境設定
-
-GCP では利用したい機能ごとに、有効化を行う必要があります。
-ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
-
-### ハンズオンで利用する GCP の API を有効化する
-
-```bash
-gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com iamcredentials.googleapis.com
-```
-
-**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次にサービスアカウントの設定を行います。</walkthrough-footnote>
 
