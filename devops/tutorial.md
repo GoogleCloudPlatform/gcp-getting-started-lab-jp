@@ -20,8 +20,8 @@
 - [Kubernetes Engine（GKE）](https://cloud.google.com/kubernetes-engine/) を用いたアプリケーション開発：40 分
 
   - サンプルアプリケーションのコンテナ化
-  - コンテナの[Google Container Registry](https://cloud.google.com/container-registry/) への登録
-  - GKE クラスターの作成
+  - コンテナの [Artifact Registry](https://cloud.google.com/artifact-registry) への登録
+  - GKE クラスタの作成
   - コンテナの GKE へのデプロイ、外部公開
   - チャレンジ問題：もう一つの外部からのアクセス経路
 
@@ -94,6 +94,23 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
+<walkthrough-footnote>CLI（gcloud）で利用するプロジェクトの指定が完了しました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
+
+## GCP 環境設定
+
+GCP では利用したい機能ごとに、有効化を行う必要があります。
+ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
+
+### ハンズオンで利用する GCP の API を有効化する
+
+```bash
+gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com iamcredentials.googleapis.com artifactregistry.googleapis.com
+```
+
+**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+
+<walkthrough-footnote>必要な機能が使えるようになりました。次にコマンドラインツールに関する残りの設定を行います。</walkthrough-footnote>
+
 ## gcloud コマンドラインツール設定 - リージョン、ゾーン
 
 ### デフォルトリージョンを設定
@@ -111,21 +128,6 @@ gcloud config set compute/region asia-northeast1
 ```bash
 gcloud config set compute/zone asia-northeast1-c
 ```
-
-<walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
-
-## GCP 環境設定
-
-GCP では利用したい機能ごとに、有効化を行う必要があります。
-ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
-
-### ハンズオンで利用する GCP の API を有効化する
-
-```bash
-gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com stackdriver.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com iamcredentials.googleapis.com
-```
-
-**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次にサービスアカウントの設定を行います。</walkthrough-footnote>
 
@@ -175,8 +177,8 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 下記の手順で進めていきます。
 
 - サンプルアプリケーションのコンテナ化
-- コンテナの[Google Container Registry](https://cloud.google.com/container-registry/) への登録
-- GKE クラスターの作成、設定
+- コンテナの [Artifact Registry](https://cloud.google.com/artifact-registry/) への登録
+- GKE クラスタの作成、設定
 - コンテナの GKE へのデプロイ、外部公開
 - チャレンジ問題：もう一つの外部からのアクセス経路
 
@@ -188,7 +190,7 @@ Go 言語で作成されたサンプル Web アプリケーションをコンテ
 ここで作成したコンテナはローカルディスクに保存されます。
 
 ```bash
-docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1 .
+docker build -t asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/gcp-getting-started-lab-jp/devops-handson:v1 .
 ```
 
 **ヒント**: `docker build` コマンドを叩くと、Dockerfile が読み込まれ、そこに記載されている手順通りにコンテナが作成されます。
@@ -200,7 +202,7 @@ docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1 .
 ```bash
 docker run -d -p 8080:8080 \
 --name devops-handson \
-gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
+asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/gcp-getting-started-lab-jp/devops-handson:v1
 ```
 
 **ヒント**: Cloud Shell 環境の 8080 ポートを、コンテナの 8080 ポートに紐付け、バックグラウンドで起動します。
@@ -225,21 +227,28 @@ gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
 先程作成したコンテナはローカルに保存されているため、他の場所から参照ができません。
 他の場所から利用できるようにするために、GCP 上のプライベートなコンテナ置き場（コンテナレジストリ）に登録します。
 
-### 作成したコンテナをコンテナレジストリ（Google Container Registry）へ登録（プッシュ）する
+### Docker リポジトリの作成
 
 ```bash
-docker push gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson:v1
+gcloud artifacts repositories create gcp-getting-started-lab-jp --repository-format=docker \
+--location=asia-northeast1 --description="Docker repository for DevOps Handson"
 ```
 
-**GUI**: [コンテナレジストリ](https://console.cloud.google.com/gcr/images/{{project-id}}?project={{project-id}})
+### 作成したコンテナをコンテナレジストリ（Artifact Registry）へ登録（プッシュ）する
+
+```bash
+docker push asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/gcp-getting-started-lab-jp/devops-handson:v1
+```
+
+**GUI**: [コンテナレジストリ](https://console.cloud.google.com/artifacts/browse/{{project-id}})
 
 <walkthrough-footnote>次にコンテナを動かすための基盤である GKE の準備を進めます。</walkthrough-footnote>
 
-## GKE クラスターの作成、設定
+## GKE クラスタの作成、設定
 
 コンテナレジストリに登録したコンテナを動かすための、GKE 環境を準備します。
 
-### GKE クラスターを作成する
+### GKE クラスタを作成する
 
 ```bash
 gcloud container clusters create "k8s-devops-handson"  \
@@ -250,25 +259,25 @@ gcloud container clusters create "k8s-devops-handson"  \
 --workload-pool $GOOGLE_CLOUD_PROJECT.svc.id.goog
 ```
 
-**参考**: クラスターの作成が完了するまでに、最大 10 分程度時間がかかることがあります。
+**参考**: クラスタの作成が完了するまでに、最大 10 分程度時間がかかることがあります。
 
-**GUI**: [クラスター](https://console.cloud.google.com/kubernetes/list?project={{project-id}})
+**GUI**: [クラスタ](https://console.cloud.google.com/kubernetes/list?project={{project-id}})
 
-<walkthrough-footnote>クラスターが作成できました。次にクラスターを操作するツールの設定を行います。</walkthrough-footnote>
+<walkthrough-footnote>クラスタが作成できました。次にクラスタを操作するツールの設定を行います。</walkthrough-footnote>
 
-## GKE クラスターの作成、設定
+## GKE クラスタの作成、設定
 
-### GKE クラスターへのアクセス設定を行う
+### GKE クラスタへのアクセス設定を行う
 
 Kubernetes には専用の [CLI ツール（kubectl）](https://kubernetes.io/docs/reference/kubectl/overview/)が用意されています。
 
-認証情報を取得し、作成したクラスターを操作できるようにします。
+認証情報を取得し、作成したクラスタを操作できるようにします。
 
 ```bash
 gcloud container clusters get-credentials k8s-devops-handson
 ```
 
-<walkthrough-footnote>これで kubectl コマンドから作成したクラスターを操作できるようになりました。次に作成済みのコンテナをクラスターにデプロイします。</walkthrough-footnote>
+<walkthrough-footnote>これで kubectl コマンドから作成したクラスタを操作できるようになりました。次に作成済みのコンテナをクラスタにデプロイします。</walkthrough-footnote>
 
 ## コンテナの GKE へのデプロイ、外部公開 - Workload Identity
 
@@ -316,11 +325,11 @@ Kubernetes のデプロイ用設定ファイルを、コンテナレジストリ
 sed -i".org" -e "s/FIXME/$GOOGLE_CLOUD_PROJECT/g" gke-config/deployment.yaml
 ```
 
-<walkthrough-footnote>アプリケーションをクラスターにデプロイする準備ができました。次にデプロイを行います。</walkthrough-footnote>
+<walkthrough-footnote>アプリケーションをクラスタにデプロイする準備ができました。次にデプロイを行います。</walkthrough-footnote>
 
 ## コンテナの GKE へのデプロイ、外部公開
 
-### コンテナを Kubernetes クラスターへデプロイする
+### コンテナを Kubernetes クラスタへデプロイする
 
 ```bash
 kubectl apply -f gke-config/
@@ -606,10 +615,10 @@ kubectl describe deployment/devops-handson-deployment -n devops-handson-ns | gre
 コマンド実行結果の例。
 
 ```
-    Image:        gcr.io/{{project-id}}/devops-handson:COMMITHASH
+    Image:        asia-northeast1-docker.pkg.dev/kozzy-devops-handson03/gcp-getting-started-lab-jp/devops-handson:COMMITHASH
 ```
 
-Cloud Build 実行前は Image が `gcr.io/{{project-id}}/devops-handson:v1` となっていますが、実行後は `gcr.io/{{project-id}}/devops-handson:COMMITHASH` になっている事が分かります。
+Cloud Build 実行前は Image が `asia-northeast1-docker.pkg.dev/{{project-id}}/gcp-getting-started-lab-jp/devops-handson:v1` となっていますが、実行後は `asia-northeast1-docker.pkg.dev/{{project-id}}/gcp-getting-started-lab-jp/devops-handson:COMMITHASH` になっている事が分かります。
 実際は、COMMITHASH には Git のコミットハッシュ値が入ります。
 
 <walkthrough-footnote>資材を更新、プッシュをトリガーとしたアプリケーションのビルド、コンテナ化、GKE へのデプロイを行うパイプラインが完成しました。次はチャレンジ問題を用意しています。</walkthrough-footnote>
@@ -664,7 +673,7 @@ gcloud projects delete {{project-id}}
 
 ## クリーンアップ（個別リソースの削除）
 
-### GKE クラスターの削除
+### GKE クラスタの削除
 
 ```bash
 gcloud container clusters delete k8s-devops-handson --quiet
@@ -688,10 +697,10 @@ gcloud projects remove-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member servic
 gcloud source repos delete devops-handson --quiet
 ```
 
-### Container Registry に登録しているコンテナイメージの削除
+### Artifact Registry のリポジトリの削除
 
 ```bash
-gcloud container images list-tags gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson --format="csv[no-heading](DIGEST)" | xargs -I{} gcloud container images delete gcr.io/$GOOGLE_CLOUD_PROJECT/devops-handson@sha256:{} --force-delete-tags --quiet
+gcloud artifacts repositories delete gcp-getting-started-lab-jp --location=asia-northeast1
 ```
 
 ### Cloud Build トリガーの削除

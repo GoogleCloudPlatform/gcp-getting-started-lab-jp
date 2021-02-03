@@ -1,15 +1,25 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA", "."]
+    args:
+      [
+        "build",
+        "-t",
+        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/gcp-getting-started-lab-jp/devops-handson:$SHORT_SHA",
+        ".",
+      ]
     dir: "devops/"
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA"]
+    args:
+      [
+        "push",
+        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/gcp-getting-started-lab-jp/devops-handson:$SHORT_SHA",
+      ]
   - name: "gcr.io/cloud-builders/kubectl"
     args:
       - "set"
       - "image"
       - "deployment/devops-handson-deployment"
-      - "myapp=gcr.io/$PROJECT_ID/devops-handson:$SHORT_SHA"
+      - "myapp=asia-northeast1-docker.pkg.dev/$PROJECT_ID/gcp-getting-started-lab-jp/devops-handson:$SHORT_SHA"
       - "-n"
       - "devops-handson-ns"
     env:

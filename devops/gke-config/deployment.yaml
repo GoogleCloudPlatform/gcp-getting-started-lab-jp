@@ -34,7 +34,7 @@ spec:
             secretName: dohandson-key
       containers:
         - name: myapp
-          image: gcr.io/FIXME/devops-handson:v1
+          image: asia-northeast1-docker.pkg.dev/FIXME/gcp-getting-started-lab-jp/devops-handson:v1
           ports:
             - containerPort: 8080
 ---
