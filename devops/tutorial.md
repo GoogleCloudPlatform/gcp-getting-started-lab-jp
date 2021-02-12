@@ -413,6 +413,24 @@ export SERVICE_IP=$(kubectl get service devops-handson-loadbalancer -n devops-ha
 **ヒント**: CLI で調査をする場合、Service で実施した情報取得の手順を参考にしてください。
 GUI で調査をする場合、以前の手順でアクセスしたページから IP アドレスを探して下さい。
 
+## チャレンジ問題：コンテナのサーバーレス環境での起動
+
+ここまでコンテナを作成し、Kubernetes(GKE)上で動作させました。
+一方で GCP では、コンテナを動作させるためのもう一つのサーバーレスプラットフォームとして [Cloud Run](https://cloud.google.com/run) が用意されています。
+
+ここでは作成したサービスアカウントを使い、ワン・コマンドで作成したコンテナイメージをサーバーレス環境にデプロイしてみましょう。
+
+利用するコマンドは `gcloud run deploy` になります。コマンドのリファレンスは[こちら](https://cloud.google.com/sdk/gcloud/reference/run/deploy)をご覧ください。
+
+**ヒント**: 今回のコマンドには下記 6 つのオプションを指定してください。
+
+- image
+- service-account
+- port
+- platform
+- region
+- allow-unauthenticated
+
 ## Operations を利用したアプリケーションの運用
 
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
@@ -621,7 +639,7 @@ kubectl describe deployment/devops-handson-deployment -n devops-handson-ns | gre
 コマンド実行結果の例。
 
 ```
-    Image:        asia-northeast1-docker.pkg.dev/kozzy-devops-handson03/gcp-getting-started-lab-jp/devops-handson:COMMITHASH
+    Image:        asia-northeast1-docker.pkg.dev/{{project-id}}/gcp-getting-started-lab-jp/devops-handson:COMMITHASH
 ```
 
 Cloud Build 実行前は Image が `asia-northeast1-docker.pkg.dev/{{project-id}}/gcp-getting-started-lab-jp/devops-handson:v1` となっていますが、実行後は `asia-northeast1-docker.pkg.dev/{{project-id}}/gcp-getting-started-lab-jp/devops-handson:COMMITHASH` になっている事が分かります。
