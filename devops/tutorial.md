@@ -234,6 +234,12 @@ gcloud artifacts repositories create gcp-getting-started-lab-jp --repository-for
 --location=asia-northeast1 --description="Docker repository for DevOps Handson"
 ```
 
+### Docker に対する認証の設定
+
+```bash
+gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+```
+
 ### 作成したコンテナをコンテナレジストリ（Artifact Registry）へ登録（プッシュ）する
 
 ```bash
