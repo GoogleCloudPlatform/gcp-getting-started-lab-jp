@@ -1,4 +1,4 @@
-# Anthos on Bare Metal の起動
+# Anthos clusters on Bare Metal の起動
 
 <walkthrough-watcher-constant key="region" value="asia-northeast1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="zone" value="asia-northeast1-c"></walkthrough-watcher-constant>
@@ -13,11 +13,15 @@
 
 ## 始めましょう
 
-[Anthos on Bare Metal](https://cloud.google.com/anthos/clusters/docs/bare-metal?hl=ja) を Google Compute Engine 上に構築する手順です。
+[Anthos clusters on Bare Metal](https://cloud.google.com/anthos/clusters/docs/bare-metal?hl=ja) を Google Compute Engine 上に構築する手順です。
 
-本手順では以下の図のようにマルチクラスタ、つまり Admin Cluster が複数の User Cluster を管理できる構成をとります。実際には [ハイブリッド クラスタ](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prep#hybrid_cluster_deployment) 1 つの構成です。
+本手順では以下の図のようにマルチクラスタ、つまり Admin Cluster が複数の User Cluster を管理できる構成をとります。
 
 ![マルチクラスタ](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/multi-cluster.png)
+
+実際には [ハイブリッド クラスタ](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prep#hybrid_cluster_deployment) 1 つの構成です。
+
+![完成図](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-5.png)
 
 **所要時間**: 約 45 分
 
@@ -154,7 +158,7 @@ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
 
 ## モニタリング ダッシュボードの有効化
 
-Anthos on Bare Metal はクラスタ作成時、自動的に [Cloud Operations ダッシュボード](https://cloud.google.com/monitoring/charts/dashboards?hl=ja) を作成し、クラスタの状況を概観できるようセットアップします。事前に [ワークスペース](https://cloud.google.com/monitoring/workspaces/create?hl=ja) を作っておくために、一度以下コンソールにアクセスしましょう。
+Anthos clusters on Bare Metal はクラスタ作成時、自動的に [Cloud Operations ダッシュボード](https://cloud.google.com/monitoring/charts/dashboards?hl=ja) を作成し、クラスタの状況を概観できるようセットアップします。事前に [ワークスペース](https://cloud.google.com/monitoring/workspaces/create?hl=ja) を作っておくために、一度以下コンソールにアクセスしましょう。
 
 画面の左上にある <walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーション メニュー</walkthrough-spotlight-pointer> を開きます。
 
@@ -174,7 +178,7 @@ gcloud compute networks subnets create {{subnet}} --region={{region}} \
 
 ### **ファイアウォールの設定**
 
-[Identity-Aware Proxy](https://cloud.google.com/iap?hl=ja) からの SSH、内部ネットワークから全通信、インターネットからの HTTP 通信を許可します。
+[Identity-Aware Proxy](https://cloud.google.com/iap?hl=ja) からの SSH、内部ネットワークから全通信を許可します。
 
 ```bash
 gcloud compute firewall-rules create allow-from-iap \
@@ -190,16 +194,11 @@ gcloud compute firewall-rules create allow-from-internal \
     --source-ranges=10.0.0.0/8
 ```
 
-```bash
-gcloud compute firewall-rules create allow-from-internet \
-    --network={{vpc}} --direction=INGRESS --priority=1000 \
-    --action=ALLOW --rules=tcp:80,icmp \
-    --source-ranges=0.0.0.0/0
-```
-
 ## 仮想マシンの起動
 
-オンプレミス想定の環境を作成するため、仮想マシンを起動していきます。Anthos on Bare Metal の詳細な導入要件は [こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prereq?hl=ja) です。
+オンプレミス想定の環境を作成するため、仮想マシンを起動していきます。Anthos clusters on Bare Metal の詳細な導入要件は [こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prereq?hl=ja) です。
+
+![VM](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-2.png)
 
 - 管理ワークステーション: **n2-standard-2**
 - ハイブリッド クラスタ マスタ兼用 VM: **n2-standard-8**
@@ -232,6 +231,14 @@ gcloud compute instances create {{vm-worker}} --zone {{zone}} \
 ```
 
 ## 仮想マシンの起動確認
+
+コンソールを移動してみます。
+
+**Compute Engine** セクションを選びます。
+
+<walkthrough-menu-navigation sectionId="COMPUTE_SECTION"></walkthrough-menu-navigation>
+
+左側のメニューから <walkthrough-spotlight-pointer cssSelector="#cfctest-section-nav-item-vm-instances">VM インスタンス</walkthrough-spotlight-pointer> を開きます。
 
 以下のコマンドで SSH ができる状態になるまで待機します。
 
@@ -364,7 +371,7 @@ gcloud iam service-accounts keys create "${GOOGLE_APPLICATION_CREDENTIALS}" \
    --iam-account={{sa}}@{{project-id}}.iam.gserviceaccount.com
 ```
 
-Anthos on Bare Metal の設定雛形を出力し、中身を眺めてみましょう。
+Anthos clusters on Bare Metal の設定雛形を出力し、中身を眺めてみましょう。
 
 ```bash
 bmctl create config -c "${HYBRID_CLUSTER}"
@@ -447,17 +454,17 @@ EOF
 
 **（管理ワークステーション上で実行してください）**
 
+![Anthos](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-5.png)
+
 以下コマンドを実行し、ハイブリッド クラスタを作成します。15 分ほどかかります。
 
 ```bash
 sudo bmctl create cluster -c "${HYBRID_CLUSTER}"
 ```
 
-## ハイブリッド クラスタの確認
+## Cloud Shell の再開
 
-**（管理ワークステーション上で実行してください）**
-
-### **（もし Cloud Shell が停止してしまったら）**
+### **（Cloud Shell のセッションが切れたりしていなければ、本節はスキップしてください）**
 
 Cloud Shell の環境変数などを再設定しつつ、ワークステーションへ SSH し
 
@@ -475,6 +482,10 @@ gcloud compute ssh {{vm-workst}} --tunnel-through-iap
 export HYBRID_CLUSTER={{cluster}}
 export GOOGLE_APPLICATION_CREDENTIALS={{sa}}-creds.json
 ```
+
+## ハイブリッド クラスタの確認
+
+**（管理ワークステーション上で実行してください）**
 
 ### **ハイブリッド クラスタの起動確認**
 
@@ -500,15 +511,15 @@ kubectl get nodes
 テスト用アプリケーションをデプロイし、挙動を確認してみます。
 
 ```bash
-kubectl create deployment nginx --image=nginx:1.19.6-alpine
-kubectl expose deployment nginx --name nginx --type LoadBalancer --port 80
+kubectl create deployment web --image=nginx:1.19.6-alpine
+kubectl expose deployment web --name web --type LoadBalancer --port 80
 kubectl get svc -w
 ```
 
 外部アクセス用 IP アドレスがアサインされたら `Ctrl + C` で watch を中断し、実際に HTTP アクセスしてみましょう。
 
 ```bash
-curl -iXGET $(kubectl get svc -l app=nginx -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
+curl -iXGET $(kubectl get svc -l app=web -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
 ```
 
 ## Google Cloud コンソールへの権限付与
@@ -560,6 +571,8 @@ kubectl create clusterrolebinding cloud-console-reader-binding \
     --clusterrole cloud-console-reader --serviceaccount "default:${KSA_NAME}"
 kubectl create clusterrolebinding cloud-console-view-binding \
     --clusterrole view --serviceaccount "default:${KSA_NAME}"
+kubectl create clusterrolebinding cloud-console-cluster-admin-binding \
+    --clusterrole cluster-admin --serviceaccount "default:${KSA_NAME}"
 ```
 
 サービス アカウント（KSA）のトークンを取得しましょう。

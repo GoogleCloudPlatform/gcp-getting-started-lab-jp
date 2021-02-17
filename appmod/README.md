@@ -1,6 +1,6 @@
 # アプリケーション モダナイゼーション
 
-## Anthos on bare metal の構築
+## Anthos clusters on bare metal の構築
 
 1. 以下をクリックし、Cloud Shell 環境を起動してください。
 
