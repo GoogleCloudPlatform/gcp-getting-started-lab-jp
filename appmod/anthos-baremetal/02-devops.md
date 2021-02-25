@@ -204,10 +204,26 @@ CSR で実際の定義を見ながら、該当のリソースが作成された�
 gcloud compute ssh {{vm-workst}} --tunnel-through-iap --command "KUBECONFIG=bmctl-workspace/{{cluster}}/{{cluster}}-kubeconfig kubectl get rolebinding --all-namespaces | grep sre"
 ```
 
-## チャレンジ問題: ACM を使いこなす
+## チャレンジ問題 1: ACM を使いこなす
 
 - すでにある定義を変更してみましょう
 - CSR に定義のある k8s リソースを手動で削除してみましょう
+
+## チャレンジ問題 2: nomos を使った構文エラーの検証
+
+（Cloud Shell に）[nomos をインストール](https://cloud.google.com/anthos-config-management/docs/how-to/nomos-command?hl=ja) して、vet コマンドを使った検証を行ってみましょう。
+
+## チャレンジ問題 3: Policy Controller を使った制約の作成
+
+![チャレンジ問題 3](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/policy-controller.png)
+
+（管理端末から）[制約オブジェクトを作り](https://cloud.google.com/anthos-config-management/docs/how-to/creating-constraints?hl=ja)、クラスタへポリシーを適用してみましょう。
+
+## チャレンジ問題 4: 複数リポジトリからの同期
+
+（管理端末から）[マルチリポジトリ モード](https://cloud.google.com/kubernetes-engine/docs/add-on/config-sync/how-to/multi-repo?hl=ja)を有効化して、複数のリポジトリから構成を同期してみましょう。
+
+![チャレンジ問題 4](https://cloud.google.com/kubernetes-engine/docs/add-on/config-sync/img/multi-repo.png)
 
 ## これで終わりです
 

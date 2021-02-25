@@ -571,9 +571,21 @@ echo ''
 
 が確認できます。実際にどんな値がみれるのか、探検してみてください。
 
-## チャレンジ問題: User Cluster の追加
+## チャレンジ問題 1: Cloud Logging でのアプリログ確認
 
-![チャレンジ問題](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/challenge.png)
+![チャレンジ問題 1](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/cloud-logging.png)
+
+標準出力にログを出すアプリをデプロイし、Cloud Logging からそのログを確認してみましょう。
+
+ただし Anthos clusters on bare metal の場合、現時点では Kubernetes 側のコンソールからはログが参照できません。Cloud Logging 側からログを絞り込んでください。
+
+**ロギング** セクションを開きましょう。
+
+<walkthrough-menu-navigation sectionId="LOGS_SECTION"></walkthrough-menu-navigation>
+
+## チャレンジ問題 2: User Cluster の追加
+
+![チャレンジ問題 2](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/challenge.png)
 
 図のように、User Cluster を追加してみましょう！[こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/creating-clusters/user-cluster-creation#create-user-config) をヒントに進めてみてくだい。
 

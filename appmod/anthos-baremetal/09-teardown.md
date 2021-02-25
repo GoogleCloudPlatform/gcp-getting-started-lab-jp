@@ -52,7 +52,6 @@ gcloud compute instances delete {{vm-worker}} --zone {{zone}} --quiet
 ```bash
 gcloud compute firewall-rules delete allow-from-iap --quiet
 gcloud compute firewall-rules delete allow-from-internal --quiet
-gcloud compute firewall-rules delete allow-from-internet --quiet
 ```
 
 VPC も削除しましょう。
