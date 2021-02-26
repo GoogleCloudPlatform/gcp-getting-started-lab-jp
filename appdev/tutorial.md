@@ -39,6 +39,12 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
+## ハンズオンで利用する GCP の API を有効化する
+
+```bash
+gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com container.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com compute.googleapis.com spanner.googleapis.com
+```
+
 ## gcloud コマンドラインツール設定 - リージョン、ゾーン
 
 ### デフォルトリージョンを設定
@@ -57,12 +63,6 @@ gcloud config set compute/region asia-northeast1
 gcloud config set compute/zone asia-northeast1-c
 ```
 
-## ハンズオンで利用する GCP の API を有効化する
-
-```bash
-gcloud services enable cloudbuild.googleapis.com sourcerepo.googleapis.com containerregistry.googleapis.com container.googleapis.com cloudtrace.googleapis.com cloudprofiler.googleapis.com logging.googleapis.com compute.googleapis.com spanner.googleapis.com
-```
-
 ## サービスアカウントの作成、IAM ロールの割当
 
 ### ハンズオン向けのサービスアカウントを作成する
@@ -72,6 +72,7 @@ gcloud iam service-accounts create appdev-handson --display-name "AppDev HandsOn
 ```
 
 ## サービスアカウントに権限（IAM ロール）を割り当てる
+
 作成したサービスアカウントには GCP リソースの操作権限がついていないため、ここで必要な権限を割り当てます。
 
 下記の権限を割り当てます。
@@ -206,6 +207,7 @@ gcloud spanner databases execute-sql appdev-db \
 ```
 
 上記コマンドを実行後、以下のような出力結果が得られることを確認する
+
 ```
 SessionId                             CouponId                              DiscountPercentage  IsUsed  ExpiredBy
 aaaaaaaa-1111-bbbb-2222-cccccccccccc  xxxxxxxx-1111-yyyy-2222-zzzzzzzzzzzz  40                  False   1604913597
@@ -252,7 +254,8 @@ EXTERNAL-IP に 値が入っていない場合、もしくは\<pending\>にな�
 kubectl get service frontend-external -n appdev-handson-ns
 ```
 
-上記コマンドを実行した結果の例 ( EXTERNAL-IPに値が入っている場合 )
+上記コマンドを実行した結果の例 ( EXTERNAL-IP に値が入っている場合 )
+
 ```
 NAME                TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
 frontend-external   LoadBalancer   10.4.10.232   35.187.195.202   80:32692/TCP   2m19s
@@ -264,20 +267,20 @@ frontend-external   LoadBalancer   10.4.10.232   35.187.195.202   80:32692/TCP  
 export FRONTEND_IP=$(kubectl get service frontend-external -n appdev-handson-ns -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
-以下コマンドを実行し、ブラウザからアクセスするためのURLを取得する。
+以下コマンドを実行し、ブラウザからアクセスするための URL を取得する。
 
 ```bash
 echo http://$FRONTEND_IP/
 ```
 
 コマンド実行例
+
 ```
 http://35.187.195.202/
 ```
 
-取得したURLへアクセスし、アプリケーションにアクセスできることを確認する。
+取得した URL へアクセスし、アプリケーションにアクセスできることを確認する。
 ![BaseApp](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/BaseApp.png?raw=true)
-
 
 # 2. クーポンサービスの作成
 
@@ -314,27 +317,29 @@ cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kuber
 ```
 
 出力画面の例
+
 ```
 image: gcr.io/{{project-id}}/couponservice:v1
 ```
 
 ## couponservice のデプロイ
 
-以下コマンドを実行し、マニュフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v1 ) を Kubernetes ( GKE ) のクラスター上にデプロイする
+以下コマンドを実行し、マニフェストファイルを使って、先程 Container Registry に登録したクーポンサービスのコンテナ ( couponservice:v1 ) を Kubernetes ( GKE ) のクラスター上にデプロイする
 
 ```bash
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
-以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registry に登録したクーポンサービスのコンテナがデプロイされていることを確認します。
 
 ```bash
-kubectl describe deployment couponservice --namespace appdev-handson-ns
+kubectl describe deployment couponservice --namespace appdev-handson-ns | grep -B 2 -A 2 Image
 ```
 
-Imageのパスが、gcr.io/{{project-id}}/couponservice:v1 となっていることを確認します。
+Image のパスが、gcr.io/{{project-id}}/couponservice:v1 となっていることを確認します。
 
 結果出力の例
+
 ```
 ...
 server:
@@ -379,6 +384,7 @@ cat ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kuber
 ```
 
 出力画面の例
+
 ```
 image: gcr.io/{{project-id}}/frontend:v1
 ```
@@ -391,15 +397,16 @@ image: gcr.io/{{project-id}}/frontend:v1
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/frontend.yaml --namespace appdev-handson-ns
 ```
 
-以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registry に登録したクーポンサービスのコンテナがデプロイされていることを確認します。
 
 ```bash
-kubectl describe deployment frontend --namespace appdev-handson-ns
+kubectl describe deployment frontend --namespace appdev-handson-ns | grep -B 2 -A 2 Image
 ```
 
-Imageのパスが、gcr.io/{{project-id}}/frontend:v1 となっていることを確認します。
+Image のパスが、gcr.io/{{project-id}}/frontend:v1 となっていることを確認します。
 
 結果出力の例
+
 ```
 ...
 server:
@@ -479,7 +486,6 @@ session-id: 42d37f1b-21cc-4bf8-bd63-1775545e870a
 
 ![CheckSession](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/CheckSession.png?raw=true)
 
-
 以下コマンドを実行し、環境変数に調べたセッション ID を設定する
 
 ```bash
@@ -505,14 +511,13 @@ gcloud spanner rows insert --database=appdev-db \
 ### Kubernetes のマニフェストファイルを修正する
 
 appdev/microservices-demo/kubernetes-manifests/couponservice.yaml を以下の通り修正する。
-xxxxx はプロジェクト ID に読み替えて実行する。
 
 ```
 修正前
-image: gcr.io/xxxxx/couponservice:v1
+image: gcr.io/{{project-id}}/couponservice:v1
 
 修正後
-image: gcr.io/xxxxx/couponservice:v2
+image: gcr.io/{{project-id}}/couponservice:v2
 ```
 
 <walkthrough-editor-open-file filePath="cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml">
@@ -527,15 +532,16 @@ image: gcr.io/xxxxx/couponservice:v2
 kubectl apply -f ~/cloudshell_open/gcp-getting-started-lab-jp/appdev/microservices-demo/kubernetes-manifests/couponservice.yaml --namespace appdev-handson-ns
 ```
 
-以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registryに登録したクーポンサービスのコンテナがデプロイされていることを確認します。
+以下コマンドを実行し、デプロイされたコンテナの情報を確認します。Container Registry に登録したクーポンサービスのコンテナがデプロイされていることを確認します。
 
 ```bash
 kubectl describe deployment couponservice --namespace appdev-handson-ns
 ```
 
-Imageのパスが、gcr.io/{{project-id}}/couponservice:v2 となっていることを確認します。
+Image のパスが、gcr.io/{{project-id}}/couponservice:v2 となっていることを確認します。
 
 結果出力の例
+
 ```
 ...
 server:
@@ -552,7 +558,6 @@ echo http://$FRONTEND_IP/
 ```
 
 ![V2App](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/appdev/tutorial-assets/V2App.png?raw=true)
-
 
 # 5. (Advanced) クーポンサービスの高度化
 
