@@ -55,6 +55,23 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
+<walkthrough-footnote>次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
+
+## GCP 環境設定
+
+GCP では利用したい機能ごとに、有効化を行う必要があります。
+ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
+
+### ハンズオンで利用する GCP の API を有効化する
+
+```bash
+gcloud services enable servicemanagement.googleapis.com compute.googleapis.com
+```
+
+`Operation 〜 finished successfully.` と表示が出ることを確認します。
+
+**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+
 ## gcloud コマンドラインツール設定 - リージョン、ゾーン
 
 ### デフォルトリージョンを設定
@@ -73,24 +90,8 @@ gcloud config set compute/region asia-northeast1
 gcloud config set compute/zone asia-northeast1-c
 ```
 
-<walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
-
-## GCP 環境設定
-
-GCP では利用したい機能ごとに、有効化を行う必要があります。
-ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
-
-### ハンズオンで利用する GCP の API を有効化する
-
-```bash
-gcloud services enable servicemanagement.googleapis.com compute.googleapis.com
-```
-
-`Operation 〜 finished successfully.` と表示が出ることを確認します。
-
-**GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
-
 <walkthrough-footnote>必要な機能が使えるようになりました。次にワークショップ環境を確認します</walkthrough-footnote>
+
 
 ## ワークショップ環境の確認
 
@@ -192,19 +193,19 @@ UI の色々なところをクリックし、サービスの各種情報を確�
 
 1. **指標の選択** で `レイテンシ`をチェックします。
 2. **リクエスト ベースまたは Windows ベースの選択** で `リクエスト ベース`をチェックします。
-3. `次へ` のボタンをクリックします。
+3. `続行` のボタンをクリックします。
 
 ### SLI の詳細を定義する
 
 1. **パフォーマンス指標** の `レイテンシのしきい値` に `10` を入力します。(10 ミリ秒)
-2. `次へ` のボタンをクリックします。
+2. `続行` のボタンをクリックします。
 
 ### サービスレベル指標（SLO）の設定
 
 1. **コンプライアンス期間** の `期間の種類` を `連続` にします。
 2. **期間の長さ** に `1` を入力します。(1 日)
 3. **パフォーマンス目標** の `目標` に `90` を入力します。(90%)
-4. `次へ` のボタンをクリックします。
+4. `続行` のボタンをクリックします。
 
 ### 確認と保存
 
