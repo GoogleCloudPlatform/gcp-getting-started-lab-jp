@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: server
-          image:  gcr.io/onlineboutique/frontend:v0.1.4
+          image: gcr.io/google-samples/microservices-demo/frontend:v0.2.1
           imagePullPolicy: Always
           ports:
           - containerPort: 8080
