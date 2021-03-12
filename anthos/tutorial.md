@@ -101,7 +101,7 @@ gcloud config set compute/zone asia-northeast1-c
 curl -sL https://github.com/GoogleCloudPlatform/anthos-sample-deployment/releases/latest/download/asd-prereq-checker.sh | sh -
 ```
 
-問題がない場合は、下記のように出力されます。各項目が `PASS` となっていることを確認してください。
+問題がない場合は、下記のように出力されます。各項目が `PASS` となっていることを確認してください。（1 つ WARNING が出ることがありますが、問題ございません）
 
 ```
 Your active configuration is: [cloudshell-4100]
@@ -114,6 +114,7 @@ PASS: Anthos Sample Deployment does not already exist.
 PASS: Project ID is valid, does not contain colon.
 PASS: Project has sufficient quota to support this deployment.
 ```
+
 
 ## Anthos Service Deployment のデプロイ
 
@@ -162,11 +163,11 @@ Anthos Service Mesh の UI にアクセスします。
 
 [サービス メッシュ](https://console.cloud.google.com/anthos/services?project={{project-id}})
 
-合計 8 のサービスが稼働していることを確認します。
+合計 9 のサービスが稼働していることを確認します。
 
 ### 各種サービスのトポロジグラフを表示
 
-8 のサービスが連携し、サンプル銀行サイトを作り上げています。右上の `トポロジ` をクリックし、トポロジグラフを表示します。
+9 のサービスが連携し、サンプル銀行サイトを作り上げています。右上の `トポロジ` をクリックし、トポロジグラフを表示します。
 
 ### トポロジグラフの詳細を確認する
 
@@ -183,7 +184,7 @@ UI の色々なところをクリックし、サービスの各種情報を確�
 
 ### ledgerwriter の UI へアクセス
 
-[ledgerwriter](https://console.cloud.google.com/anthos/services/service/boa/ledgerwriter/overview?project={{project-id}})
+左のメニューから`サービス メッシュ` -> `ledgerwriter` をクリックしてください。
 
 ### SLO の作成を開始
 
@@ -808,15 +809,15 @@ kubectl get pod -n zoneprinter --context anthos-sample-cluster1
 kubectl get pod -n zoneprinter --context anthos-sample-cluster2
 ```
 
-## Ingress for Anthos の導入
+## Multi Cluster Ingress の導入
 
-Ingress for Anthos は異なるリージョンのクラスタに配置されているサービスを、インテリジェントに負荷分散する機能です。下記のような特徴があります。
+Multi Cluster Ingress は異なるリージョンのクラスタに配置されているサービスを、インテリジェントに負荷分散する機能です。下記のような特徴があります。
 
 - 1 IP アドレスでの公開
 - 利用者の近いクラスタに自動的にアクセスを振り分け
 - サービスのヘルスチェック
 
-### Ingress for Anthos の有効化
+### Multi Cluster Ingress の有効化
 
 ```bash
 gcloud services enable multiclusteringress.googleapis.com
@@ -824,7 +825,7 @@ gcloud services enable multiclusteringress.googleapis.com
 
 ### Config Cluster の設定
 
-Config Cluster とは Ingress for Anthos の設定を担当するクラスタで、1 つのみ設定が可能です。
+Config Cluster とは Multi Cluster Ingress の設定を担当するクラスタで、1 つのみ設定が可能です。
 
 ```bash
 gcloud alpha container hub ingress enable --config-membership=projects/{{project-id}}/locations/global/memberships/anthos-sample-cluster1
@@ -832,16 +833,16 @@ gcloud alpha container hub ingress enable --config-membership=projects/{{project
 
 ここでは Anthos Sample Deployment により作成されたクラスタを対象にします。
 
-## Ingress for Anthos 関連リソースの作成
+## Multi Cluster Ingress 関連リソースの作成
 
-Ingress for Anthos では複数のリージョンに置かれているサービスをまとめるため、専用のリソースが用意されています。
+Multi Cluster Ingress では複数のリージョンに置かれているサービスをまとめるため、専用のリソースが用意されています。
 
 - MultiClusterService
 - MultiClusterIngress
 
 **ポイント**: これらのリソースは設定を担当する `Config Cluster` のみに作成することに注意してください。
 
-### MultiClusterService の作成
+### MultiClusterService リソースの作成
 
 ```bash
 kubectl apply -f k8s-manifest/mcs.yaml --context anthos-sample-cluster1
@@ -867,7 +868,7 @@ spec:
           targetPort: 8080
 ```
 
-## MultiClusterIngress の作成
+## MultiClusterIngress リソースの作成
 
 ```bash
 kubectl apply -f k8s-manifest/mci.yaml --context anthos-sample-cluster1
@@ -889,9 +890,9 @@ spec:
         servicePort: 8080
 ```
 
-## Ingress for Anthos の動作確認
+## Multi Cluster Ingress の動作確認
 
-### MultiClusterIngress の確認
+### ステータスの確認
 
 MultiClusterIngress のステータスを確認します。
 
