@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
-	"google.golang.org/api/iterator"
 )
 
 func main() {
@@ -32,7 +31,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, Egg!")
+	fmt.Fprint(w, "Hello, GIG!")
 }
 
 func firestoreHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,39 +65,35 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 取得処理
 	case http.MethodGet:
-		iter := client.Collection("users").Documents(ctx)
-		var u []Users
-
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			var user Users
-			err = doc.DataTo(&user)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user.Id = doc.Ref.ID
-			log.Print(user)
-			u = append(u, user)
+		docs, err := client.Collection("users").Documents(ctx).GetAll()
+		if err != nil {
+			log.Fatal(err)
 		}
-		if len(u) == 0 {
+		if len(docs) == 0 {
 			w.WriteHeader(http.StatusNoContent)
-		} else {
-			json, err := json.Marshal(u)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
+			return
 		}
+
+		var users []User
+		for _, doc := range docs {
+			var u User
+			if err := doc.DataTo(&u); err != nil {
+				log.Fatal(err)
+			}
+			u.ID = doc.Ref.ID
+			log.Print(u)
+			users = append(users, u)
+		}
+		json, err := json.Marshal(users)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
 
 	// 更新処理
 	case http.MethodPut:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
 		u, err := getUserBody(r)
 		if err != nil {
 			log.Fatal(err)
@@ -106,7 +101,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = client.Collection("users").Doc(u.Id).Set(ctx, u)
+		_, err = client.Collection("users").Doc(id).Set(ctx, u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -131,13 +126,13 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type Users struct {
-	Id    string `firestore:id, json:id`
-	Email string `firestore:email, json:email`
-	Name  string `firestore:name, json:name`
+type User struct {
+	ID    string `firestore:"-" json:"id"`
+	Email string `firestore:"email" json:"email"`
+	Name  string `firestore:"name" json:"name"`
 }
 
-func getUserBody(r *http.Request) (u Users, err error) {
+func getUserBody(r *http.Request) (u User, err error) {
 	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
 	if err != nil {
 		return u, err

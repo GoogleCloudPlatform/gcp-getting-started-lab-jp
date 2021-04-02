@@ -1,10 +1,10 @@
-# E.G.G ハンズオン #1
+# G.I.G ハンズオン #1
 
 ## Google Cloud Platform（GCP）プロジェクトの選択
 
 ハンズオンを行う GCP プロジェクトを作成し、 GCP プロジェクトを選択して **Start/開始** をクリックしてください。
 
-**今回のハンズオンは Firestore Native mode を使って行うため、既存のプロジェクト（特にすでに使っているなど）だと不都合が生じる恐れがありますので新しいプロジェクトを作成してください。**
+**今回のハンズオンは Firestore Native mode を使って行うため、既存のプロジェクト（特に Datastore をすでに使っているなど）だと不都合が生じる恐れがありますので、新しいプロジェクトを作成してください。**
 
 
 <walkthrough-project-setup>
@@ -66,7 +66,7 @@
     - VPC Subnet と VPC の削除
     - Container Registry に登録したコンテナイメージの削除
     - Owner 権限をつけた dev-key.json の削除
-    - サービスアカウント dev-egg-sa の削除
+    - サービスアカウント dev-gig-sa の削除
 
 
 <!-- Step 3 -->
@@ -86,7 +86,7 @@
 <!-- Step 4 -->
 ## gcloud コマンドラインツール
 
-Google Cloud は、CLI、GUI、Rest API から操作が可能です。ハンズオンでは主に CLI を使い作業を行いますが、GUI で確認する URL も合わせて掲載します。
+Google Cloud は、CLI、GUI、Rest API から操作が可能です。ハンズオンでは主に CLI を使い作業を行いますが、GUI で確認する URL も併せて掲載します。
 
 
 ### gcloud コマンドラインツールとは?
@@ -120,6 +120,7 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 ### CLI（gcloud コマンド） から利用する GCP のデフォルトプロジェクトを設定
 
 操作対象のプロジェクトを設定します。
+権限を与えるための確認画面が出たら承認して進めます。
 
 ```bash
 gcloud config set project $GOOGLE_CLOUD_PROJECT
@@ -133,6 +134,10 @@ gcloud config set project $GOOGLE_CLOUD_PROJECT
 gcloud config set compute/region us-central1
 ```
 
+次のようなメッセージが出たら `y` で進めてください。
+```plain
+Would you like to enable and retry (this will take a few minutes)?
+```
 
 <walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
 
@@ -166,34 +171,35 @@ gcloud services enable \
   servicenetworking.googleapis.com
 ```
 
-**GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
+**GUI**: [APIライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})または、クラウドコンソールの各サービスのページを開くと有効化ボタンが表示されます。
 
 <!-- Step 7 -->
 ## GCP 環境設定 Part2
 
 ### サービスアカウントの作成
 
-ローカルの開発で使用するサービスアカウントを作成します。
+サービスアカウントとは、アプリケーションやVMインスタンスが使用するアカウントです。
+サービスアカウントを作成し、アプリがそれを使用するようにします。
 
 ```bash
-gcloud iam service-accounts create dev-egg-sa
+gcloud iam service-accounts create dev-gig-sa
 ```
 
-作成したサービスアカウントに権限を付与します。 **今回のハンズオンはオーナー権限を付与していますが、実際の開発の現場では適切な権限を付与しましょう！**
+作成したサービスアカウントに権限を付与します。 **今回のハンズオンは編集者権限を付与していますが、実際の開発の現場では必要最小限の権限を付与しましょう！**
 
 ```bash
-gcloud projects add-iam-policy-binding {{project-id}} --member "serviceAccount:dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
+gcloud projects add-iam-policy-binding {{project-id}} --member "serviceAccount:dev-gig-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/editor"
 ```
 
-キーファイルを生成します。
+認証用のキーファイルを生成します。
 
 ```bash
-gcloud iam service-accounts keys create dev-key.json --iam-account dev-egg-sa@{{project-id}}.iam.gserviceaccount.com
+gcloud iam service-accounts keys create dev-key.json --iam-account dev-gig-sa@{{project-id}}.iam.gserviceaccount.com
 ```
 
 **GUI**: [サービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts?project={{project-id}})
 
-作成したキーを環境変数に設定します。
+作成したキーを環境変数に設定します。クライアントライブラリは `GOOGLE_APPLICATION_CREDENTIALS` に設定されたファイルを使って認証を行います。
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
@@ -206,20 +212,24 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 
 今回のハンズオンでは Firestore のネイティブモードを使用します。
 
-GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動し、 [SWITCH TO NATIVE MODE] をクリックしてください。ロケーション選択では `us-east1` を選択してください。
+GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動してください。
 
-1. 切り替え画面
+1. ネイティブモードを選択して進めてください。
+
+![select-firestore-mode](https://storage.googleapis.com/egg-resources/egg1/public/select-mode.png)
+
+その次のロケーション選択では `us-west2` を選択してください。
+
+2. 切り替え画面
+
+もし次のようなメッセージが表示されたら、`SWITCH TO NATIVE MODE` をクリックしてください。
 
 ![switch1](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native1.png)
 ![switch2](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native2.png)
 
-2. もしかしたらこちらの画面が表示されている場合もあります。同様にネイティブモードを選択していただければOKです。
-
-![select-firestore-mode](https://storage.googleapis.com/egg-resources/egg1/public/select-mode.png)
-
 3. ネイティブモードが有効になると、[Firestore コンソール](https://console.cloud.google.com/firestore/data/?project={{project-id}})でデータ管理の画面が有効になります。
 
-**Datastore モードの場合でも、まだ一度もデータを登録していなければネイティブモードへの切り替えが可能です。**
+**Datastore モードを選んだ場合でも、まだ一度もデータを登録していなければネイティブモードへの切り替えが可能です。**
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次に Cloud Run によるアプリケーションの開発に進みます。</walkthrough-footnote>
 
@@ -269,7 +279,7 @@ gcloud config set compute/region us-central1
 - 作業用のディレクトリへ移動
 
 ```bash
-cd ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1
+cd ~/cloudshell_open/gcp-getting-started-lab-jp/gig/gig02-01
 ```
 
 - シークレットキーの参照先を設定
@@ -285,18 +295,9 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 - Cloud Run の URL の取得
 
 ```bash
-URL=$(gcloud run services describe --format=json --region=us-central1 --platform=managed egg1-app | jq .status.url -r)
+URL=$(gcloud run services describe --format=json --region=us-central1 --platform=managed gig02-app | jq .status.url -r)
 echo ${URL}
 ```
-
-**Cloud Shell が固まってしまう方へ**
-
-Cloud Shell が遅い、固まってしまう、という場合はブーストモードを有効にすることで改善される可能性がありますのでお試しください。ブーストモードは、Cloud Shell VM のマシンスペックを 24 時間の間、一時的に向上させる機能です。
-
-- Cloud Shell のブーストモードの有効化手順
-
-ブーストモードを有効にするには、[その他] メニュー（Cloud Shell の右上にある 3 つの点のアイコン）の下の [ブーストモードを有効にする] オプションを使います。ブーストモードを有効にすると、Cloud Shell が再起動され、すぐにセッションが終了します。その後、新しい VM がプロビジョニングされますが、これには数分かかることがあります。ホーム ディレクトリのデータはそのまま残りますが、実行中のすべてのプロセスは失われます。
-
 
 <!-- Step 11 -->
 ## アプリケーション コードの確認
@@ -306,7 +307,7 @@ Cloud Shell が遅い、固まってしまう、という場合はブースト�
 ハンズオン用のサンプル Web アプリケーションとして　Go 言語で API サーバーを作成していきます。
 
 まずはカレント ディレクトリにある main.go を確認してください。
-単純な HTTP リクエストに対して `Hello, EGG!` を返す Go のコードになります。
+単純な HTTP リクエストに対して `Hello, GIG!` を返す Go のコードになります。
 
 
 ```go:main.go
@@ -335,11 +336,11 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, Egg!")
+	fmt.Fprint(w, "Hello, GIG!")
 }
 ```
 
-確認できたら、ローカルで動かしてみましょう。
+確認できたら、Cloud Shell 上で動かしてみましょう。
 
 ```bash
 go run main.go
@@ -357,14 +358,14 @@ go run main.go
 
 ### CloudShell の機能を利用し、起動したアプリケーションにアクセスする
 
-画面右上にあるアイコン <walkthrough-web-preview-icon></walkthrough-web-preview-icon> をクリックし、"プレビューのポート: 8080"を選択します。
+エディタ画面の右上にあるアイコン <walkthrough-web-preview-icon></walkthrough-web-preview-icon> をクリックし、"ポート 8080 でプレビュー"を選択します。
 これによりブラウザで新しいタブが開き、Cloud Shell 上で起動しているコンテナにアクセスできます。
 
-正しくアプリケーションにアクセスできると、 **Hello, EGG!** と表示されます。
+正しくアプリケーションにアクセスできると、 **Hello, GIG!** と表示されます。
 
-確認が終わったら、Cloud Shell 上で Ctrl+c を入力して実行中のアプリケーションを停止します。
+確認が終わったら、Cloud Shell 上で Ctrl+C を入力して実行中のアプリケーションを停止します。
 
-<walkthrough-footnote>ローカル環境（Cloud Shell 内）で動いているアプリケーションにアクセスできました。次にアプリケーションのコンテナ化をします。</walkthrough-footnote>
+<walkthrough-footnote>Cloud Shell 上で動いているアプリケーションにアクセスできました。次にアプリケーションをコンテナ化します。</walkthrough-footnote>
 
 
 <!-- Step 13 -->
@@ -376,7 +377,7 @@ Go 言語で作成されたサンプル Web アプリケーションをコンテ
 ここで作成したコンテナは Cloud Shell インスタンスのローカルに保存されます。
 
 ```bash
-docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1 .
+docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1 .
 ```
 
 **ヒント**: `docker build` コマンドを叩くと、Dockerfile が読み込まれ、そこに記載されている手順通りにコンテナが作成されます。
@@ -387,10 +388,10 @@ docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1 .
 
 ```bash
 docker run -p 8080:8080 \
---name egg1-app \
+--name gig02-app \
 -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/auth.json \
 -v $PWD/auth.json:/tmp/keys/auth.json:ro \
-gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1
+gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1
 ```
 
 **ヒント**: Cloud Shell 環境の 8080 ポートを、コンテナの 8080 ポートに紐付け、フォアグラウンドで起動しています。
@@ -403,27 +404,27 @@ gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1
 
 ### CloudShell の機能を利用し、起動したアプリケーションにアクセスする
 
-画面右上にあるアイコン <walkthrough-web-preview-icon></walkthrough-web-preview-icon> をクリックし、"プレビューのポート: 8080"を選択します。
+画面右上にあるアイコン <walkthrough-web-preview-icon></walkthrough-web-preview-icon> をクリックし、"ポート 8080 でプレビュー"を選択します。
 これによりブラウザで新しいタブが開き、Cloud Shell 上で起動しているコンテナにアクセスできます。
 
-正しくアプリケーションにアクセスできると、先程と同じように `Hello EGG!` と表示されます。
+正しくアプリケーションにアクセスできると、先程と同じように `Hello GIG!` と表示されます。
 
-確認が終わったら、Cloud Shell 上で Ctrl+c を入力して実行中のコンテナを停止します。
+確認が終わったら、Cloud Shell 上で Ctrl+C を入力して実行中のコンテナを停止します。
 
 
-<walkthrough-footnote>ローカル環境（Cloud Shell 内）で動いているコンテナにアクセスできました。次に Cloud Run にデプロイするための準備を進めます。</walkthrough-footnote>
+<walkthrough-footnote>Cloud Shell 上で動いているコンテナにアクセスできました。次に Cloud Run にデプロイするための準備を進めます。</walkthrough-footnote>
 
 
 <!-- Step 15 -->
-## コンテナのレジストリへの登録
+## イメージのレジストリへの登録
 
-先程作成したコンテナはローカルに保存されているため、他の場所から参照ができません。
-他の場所から利用できるようにするために、GCP 上のプライベートなコンテナ置き場（コンテナレジストリ）に登録します。
+先程作成したイメージは Cloud Shell 内に保存されているため、他の場所から参照ができません。
+他の場所から利用できるようにするために、GCP 上のプライベートなイメージ置き場（コンテナレジストリ）に登録します。
 
-### 作成したコンテナをコンテナレジストリ（Google Container Registry）へ登録（プッシュ）する
+### 作成したイメージをコンテナレジストリ（Google Container Registry）へ登録（プッシュ）する
 
 ```bash
-docker push gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1
+docker push gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1
 ```
 
 **GUI**: [コンテナレジストリ](https://console.cloud.google.com/gcr/images/{{project-id}}?project={{project-id}})
@@ -436,15 +437,15 @@ docker push gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1
 
 ### gcloud コマンドで Cloud Run の Service を作成し、コンテナをデプロイします
 
-Cloud Run の名前は egg1-app にしています。
+Cloud Run でのサービス名は gig02-app にしています。
 
 ```bash
-gcloud run deploy --image=gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1 \
-  --service-account="dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" \
+gcloud run deploy --image=gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1 \
+  --service-account="dev-gig-sa@{{project-id}}.iam.gserviceaccount.com" \
   --platform=managed \
   --region=us-central1 \
   --allow-unauthenticated \
-  egg1-app
+  gig02-app
 ```
 
 **参考**: デプロイが完了するまで、1〜2分程度かかります。
@@ -452,21 +453,22 @@ gcloud run deploy --image=gcr.io/$GOOGLE_CLOUD_PROJECT/egg1-app:v1 \
 **GUI**: [Cloud Run](https://console.cloud.google.com/run?project={{project-id}})
 
 ### Cloud Run の Service の URLを取得します
+
 ```bash
-URL=$(gcloud run services describe --format=json --region=us-central1 --platform=managed egg1-app | jq .status.url -r)
+URL=$(gcloud run services describe --format=json --region=us-central1 --platform=managed gig02-app | jq -r .status.url)
 echo ${URL}
 ```
 
 ブラウザから取得した URL を開いてアプリケーションの動作を確認します。
 
-**GUI**: [Cloud Run サービス情報](https://console.cloud.google.com/run/detail/us-central1/egg1-app/general?project={{project-id}})
+**GUI**: [Cloud Run サービス情報](https://console.cloud.google.com/run/detail/us-central1/gig02-app/general?project={{project-id}})
 
 
 <!-- Step 17 -->
 ## Cloud Runのログを確認します
 
 ### コンテナのログを確認
-**GUI**: [Cloud Run ログ](https://console.cloud.google.com/run/detail/us-central1/egg1-app/logs?project={{project-id}})
+**GUI**: [Cloud Run ログ](https://console.cloud.google.com/run/detail/us-central1/gig02-app/logs?project={{project-id}})
 
 アクセスログを確認します。
 
@@ -487,7 +489,7 @@ Cloud Build を実行する際に利用されるサービスアカウントを�
 export CB_SA=$(gcloud projects get-iam-policy $GOOGLE_CLOUD_PROJECT | grep cloudbuild.gserviceaccount.com | uniq | cut -d ':' -f 2)
 ```
 
-上で取得したサービスアカウントに Cloud Build から自動デプロイをさせるため Cloud Run 管理者の権限を与えます。
+上で取得したサービスアカウントに Cloud Build から自動デプロイをさせるため Cloud Run 管理者とサービス アカウント ユーザーのロールを与えます。
 
 ```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAccount:$CB_SA --role roles/run.admin
@@ -505,32 +507,34 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ### cloudbuild.yaml の確認
 
-Cloud Build のジョブの中身は `egg2-1` フォルダ下にある `cloudbuild.yaml` に定義されているので中身を確認してみましょう。
+Cloud Build のジョブの中身は `gig02-01` フォルダ下にある `cloudbuild.yaml` に定義されているので中身を確認してみましょう。
 
 ```
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID', '.']
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID', '.']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID']
+  args: ['push', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID']
 
 - name: 'gcr.io/cloud-builders/gcloud'
   args: [
     'run',
     'deploy',
-    '--image=gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID',
-    '--service-account=dev-egg-sa@$PROJECT_ID.iam.gserviceaccount.com',
+    '--image=gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID',
+    '--service-account=dev-gig-sa@$PROJECT_ID.iam.gserviceaccount.com',
     '--platform=managed',
     '--region=us-central1',
     '--allow-unauthenticated',
     '--set-env-vars',
     'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
-    'egg1-app',
+    'gig02-app',
   ]
 ```
 
-docker build コマンドでコンテナをビルドした際は、コンテナのタグを `gcr.io/{{project-id}}/egg1-app:v1` としていましたが、Cloud Build では `gcr.io/{{project-id}}/egg1-app:$BUILD_ID` としている事が分かります。$BUILD_ID には Cloud Build のジョブの ID が入ります。
+3つあるステップは上から順にDockerイメージのビルド、プッシュ、Cloud Run へのデプロイを行っています。
+
+手動で docker build コマンドでコンテナをビルドした際は、イメージのタグを固定の `gcr.io/{{project-id}}/gig02-app:v1` としていましたが、Cloud Build の1ステップ目を見ると `gcr.io/{{project-id}}/gig02-app:$BUILD_ID` としている事が分かります。$BUILD_ID には Cloud Build のジョブの ID が入ります。
 
 <walkthrough-footnote>それでは　Cloud Build のジョブを実行してみましょう。</walkthrough-footnote>
 
@@ -541,25 +545,25 @@ docker build コマンドでコンテナをビルドした際は、コンテナ�
 ### Cloud Build のジョブの実行
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit .
 ```
 
-** ヒント **: コマンド末尾の `.` は、 `cloudbuild.yaml` がカレント ディレクトリに存在することを指しています。
+**ヒント**: コマンド末尾の `.` は、 カレント ディレクトリに存在するコンフィグファイル `cloudbuild.yaml` を使うことを示します。
 
 
 ### ジョブの確認
 
-[Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds?project={{project-id}}) にアクセスし、ビルドが実行されていることを確認します。
+[Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds;region=global?project={{project-id}}) にアクセスし、ビルドが実行されていることを確認します。
 
 
 ### Cloud Run の確認
 
 Cloud Run のコンテナの Image URL が Cloud Build で作成されたイメージになっていることを確認します。
 
-**GUI**: [Cloud Run リビジョン](https://console.cloud.google.com/run/detail/us-central1/egg1-app/revisions?project={{project-id}})
+**GUI**: [Cloud Run リビジョン](https://console.cloud.google.com/run/detail/us-central1/gig02-app/revisions?project={{project-id}})
 
 
-<walkthrough-footnote>Cloud Build による自動ビルド・デプロイの設定が完了しました。次は Firestore の実装に入ります。</walkthrough-footnote>
+<walkthrough-footnote>Cloud Build による自動ビルド・デプロイの設定が完了しました。次は Firestore を読み書きする実装に入ります。</walkthrough-footnote>
 
 
 <!-- Step 21 -->
@@ -569,26 +573,26 @@ Cloud Run のコンテナの Image URL が Cloud Build で作成されたイメ�
 
 ### 依存関係の追加
 
-Firestore にアクセスするためにクライアントライブラリを追加します。
-Go 言語の場合、 `go.mod` で Go パッケージの依存関係を設定できます。
+Firestore にアクセスするためにクライアントライブラリが必要です。
+Go 言語の場合、 `go.mod` に Go パッケージの依存関係が記載されます。
 
-今回のハンズオンで使う依存関係を全て書いた `go.mod` ファイルは既に `egg2-1` フォルダに配置済みです。
+今回のハンズオンで使う依存関係を全て書いた `go.mod` ファイルは既に `gig02-01` フォルダに配置済みです。
 
 ```
-module github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/gaming/egg2-1
+module github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/gig/gig02-01
 
-go 1.13
+go 1.16
 
 require (
-	cloud.google.com/go/firestore v1.3.0
+	cloud.google.com/go v0.80.0 // indirect
+	cloud.google.com/go/firestore v1.5.0
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
-	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
-	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
-	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 // indirect
-	golang.org/x/tools v0.0.0-20200913032122-97363e29fc9b // indirect
-	google.golang.org/api v0.31.0
-	google.golang.org/genproto v0.0.0-20200911024640-645f7a48b24f // indirect
-	google.golang.org/grpc v1.32.0 // indirect
+	golang.org/x/mod v0.4.2 // indirect
+	golang.org/x/net v0.0.0-20210331060903-cb1fcc7394e5 // indirect
+	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558 // indirect
+	google.golang.org/api v0.43.0
+	google.golang.org/genproto v0.0.0-20210330181207-2295ebbda0c6 // indirect
 )
 ```
 
@@ -611,7 +615,6 @@ require (
 "io"
 "strconv"
 "cloud.google.com/go/firestore"
-"google.golang.org/api/iterator"
 ```
 
 次に、main 関数にハンドラを追加します。
@@ -655,36 +658,31 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 取得処理
 	case http.MethodGet:
-		iter := client.Collection("users").Documents(ctx)
-		var u []Users
-
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			var user Users
-			err = doc.DataTo(&user)
-			if err != nil {
-				log.Fatal(err)
-			}
-			user.Id = doc.Ref.ID
-			log.Print(user)
-			u = append(u, user)
+		docs, err := client.Collection("users").Documents(ctx).GetAll()
+		if err != nil {
+			log.Fatal(err)
 		}
-		if len(u) == 0 {
+		if len(docs) == 0 {
 			w.WriteHeader(http.StatusNoContent)
-		} else {
-			json, err := json.Marshal(u)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
+			return
 		}
+
+		var users []User
+		for _, doc := range docs {
+			var u User
+			if err := doc.DataTo(&u); err != nil {
+				log.Fatal(err)
+			}
+			u.ID = doc.Ref.ID
+			log.Print(u)
+			users = append(users, u)
+		}
+		json, err := json.Marshal(users)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
 
 	// それ以外のHTTPメソッド
 	default:
@@ -693,13 +691,13 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type Users struct {
-	Id    string `firestore:id, json:id`
-	Email string `firestore:email, json:email`
-	Name  string `firestore:name, json:name`
+type User struct {
+	ID    string `firestore:"-" json:"id"`
+	Email string `firestore:"email" json:"email"`
+	Name  string `firestore:"name" json:"name"`
 }
 
-func getUserBody(r *http.Request) (u Users, err error) {
+func getUserBody(r *http.Request) (u User, err error) {
 	length, err := strconv.Atoi(r.Header.Get("Content-Length"))
 	if err != nil {
 		return u, err
@@ -719,7 +717,6 @@ func getUserBody(r *http.Request) (u Users, err error) {
 	log.Print(u)
 	return u, nil
 }
-
 ```
 
 こちらのコードは実際のプロジェクトの Firestore にデータを追加、または Firestore からデータを取得しようとしています。
@@ -735,7 +732,7 @@ func getUserBody(r *http.Request) (u Users, err error) {
 Cloud Build を実行し、アプリケーションを Cloud Run にデプロイしてみましょう。
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit .
 ```
 
 ### URL の表示
@@ -753,7 +750,7 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 **登録**
 
 ```
-curl -X POST -d '{"email":"tamago@example.com", "name":"Tamago Taro"}' ${URL}/firestore
+curl -X POST -d '{"email":"taro@example.com", "name":"Cloud Taro"}' ${URL}/firestore
 ```
 
 **取得（全件）**
@@ -773,9 +770,11 @@ curl ${URL}/firestore
 
 先程のステップで実装したデータの登録処理では、各データに対して一意な ID が付与されていました。
 ここでは、その ID を用いてデータを更新・削除する処理を追加します。
+リクエストのパスに対象の ID を指定することとします。
 
-更新 API は Doc に ID の値をセットすることで一意なユーザーデータを対象にし、Set 関数で受け取ったリクエストの内容で更新します。
-削除 API はパスパラメータで ID を指定する形式にしています。
+更新 API では、複数のドキュメント（コレクション）の中から一意なユーザデータのドキュメントを対象とするため、 `.Doc(id)` のように ID を指定しています。そして、そのドキュメントに対して Set メソッドを使って受け取ったリクエストの内容を書き込みます。
+
+削除 API は指定された ID のドキュメントを削除するようにしています。
 
 `main.go` の import の中に以下を追記してください。
 
@@ -783,7 +782,7 @@ curl ${URL}/firestore
 "strings"
 ```
 
-main 関数の HandleFunc に以下を追加します。
+main 関数の中でハンドラ関数を追加します。
 
 ```go
 	http.HandleFunc("/firestore/", firestoreHandler)
@@ -794,6 +793,7 @@ main 関数の HandleFunc に以下を追加します。
 ```go
 	// 更新処理
 	case http.MethodPut:
+		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
 		u, err := getUserBody(r)
 		if err != nil {
 			log.Fatal(err)
@@ -801,7 +801,7 @@ main 関数の HandleFunc に以下を追加します。
 			return
 		}
 
-		_, err = client.Collection("users").Doc(u.Id).Set(ctx, u)
+		_, err = client.Collection("users").Doc(id).Set(ctx, u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -831,7 +831,7 @@ main 関数の HandleFunc に以下を追加します。
 Cloud Build を実行し、アプリケーションを Cloud Run にデプロイしてみましょう。
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit .
 ```
 
 ### URL の表示
@@ -848,12 +848,12 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 
 **更新**
 
-`<ID>` へはコンソールなどで確認した `id` の値をセットしてください。
+`<ID>` へはコンソールや GET リクエストなどで確認した `id` の値をセットしてください。
 
-![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
+![firestore-id](https://storage.googleapis.com/egg-resources/gig02/public/firestore-id.jpg)
 
 ```
-curl -X PUT -d '{"id": "<ID>", "email":"egg@example.com", "name":"Egg Taro"}' ${URL}/firestore
+curl -X PUT -d '{"email":"taro@example.net", "name":"Cloud Taro"}' ${URL}/firestore/<ID>
 ```
 
 **削除**
@@ -874,16 +874,20 @@ curl -X DELETE ${URL}/firestore/<ID>
 まずは VPC ネットワークを作成します。
 
 ```bash
-gcloud compute networks create eggvpc --subnet-mode=custom
+gcloud compute networks create gigvpc --subnet-mode=custom
 ```
 
-```bash
-gcloud compute networks subnets create us-subnet --network=eggvpc --region=us-central1 --range=10.128.0.0/20
-```
+VPC の中にサブネットを設定します。
 
 ```bash
-gcloud compute networks vpc-access connectors create egg-vpc-connector \
---network eggvpc \
+gcloud compute networks subnets create us-subnet --network=gigvpc --region=us-central1 --range=10.128.0.0/20
+```
+
+作成したサブネットの範囲内に Serverless VPC Access コネクタを設定します。コネクタを介して Cloud Run から Memorystore にアクセスできるようになります。
+
+```bash
+gcloud compute networks vpc-access connectors create gig-vpc-connector \
+--network gigvpc \
 --region us-central1 \
 --range 10.129.0.0/28
 ```
@@ -898,7 +902,7 @@ Firestore のデータをキャッシュから返せるように修正してい�
 ### Redis インスタンスを作成する
 
 ```bash
-gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
+gcloud redis instances create --network=gigvpc --region=us-central1 gigcache
 ```
 
 
@@ -907,7 +911,7 @@ gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
 
 **このステップで作成したコードは answer/step28/main.go になります。**
 
-現在、全件取っているだけでキャッシュする意味がないため、キーで取得できるようにまずは修正します。
+現在、ユーザーデータを全件取るしかなくキャッシュする意味がないため、単一ユーザのデータをキーを指定して取得する機能を追加します。
 
 `main.go` の firestoreHandler の MethodGet を修正していきます。以下の内容に修正してください。
 
@@ -917,57 +921,51 @@ gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
 		id := strings.TrimPrefix(r.URL.Path, "/firestore/")
 		log.Printf("id=%v", id)
 		if id == "/firestore" || id == "" {
-			iter := client.Collection("users").Documents(ctx)
-			var u []Users
-
-			for {
-				doc, err := iter.Next()
-				if err == iterator.Done {
-					break
-				}
-				if err != nil {
-					log.Fatal(err)
-				}
-				var user Users
-				err = doc.DataTo(&user)
-				if err != nil {
-					log.Fatal(err)
-				}
-				user.Id = doc.Ref.ID
-				log.Print(user)
-				u = append(u, user)
-			}
-			if len(u) == 0 {
-				w.WriteHeader(http.StatusNoContent)
-			} else {
-				json, err := json.Marshal(u)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				w.Write(json)
-			}
-		} else {
-			// (Step 29) 置き換えここから
-			doc, err := client.Collection("users").Doc(id).Get(ctx)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			var u Users
-			err = doc.DataTo(&u)
+			docs, err := client.Collection("users").Documents(ctx).GetAll()
 			if err != nil {
 				log.Fatal(err)
 			}
-			u.Id = doc.Ref.ID
-			json, err := json.Marshal(u)
+			if len(docs) == 0 {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			var users []User
+			for _, doc := range docs {
+				var u User
+				if err := doc.DataTo(&u); err != nil {
+					log.Fatal(err)
+				}
+				u.ID = doc.Ref.ID
+				log.Print(u)
+				users = append(users, u)
+			}
+			json, err := json.Marshal(users)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 			w.Write(json)
-			// (Step 29) 置き換えここまで
+			return
 		}
+		// (Step 29) 置き換えここから
+		doc, err := client.Collection("users").Doc(id).Get(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var u User
+		if err := doc.DataTo(&u); err != nil {
+			log.Fatal(err)
+		}
+		u.Id = doc.Ref.ID
+		json, err := json.Marshal(u)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
+		// (Step 29) 置き換えここまで
 ```
 
 これでまずは単一のユーザーデータを取得できるようになりました。
@@ -988,7 +986,7 @@ import に以下を追記してください。
 main 関数の最初の処理として以下を追記してください。
 
 ```go
-	// Redis
+	// Redis 初期化
 	initRedis()
 ```
 
@@ -1012,51 +1010,52 @@ func initRedis() {
 Firestore クライアント作成のブロックと switch 文の間に以下を追記してください。
 
 ```go
-			conn := pool.Get()
-			defer conn.Close()
+	// Redis クライアント作成
+	conn := pool.Get()
+	defer conn.Close()
 ```
 
 先程の単一ユーザーデータを取得するコードに対して、キャッシュを取得・セットするコードを追加します。
 取得処理にあるコメントの `(Step 29) 置き換えここから` から `(Step 29) 置き換えここまで` の部分を以下のコードに置き換えましょう。
 
 ```go
-			// (Step 29) 置き換えここから
-			// Redis クライアント作成
-			cache, err := redis.String(conn.Do("GET", id))
-			if err != nil {
-				log.Println(err)
-			}
-			log.Printf("cache : %v", cache)
+		// (Step 29) 置き換えここから
+		// Redis クライアント作成
+		cache, err := redis.String(conn.Do("GET", id))
+		if err != nil {
+			log.Println(err)
+		}
+		log.Printf("cache : %v", cache)
 
-			if cache != "" {
-				json, err := json.Marshal(cache)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				w.Write(json)
-				log.Printf("find cache")
-			} else {
-				doc, err := client.Collection("users").Doc(id).Get(ctx)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				var u Users
-				err = doc.DataTo(&u)
-				if err != nil {
-					log.Fatal(err)
-				}
-				u.Id = doc.Ref.ID
-				json, err := json.Marshal(u)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				conn.Do("SET", id, string(json))
-				w.Write(json)
+		if cache != "" {
+			json, err := json.Marshal(cache)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
-			// (Step 29) 置き換えここまで
+			w.Write(json)
+			log.Printf("cache hit")
+			return
+		}
+		doc, err := client.Collection("users").Doc(id).Get(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		var u User
+		if err := doc.DataTo(&u); err != nil {
+			log.Fatal(err)
+		}
+		u.Id = doc.Ref.ID
+		json, err := json.Marshal(u)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		conn.Do("SET", id, string(json))
+		w.Write(json)
+
+	// (Step 29) 置き換えここまで
 ```
 
 <!-- Step 30 -->
@@ -1070,7 +1069,7 @@ Serverless VPC Access は Cloud Run デプロイ時に `--vpc-connector` を指�
 以下のコマンドを実行して Redis インスタンスの IP アドレスを取得します。
 
 ```bash
-gcloud redis instances list --format=json  --region=us-central1 | jq '.[0].host'
+gcloud redis instances list --format=json  --region=us-central1 | jq -r '.[0].host'
 ```
 
 ### cloudbuild.yaml の更新
@@ -1081,28 +1080,28 @@ cloudbuild.yaml を以下のように更新します。
 ```
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID', '.']
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID', '.']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID']
+  args: ['push', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID']
 
 - name: 'gcr.io/cloud-builders/gcloud'
   args: [
     'run',
     'deploy',
-    '--image=gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID',
-    '--vpc-connector=egg-vpc-connector',
-    '--service-account=dev-egg-sa@$PROJECT_ID.iam.gserviceaccount.com',
+    '--image=gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID',
+    '--service-account=dev-gig-sa@$PROJECT_ID.iam.gserviceaccount.com',
     '--platform=managed',
     '--region=us-central1',
     '--allow-unauthenticated',
+    '--vpc-connector=gig-vpc-connector',
     '--set-env-vars',
     'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
     '--set-env-vars',
     'REDIS_HOST=XXX.XXX.XXX.XXX',
     '--set-env-vars',
     'REDIS_PORT=6379',
-    'egg1-app',
+    'gig02-app',
   ]
 ```
 
@@ -1115,7 +1114,7 @@ steps:
 Cloud Build を実行し、アプリケーションを Cloud Run にデプロイしてみましょう。
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit .
 ```
 
 ### URL の表示
@@ -1133,9 +1132,10 @@ curl ${URL}/firestore/<ID>
 ```
 
 ### コンテナのログを確認
-**GUI**: [Cloud Run ログ](https://console.cloud.google.com/run/detail/us-central1/egg1-app/logs?project={{project-id}})
+**GUI**: [Cloud Run ログ](https://console.cloud.google.com/run/detail/us-central1/gig02-app/logs?project={{project-id}})
 
 アクセスログから 2 回目のアクセスの処理時間が短くなっていることを確認します。
+また、アプリのログからキャッシュがヒットしていることも確認します。
 
 <walkthrough-footnote>ハンズオンの内容は以上になります。お疲れさまでした。</walkthrough-footnote>
 
@@ -1143,7 +1143,7 @@ curl ${URL}/firestore/<ID>
 <!-- Step 32 -->
 ## チャレンジ問題: Cloud Run の新リビジョンの段階的なデプロイ
 
-Cloud Run には、リビジョン間でトラフィックを切り替える機能があり、A/B テストやカナリアデプロイを行なうことが可能です。main.go の `Hello, EGG!` の文言を任意の言葉に変更し、以下の手順でトラフィックの段階的な移行を試してみましょう。
+Cloud Run には、リビジョン間でトラフィックを切り替える機能があり、A/B テストやカナリアデプロイを行なうことが可能です。main.go の `Hello, GIG!` の文言を任意の言葉に変更し、以下の手順でトラフィックの段階的な移行を試してみましょう。
 
 ### couldbuild.yaml の変更
 
@@ -1153,36 +1153,36 @@ Cloud Run には、リビジョン間でトラフィックを切り替える機�
 ```
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID', '.']
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID', '.']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID']
+  args: ['push', 'gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID']
 
 - name: 'gcr.io/cloud-builders/gcloud'
   args: [
     'run',
     'deploy',
-    '--no-traffic',
-    '--image=gcr.io/$PROJECT_ID/egg1-app:$BUILD_ID',
-    '--vpc-connector=egg-vpc-connector',
-    '--service-account=dev-egg-sa@$PROJECT_ID.iam.gserviceaccount.com',
+    '--image=gcr.io/$PROJECT_ID/gig02-app:$BUILD_ID',
+    '--service-account=dev-gig-sa@$PROJECT_ID.iam.gserviceaccount.com',
     '--platform=managed',
     '--region=us-central1',
     '--allow-unauthenticated',
+    '--vpc-connector=gig-vpc-connector',
     '--set-env-vars',
     'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
     '--set-env-vars',
     'REDIS_HOST=XXX.XXX.XXX.XXX',
     '--set-env-vars',
     'REDIS_PORT=6379',
-    'egg1-app',
+    '--no-traffic',
+    'gig02-app',
   ]
 ```
 
 ### Cloud Build のジョブを実行
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+gcloud builds submit .
 ```
 
 ### リビジョン情報の確認
@@ -1190,23 +1190,22 @@ gcloud builds submit --config cloudbuild.yaml .
 以下のコマンドを実行します。
 
 ```bash
-gcloud run revisions list --platform=managed --region=us-central1 --service=egg1-app
+gcloud run revisions list --platform=managed --region=us-central1 --service=gig02-app
 ```
 
 **--no-traffic** を指定しているため、まだ以前のリビジョンがトラフィックを処理しています。
 
-**GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/egg1-app/revisions?hl=ja&project={{project-id}})
-
+**GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/gig02-app/revisions?hl=ja&project={{project-id}})
 
 ### Cloud Run のトラフィック切り替えの実行
 
-以下のコマンドで全てのトラフィックを最新のリビジョンに切り替えます。
+以下のコマンドで半分のトラフィックを最新のリビジョンに切り替えます。`to-revisions`には一つ前のステップで調べた最新のリビジョン名を指定してください。
 
 ```bash
-gcloud run services update-traffic --to-latest --platform=managed --region=us-central1 egg1-app
+gcloud run services update-traffic --to-revisions=gig02-app-00008-ruw=50 --platform=managed --region=us-central1 gig02-app
 ```
 
-**GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/egg1-app/revisions?hl=ja&project={{project-id}})
+**GUI**: [Cloud Run 変更内容（リビジョン）](https://console.cloud.google.com/run/detail/us-central1/gig02-app/revisions?hl=ja&project={{project-id}})
 
 
 ### アプリケーションの確認
@@ -1217,6 +1216,15 @@ gcloud run services update-traffic --to-latest --platform=managed --region=us-ce
 echo $URL
 ```
 
+cURL コマンドを何度か使って、以前のメッセージと最新のメッセージの両方が返ってくることを確認します。
+
+### 全てのトラフィックの切り替え
+
+下記のコマンドを使って全てのトラフィックを最新のリビジョンへ向けます。完了したら、以前と同様に cURL コマンドを使って最新のメッセージのみが返ってくることを確認します。
+
+```bash
+gcloud run services update-traffic --to-latest --platform=managed --region=us-central1 gig02-app
+```
 
 ## チャレンジ問題: Cloud Source Repositories へのコミットをトリガーにしたデプロイ
 
@@ -1227,17 +1235,17 @@ echo $URL
 今回利用しているソースコードを配置するためのプライベート Git リポジトリを、Cloud Source Repository（CSR）に作成します。
 
 ```bash
-gcloud source repos create egg1-handson
+gcloud source repos create gig02-handson
 ```
 
-**GUI**: [Source Repository](https://source.cloud.google.com/{{project-id}}/egg1-handson): 作成前にアクセスすると拒否されます。
+**GUI**: [Source Repository](https://source.cloud.google.com/{{project-id}}/gig02-handson): 作成前にアクセスすると拒否されます。
 
 ### Cloud Build トリガーを作成
 
 Cloud Build に前の手順で作成した、プライベート Git リポジトリに push が行われたときに起動されるトリガーを作成します。
 
 ```bash
-gcloud beta builds triggers create cloud-source-repositories --description="egg1handson" --repo=egg1-handson --branch-pattern=".*" --build-config="gaming/egg2-1/cloudbuild.yaml"
+gcloud beta builds triggers create cloud-source-repositories --description="gig02handson" --repo=gig02-handson --branch-pattern=".*" --build-config="gig/gig02-01/cloudbuild.yaml"
 ```
 
 **GUI**: [ビルドトリガー](https://console.cloud.google.com/cloud-build/triggers?project={{project-id}})
@@ -1274,7 +1282,7 @@ CSR を Git のリモートレポジトリとして登録します。
 これで git コマンドを使い Cloud Shell 上にあるファイル群を管理することができます。
 
 ```bash
-git remote add google https://source.developers.google.com/p/$GOOGLE_CLOUD_PROJECT/r/egg1-handson
+git remote add google https://source.developers.google.com/p/$GOOGLE_CLOUD_PROJECT/r/gig02-handson
 ```
 
 ### CSR への資材の転送（プッシュ）
@@ -1286,7 +1294,7 @@ git push コマンドを使い、CSR に資材を転送（プッシュ）しま�
 git push google master
 ```
 
-**GUI**: [Source Repository](https://source.cloud.google.com/{{project-id}}/egg1-handson) から資材がプッシュされたことを確認できます。
+**GUI**: [Source Repository](https://source.cloud.google.com/{{project-id}}/gig02-handson) から資材がプッシュされたことを確認できます。
 
 
 ### Cloud Build の自動実行を確認
@@ -1294,6 +1302,14 @@ git push google master
 [Cloud Build の履歴](https://console.cloud.google.com/cloud-build/builds?project={{project-id}}) にアクセスし、git push コマンドを実行した時間にビルドが実行されていることを確認します。
 恐らくこのビルドは失敗していると思います。更に時間に余裕がある方は、どこがエラーになっているか Cloud Build のログから確認して修正してみましょう！
 
+## チャレンジ問題: キャッシュのライフサイクル
+
+これまでの実装では、キャッシュの保持期間の設定がなされていないため、データを変更したり削除したりした後もキャッシュに残った古いデータが返されてしまいます。
+キャッシュの保持期間を設定したり、データの変更や削除のときにキャッシュも書き換えたりすることでデータの不整合をなくしましょう。
+
+- 参考: Redis のコマンドリファレンス
+  - [SET](https://redis.io/commands/set) - 有効期間を設定するオプションがあります
+  - [DEL](https://redis.io/commands/del) - 指定されたデータを削除します
 
 ## Congraturations!
 
@@ -1318,7 +1334,7 @@ gcloud projects delete {{project-id}}
 ### Cloud Run の削除
 
 ```bash
-gcloud run services delete egg1-app --platform managed --region=us-central1
+gcloud run services delete gig02-app --platform managed --region=us-central1
 ```
 
 ### Firestore データの削除
@@ -1328,13 +1344,13 @@ Firestore コンソールから、ルートコレクションを削除してく�
 ### Cloud Memorystore の削除
 
 ```bash
-gcloud redis instances delete eggcache --region=us-central1
+gcloud redis instances delete gigcache --region=us-central1
 ```
 
 ### Serverless VPC Access コネクタの削除
 
 ```bash
-gcloud compute networks vpc-access connectors delete egg-vpc-connector --region us-central1
+gcloud compute networks vpc-access connectors delete gig-vpc-connector --region us-central1
 ```
 
 
@@ -1345,7 +1361,7 @@ gcloud compute networks subnets delete us-subnet --region=us-central1
 ```
 
 ```bash
-gcloud compute networks delete eggvpc
+gcloud compute networks delete gigvpc
 ```
 
 ### Container Registry に登録したコンテナイメージの削除
@@ -1354,22 +1370,22 @@ Container Registry コンソールから、イメージを選択して削除し�
 
 ### Cloud Source Repositories に作成したリポジトリの削除
 
-[CSR の設定画面](https://source.cloud.google.com/admin/settings?projectId={{project-id}}&repository=egg1-handson) にアクセスし、「このリポジトリを削除」を実行
+[CSR の設定画面](https://source.cloud.google.com/admin/settings?projectId={{project-id}}&repository=gig02-handson) にアクセスし、「このリポジトリを削除」を実行
 
-### Owner 権限をつけた dev-key.json の削除
+### 編集者権限をつけた dev-key.json の削除
 
 ```bash
-rm ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1/dev-key.json
+rm ~/cloudshell_open/gcp-getting-started-lab-jp/gig/gig02-01/dev-key.json
 ```
 
 ### サービスアカウントに付与したロールの取り消し
 
 ```bash
-gcloud projects remove-iam-policy-binding {{project-id}} --member "serviceAccount:dev-egg-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/owner"
+gcloud projects remove-iam-policy-binding {{project-id}} --member "serviceAccount:dev-gig-sa@{{project-id}}.iam.gserviceaccount.com" --role "roles/editor"
 ```
 
 ### サービスアカウントの削除
 
 ```bash
-gcloud iam service-accounts delete dev-egg-sa@{{project-id}}.iam.gserviceaccount.com
+gcloud iam service-accounts delete dev-gig-sa@{{project-id}}.iam.gserviceaccount.com
 ```
