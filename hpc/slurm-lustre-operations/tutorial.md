@@ -3,7 +3,7 @@
 <walkthrough-watcher-constant key="region" value="asia-northeast1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="zone" value="asia-northeast1-c"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="lustre" value="lustre"></walkthrough-watcher-constant>
-<walkthrough-watcher-constant key="slurm" value="hpc-cluster"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="slurm" value="slurm-01"></walkthrough-watcher-constant>
 
 ## 始めましょう
 
@@ -23,7 +23,7 @@
 
 <walkthrough-project-billing-setup permissions="compute.googleapis.com"></walkthrough-project-billing-setup>
 
-## VPC の作成
+## CLI の初期値
 
 CLI の初期値を設定します。
 
