@@ -3,7 +3,7 @@
 <walkthrough-watcher-constant key="region" value="asia-northeast1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="zone" value="asia-northeast1-c"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="lustre" value="lustre"></walkthrough-watcher-constant>
-<walkthrough-watcher-constant key="slurm" value="hpc-cluster"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="slurm" value="slurm-01"></walkthrough-watcher-constant>
 
 ## 始めましょう
 
@@ -23,7 +23,7 @@
 
 <walkthrough-project-billing-setup permissions="compute.googleapis.com"></walkthrough-project-billing-setup>
 
-## VPC の作成
+## CLI の初期値
 
 CLI の初期値を設定します。
 
@@ -43,13 +43,23 @@ gcloud config set compute/zone {{zone}}
 
 ## Slurm クラスタの停止
 
+動的にスケールアウトしているサーバーがあれば削除します。
+
+```text
+instances=$( gcloud compute instances list --zones {{zone}} \
+  --filter 'name~{{slurm}}-compute' --format 'value(name)' )
+if [ "${instances}" != "" ]; then
+  gcloud compute instances delete ${instances} --zone {{zone}} --quiet
+fi
+```
+
 管理ノード群を一時停止します。
 
 ```text
 mgmt=$( gcloud deployment-manager deployments describe {{slurm}} --format json \
     | jq -r '.resources[]|select(.type=="compute.v1.instance")|.name' \
     | grep -v image)
-for id in "${mgmt}"; do
+for id in ${mgmt}; do
     gcloud beta compute instances suspend "${id}" --zone={{zone}}
 done
 ```
@@ -62,7 +72,7 @@ done
 oss=$( gcloud deployment-manager deployments describe {{lustre}} --format json \
     | jq -r '.resources[]|select(.type=="compute.v1.instance")|.name' \
     | grep oss)
-for id in "${oss}"; do
+for id in ${oss}; do
     gcloud compute instances stop "${id}" --zone={{zone}}
 done
 ```
@@ -73,7 +83,7 @@ done
 mds=$( gcloud deployment-manager deployments describe {{lustre}} --format json \
     | jq -r '.resources[]|select(.type=="compute.v1.instance")|.name' \
     | grep mds)
-for id in "${mds}"; do
+for id in ${mds}; do
     gcloud compute instances stop "${id}" --zone={{zone}}
 done
 ```
@@ -90,7 +100,7 @@ done
 サーバーの一覧を取得し、MDS を起動します。
 
 ```text
-for id in "${mds}"; do
+for id in ${mds}; do
     gcloud compute instances start "${id}" --zone={{zone}}
 done
 ```
@@ -105,7 +115,7 @@ gcloud compute ssh {{lustre}}-mds1 --zone {{zone}} \
 OSS を起動します。
 
 ```text
-for id in "${oss}"; do
+for id in ${oss}; do
     gcloud compute instances start "${id}" --zone={{zone}}
 done
 ```
@@ -122,7 +132,7 @@ gcloud compute ssh {{lustre}}-oss1 --zone {{zone}} \
 管理ノード群を再開します。
 
 ```text
-for id in "${mgmt}"; do
+for id in ${mgmt}; do
     gcloud beta compute instances resume "${id}" --zone={{zone}}
 done
 ```

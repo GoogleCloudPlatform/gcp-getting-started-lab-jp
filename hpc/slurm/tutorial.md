@@ -5,12 +5,15 @@
 <walkthrough-watcher-constant key="vpc" value="hpc"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="subnet" value="hpc"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="subnet-range" value="10.128.0.0/16"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="slurm" value="slurm-01"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="slurm-image" value="projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="slurm-image-hyperthreads" value="False"></walkthrough-watcher-constant>
 
 ## 始めましょう
 
 [Slurm](https://slurm.schedmd.com/documentation.html) ベースの計算クラスタを構築するための手順です。
 
-**所要時間**: 約 20 分
+**所要時間**: 約 15 分
 
 **前提条件**:
 
@@ -32,6 +35,7 @@ CLI の初期値を設定します。
 ```bash
 gcloud config set project "{{project-id}}"
 gcloud config set compute/region {{region}}
+gcloud config set compute/zone {{zone}}
 ```
 
 [Private Google Access](https://cloud.google.com/vpc/docs/private-access-options?hl=ja#pga) を有効にした ** VPC** を作成します。
@@ -66,67 +70,61 @@ gcloud compute firewall-rules create allow-from-internal \
 
 ## 計算クラスタの構築の準備 (1)
 
-VM がより近接した配置となるよう、[プレイスメントポリシー](https://cloud.google.com/compute/docs/instances/define-instance-placement?hl=ja) を事前に作成します。
-
-```bash
-gcloud compute resource-policies create group-placement \
-    --collocation=collocated --vm-count=22 hpc-debug
-```
-
-## 計算クラスタの構築の準備 (2)
-
 作業ディレクトリのルートにもどりスクリプトをダウンロードし、作業ディレクトリを移動します。
 
 ```bash
-git clone https://github.com/SchedMD/slurm-gcp.git ~/slurm-gcp && cd ~/slurm-gcp
+git clone https://github.com/SchedMD/slurm-gcp.git ~/slurm-gcp && cd ~/slurm-gcp/dm
 ```
+
+クラスタを柔軟に設定できるよう、一部制約を変更します。
+
+```bash
+sed -ie "s|minimum     : 300|minimum     : 60|g" slurm-cluster.jinja.schema
+```
+
+## 計算クラスタの構築の準備 (2)
 
 slurm-cluster.yaml を編集しましょう。
 
 ```text
 cat << EOF >slurm-cluster.yaml
 imports:
-- path: slurm.jinja
+- path: slurm-cluster.jinja
 
 resources:
-- name: slurm-cluster
-  type: slurm.jinja
+- name: {{slurm}}-resources
+  type: slurm-cluster.jinja
   properties:
-    cluster_name            : hpc
-    zone                    : {{zone}}
+    cluster_name            : {{slurm}}
     vpc_net                 : {{vpc}}
     vpc_subnet              : {{subnet}}
+    zone                    : {{zone}}
 
     # ヘッドノード
+    controller_image        : {{slurm-image}}
     controller_machine_type : n1-standard-2
-    controller_disk_size_gb : 20
+    controller_disk_size_gb : 30
     external_controller_ip  : False
 
     # ログインノード
+    login_image             : {{slurm-image}}
     login_machine_type      : n1-standard-2
     external_login_ips      : False
     login_node_count        : 0
 
-    # 計算用 VM イメージ作成用
-    compute_image_machine_type : n1-standard-2
-
-    # バージョン
-    slurm_version : 19.05.8
-    ompi_version  : v3.1.x
-
     # 計算クラスタ
-    external_compute_ips  : False
-    private_google_access : True
+    external_compute_ips : False
+    suspend_time         : 120
 
     partitions:
-      - name              : debug
-        machine_type      : c2-standard-60
+      - name              : partition1
+        image             : {{slurm-image}}
+        image_hyperthreads: {{slurm-image-hyperthreads}}
+        machine_type      : c2-standard-4
         max_node_count    : 10
         zone              : {{zone}}
         vpc_subnet        : {{subnet}}
-
-        # プレイスメントポリシー
-        resource_policies : ["hpc-debug"]
+        enable_placement  : True
 EOF
 ```
 
@@ -138,7 +136,7 @@ EOF
 
 ```bash
 gcloud services enable deploymentmanager.googleapis.com
-gcloud deployment-manager deployments create hpc-cluster \
+gcloud deployment-manager deployments create {{slurm}} \
     --config slurm-cluster.yaml
 ```
 
@@ -148,19 +146,19 @@ gcloud deployment-manager deployments create hpc-cluster \
 
 ### 計算クラスタの初期化
 
-クラスタの構成が完了するまで進行状況をトラッキングします。‘Started Google Compute Engine Startup Scripts.’ と出力されるまで お待ち下さい。およそ 20 分程度かかります。
+クラスタの構成が完了するまで進行状況をトラッキングします。‘Started Google Compute Engine Startup Scripts.’ と出力されていることを確認します。出力されていない場合 2、3 分お待ち下さい。
 
 ```bash
-gcloud compute ssh hpc-controller --zone {{zone}} \
+gcloud compute ssh {{slurm}}-controller --zone {{zone}} \
     --command "sudo journalctl -fu google-startup-scripts.service"
 ```
 
 ## 挙動の確認
 
-ログインノードに入り、クラスタの状況を確認、そして試しにジョブを投入してみます。
+管理ノードに入り、クラスタの状況を確認、そして試しにジョブを投入してみます。
 
 ```bash
-gcloud compute ssh hpc-controller --zone {{zone}}
+gcloud compute ssh {{slurm}}-controller --zone {{zone}}
 ```
 
 Slurm クラスタの状況を確認してみます。
@@ -179,6 +177,7 @@ cat << EOF >hostname_sleep.sh
 #SBATCH --nodes=2
 
 srun hostname
+srun lscpu | grep -e Socket -e Core -e Thread
 sleep 5
 EOF
 ```
@@ -187,7 +186,7 @@ EOF
 
 ```bash
 sbatch hostname_sleep.sh
-watch -n 5 squeue
+watch -n 3 squeue
 ```
 
 処理が完了したら出力されたファイルやジョブ情報を確認してみます。
@@ -204,7 +203,16 @@ sacct
 計算クラスタの削除
 
 ```bash
-gcloud deployment-manager deployments delete hpc-cluster
+gcloud deployment-manager deployments delete {{slurm}}
+```
+
+Firewall, VPC の削除
+
+```bash
+gcloud compute firewall-rules delete allow-from-iap --quiet
+gcloud compute firewall-rules delete allow-from-internal --quiet
+gcloud compute networks subnets delete {{subnet}} --quiet
+gcloud compute networks delete {{vpc}} --quiet
 ```
 
 ## これで終わりです
