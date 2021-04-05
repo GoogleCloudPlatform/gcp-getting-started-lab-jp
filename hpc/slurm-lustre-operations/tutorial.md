@@ -43,6 +43,16 @@ gcloud config set compute/zone {{zone}}
 
 ## Slurm クラスタの停止
 
+動的にスケールアウトしているサーバーがあれば削除します。
+
+```text
+instances=$( gcloud compute instances list --zones {{zone}} \
+  --filter 'name~{{slurm}}-compute' --format 'value(name)' )
+if [ "${instances}" != "" ]; then
+  gcloud compute instances delete ${instances} --zone {{zone}} --quiet
+fi
+```
+
 管理ノード群を一時停止します。
 
 ```text
