@@ -19,7 +19,7 @@
 
 ![マルチクラスタ](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/multi-cluster.png)
 
-実際には [ハイブリッド クラスタ](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prep#hybrid_cluster_deployment) 1 つの構成です。
+実際には [ハイブリッド クラスタ](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.7/installing/install-prep#hybrid_cluster_deployment) 1 つの構成です。
 
 ![完成図](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-5.png)
 
@@ -168,7 +168,7 @@ gcloud compute firewall-rules create allow-from-internal --network={{vpc}} --dir
 
 ## 仮想マシンの起動
 
-オンプレミス想定の環境を作成するため、仮想マシンを起動していきます。Anthos clusters on Bare Metal の詳細な導入要件は [こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prereq?hl=ja) です。
+オンプレミス想定の環境を作成するため、仮想マシンを起動していきます。Anthos clusters on Bare Metal の詳細な導入要件は [こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.7/installing/install-prereq?hl=ja) です。
 
 ![VM](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-2.png)
 
@@ -286,7 +286,7 @@ kubectl version --client=true
 
 ```bash
 mkdir baremetal && cd baremetal
-gsutil cp gs://anthos-baremetal-release/bmctl/1.6.1/linux-amd64/bmctl .
+gsutil cp gs://anthos-baremetal-release/bmctl/1.7.0/linux-amd64/bmctl .
 chmod a+x bmctl
 sudo mv bmctl /usr/local/sbin/
 bmctl version
@@ -369,7 +369,7 @@ metadata:
   namespace: cluster-admins
 spec:
   type: hybrid
-  anthosBareMetalVersion: 1.6.1
+  anthosBareMetalVersion: 1.7.0
   gkeConnect:
     projectID: {{project-id}}
   controlPlane:
@@ -401,11 +401,17 @@ spec:
   storage:
     lvpNodeMounts:
       path: /mnt/localpv-disk
-      storageClassName: node-disk
+      storageClassName: local-disks
     lvpShare:
       path: /mnt/localpv-share
-      storageClassName: standard
+      storageClassName: local-shared
       numPVUnderSharedPath: 5
+  nodeConfig:
+    autoRepair:
+      enabled: true
+    podDensity:
+      maxPodsPerNode: 250
+    containerRuntime: containerd
 ---
 apiVersion: baremetal.cluster.gke.io/v1
 kind: NodePool
@@ -425,7 +431,7 @@ EOF
 
 ![Anthos](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/1-5.png)
 
-以下コマンドを実行し、ハイブリッド クラスタを作成します。15 分ほどかかります。
+以下コマンドを実行し、ハイブリッド クラスタを作成します。クラスタ構築には 20 分弱かかります。
 
 ```bash
 sudo bmctl create cluster -c "${HYBRID_CLUSTER}"
@@ -587,7 +593,7 @@ echo ''
 
 ![チャレンジ問題 2](https://raw.github.com/wiki/pottava/google-cloud-tutorials/anthos-baremetal/challenge.png)
 
-図のように、User Cluster を追加してみましょう！[こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/creating-clusters/user-cluster-creation#create-user-config) をヒントに進めてみてくだい。
+図のように、User Cluster を追加してみましょう！[こちら](https://cloud.google.com/anthos/clusters/docs/bare-metal/1.7/installing/creating-clusters/user-cluster-creation#create-user-config) をヒントに進めてみてくだい。
 
 ## これで終わりです
 
