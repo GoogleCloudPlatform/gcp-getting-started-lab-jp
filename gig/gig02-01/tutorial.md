@@ -1311,6 +1311,16 @@ git push google master
   - [SET](https://redis.io/commands/set) - 有効期間を設定するオプションがあります
   - [DEL](https://redis.io/commands/del) - 指定されたデータを削除します
 
+## チャレンジ問題: Buildpacks
+
+Buildpacks を使うと、Dockerfile を書かなくてもアプリのソースコードからイメージをビルドすることができるようになります。
+
+Cloud Shell では `pack` コマンドは最初から使えるようになっているので、Dockerfile を削除しても `pack` コマンドでビルドできることを確かめてみましょう。
+Google が提供するビルダーの名称は `gcr.io/buildpacks/builder:v1` です。.NET, Go, Java, Node.js, Python をサポートしています。
+
+- 参考 [Buildpacksのドキュメント](https://buildpacks.io/docs/app-developer-guide/build-an-app/)
+
+
 ## Congraturations!
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
