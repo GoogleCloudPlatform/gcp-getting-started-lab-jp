@@ -60,7 +60,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Print("success: id is %v", ref.ID)
+		log.Printf("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
 
 	// 取得処理
