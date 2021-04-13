@@ -68,7 +68,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Print("success: id is %v", ref.ID)
+		log.Printf("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
 
 	// 取得処理
@@ -112,12 +112,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("cache : %v", cache)
 
 		if cache != "" {
-			json, err := json.Marshal(cache)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
+			w.Write([]byte(cache))
 			log.Printf("cache hit")
 			return
 		}
@@ -131,7 +126,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 		if err := doc.DataTo(&u); err != nil {
 			log.Fatal(err)
 		}
-		u.Id = doc.Ref.ID
+		u.ID = doc.Ref.ID
 		json, err := json.Marshal(u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -211,7 +206,8 @@ func initRedis() {
 	port := os.Getenv("REDIS_PORT")
 	addr := fmt.Sprintf("%s:%s", host, port)
 
-	pool = redis.NewPool(func() (redis.Conn, error) {
-		return redis.Dial("tcp", addr)
-	}, 10)
+	pool = &redis.Pool{
+		MaxIdle: 10,
+		Dial:    func() (redis.Conn, error) { return redis.Dial("tcp", addr) },
+	}
 }

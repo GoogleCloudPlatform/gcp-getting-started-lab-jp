@@ -126,19 +126,6 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
-### デフォルトリージョンを設定
-
-リージョナルリソースを作成する際に指定するデフォルトのリージョンを設定します。
-
-```bash
-gcloud config set compute/region us-central1
-```
-
-次のようなメッセージが出たら `y` で進めてください。
-```plain
-Would you like to enable and retry (this will take a few minutes)?
-```
-
 <walkthrough-footnote>CLI（gcloud）を利用する準備が整いました。次にハンズオンで利用する機能を有効化します。</walkthrough-footnote>
 
 
@@ -214,22 +201,24 @@ export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/dev-key.json
 
 GCP コンソールの [Datastore](https://console.cloud.google.com/datastore/entities/query/kind?project={{project-id}}) に移動してください。
 
-1. ネイティブモードを選択して進めてください。
+ネイティブモードを選択して進めてください。
 
 ![select-firestore-mode](https://storage.googleapis.com/egg-resources/egg1/public/select-mode.png)
 
 その次のロケーション選択では `us-west2` を選択してください。
 
-2. 切り替え画面
+#### 別の画面が出る場合
 
-もし次のようなメッセージが表示されたら、`SWITCH TO NATIVE MODE` をクリックしてください。
+**Datastore モードを選んだ場合でも、まだ一度もデータを登録していなければネイティブモードへの切り替えが可能です。**
+
+`データベースが空であるため、ネイティブ モードの Cloud Firestore に切り替えてより多くの機能を利用できます。`というメッセージが表示された場合は、右上の`ネイティブ モードに切り替える`をクリックし、次に `モードを切り替え` をクリックしてください。
 
 ![switch1](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native1.png)
 ![switch2](https://storage.googleapis.com/egg-resources/egg1/public/firestore-switch-to-native2.png)
 
-3. ネイティブモードが有効になると、[Firestore コンソール](https://console.cloud.google.com/firestore/data/?project={{project-id}})でデータ管理の画面が有効になります。
+### ネイティブモードを有効にした後
 
-**Datastore モードを選んだ場合でも、まだ一度もデータを登録していなければネイティブモードへの切り替えが可能です。**
+ネイティブモードが有効になると、[Firestore コンソール](https://console.cloud.google.com/firestore/data/?project={{project-id}})でデータ管理の画面が有効になります。
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次に Cloud Run によるアプリケーションの開発に進みます。</walkthrough-footnote>
 
@@ -268,12 +257,6 @@ export GOOGLE_CLOUD_PROJECT="{{project-id}}"
 
 ```bash
 gcloud config set project $GOOGLE_CLOUD_PROJECT
-```
-
-- デフォルトリージョンを設定
-
-```bash
-gcloud config set compute/region us-central1
 ```
 
 - 作業用のディレクトリへ移動
@@ -389,8 +372,8 @@ docker build -t gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1 .
 ```bash
 docker run -p 8080:8080 \
 --name gig02-app \
--e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/auth.json \
--v $PWD/auth.json:/tmp/keys/auth.json:ro \
+-e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/dev-key.json \
+-v $PWD/dev-key.json:/tmp/keys/dev-key.json:ro \
 gcr.io/$GOOGLE_CLOUD_PROJECT/gig02-app:v1
 ```
 
@@ -653,7 +636,7 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Print("success: id is %v", ref.ID)
+		log.Printf("success: id is %v", ref.ID)
 		fmt.Fprintf(w, "success: id is %v \n", ref.ID)
 
 	// 取得処理
@@ -850,9 +833,9 @@ Cloud Shell から Cloud Run の Service の URL に対して、以下のよう�
 
 `<ID>` へはコンソールや GET リクエストなどで確認した `id` の値をセットしてください。
 
-![firestore-id](https://storage.googleapis.com/egg-resources/gig02/public/firestore-id.jpg)
+![firestore-id](https://storage.googleapis.com/egg-resources/egg1/public/firestore-id.jpg)
 
-```
+```bash
 curl -X PUT -d '{"email":"taro@example.net", "name":"Cloud Taro"}' ${URL}/firestore/<ID>
 ```
 
@@ -860,7 +843,7 @@ curl -X PUT -d '{"email":"taro@example.net", "name":"Cloud Taro"}' ${URL}/firest
 
 `<ID>` へは削除する `id` の値を指定してください。
 
-```
+```bash
 curl -X DELETE ${URL}/firestore/<ID>
 ```
 
@@ -958,7 +941,7 @@ gcloud redis instances create --network=gigvpc --region=us-central1 gigcache
 		if err := doc.DataTo(&u); err != nil {
 			log.Fatal(err)
 		}
-		u.Id = doc.Ref.ID
+		u.ID = doc.Ref.ID
 		json, err := json.Marshal(u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -996,14 +979,15 @@ main 関数の最初の処理として以下を追記してください。
 var pool *redis.Pool
 
 func initRedis() {
-	var (
-		host = os.Getenv("REDIS_HOST")
-		port = os.Getenv("REDIS_PORT")
-		addr = fmt.Sprintf("%s:%s", host, port)
-	)
-	pool = redis.NewPool(func() (redis.Conn, error) {
-		return redis.Dial("tcp", addr)
-	}, 10)
+
+	host := os.Getenv("REDIS_HOST")
+	port := os.Getenv("REDIS_PORT")
+	addr := fmt.Sprintf("%s:%s", host, port)
+
+	pool = &redis.Pool{
+		MaxIdle: 10,
+		Dial:    func() (redis.Conn, error) { return redis.Dial("tcp", addr) },
+	}
 }
 ```
 
@@ -1028,12 +1012,7 @@ Firestore クライアント作成のブロックと switch 文の間に以下�
 		log.Printf("cache : %v", cache)
 
 		if cache != "" {
-			json, err := json.Marshal(cache)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
+			w.Write([]byte(cache))
 			log.Printf("cache hit")
 			return
 		}
@@ -1046,7 +1025,7 @@ Firestore クライアント作成のブロックと switch 文の間に以下�
 		if err := doc.DataTo(&u); err != nil {
 			log.Fatal(err)
 		}
-		u.Id = doc.Ref.ID
+		u.ID = doc.Ref.ID
 		json, err := json.Marshal(u)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
