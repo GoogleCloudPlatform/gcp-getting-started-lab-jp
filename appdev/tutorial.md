@@ -97,7 +97,6 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ```bash
 gcloud container clusters create "k8s-appdev-handson"  \
---image-type "COS" \
 --machine-type "n1-standard-2" \
 --enable-stackdriver-kubernetes \
 --enable-ip-alias \
