@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: spanner-app
+  name: spanner-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8080
+  selector:
+    name: spanner-app

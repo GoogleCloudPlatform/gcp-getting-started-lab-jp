@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: spanner-app
+  name: spanner-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: spanner-app
+  template:
+    metadata:
+      labels:
+        name: spanner-app
+    spec:
+      serviceAccountName: spanner-app
+      containers:
+      - image: asia.gcr.io/<project id>/spanner-app:v1
+        name: spanner-app
+        env:
+        - name: GOOGLE_CLOUD_PROJECT
+          value: <project id>
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
