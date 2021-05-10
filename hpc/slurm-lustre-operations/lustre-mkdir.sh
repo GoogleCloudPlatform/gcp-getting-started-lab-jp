@@ -41,9 +41,9 @@ if [ "${zone}" = "" ]; then
 fi
 
 if [ "${directory}" = "" ]; then
-  gcloud compute ssh "${cluster}-mds1" --zone "${zone}" --tunnel-through-iap \
+  gcloud compute ssh "${cluster}-mds1" --zone "${zone}" \
     --command "sudo sh -c 'mkdir -p work && mount -t lustre ${cluster}-mds1:/lustre work && ls -la work && umount work && rm -rf work'"
 else
-  gcloud compute ssh "${cluster}-mds1" --zone "${zone}" --tunnel-through-iap \
+  gcloud compute ssh "${cluster}-mds1" --zone "${zone}" \
     --command "sudo sh -c 'mkdir -p work && mount -t lustre ${cluster}-mds1:/lustre work && cd work && mkdir -p ${directory} && lfs setstripe -c -1 ${directory} && cd .. && ls -la work && umount work && rm -rf work'"
 fi

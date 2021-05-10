@@ -53,7 +53,7 @@ fi
 echo "Waiting for the VMs to be ready.."
 while :
 do
-  if gcloud compute ssh "${cluster}-mds1" --zone "${zone}" --tunnel-through-iap \
+  if gcloud compute ssh "${cluster}-mds1" --zone "${zone}" \
         --command "sudo journalctl -u google-startup-scripts.service" 2>/dev/null \
         | grep -q -m 1 'Started Google Compute Engine Startup Scripts'; then
     echo "The Lustre cluster got ready."

@@ -46,7 +46,7 @@ done
 
 while :
 do
-  if gcloud compute ssh "${cluster}-mds1" --zone "${zone}" --tunnel-through-iap \
+  if gcloud compute ssh "${cluster}-mds1" --zone "${zone}" \
         --command "sudo journalctl -u google-startup-scripts.service" 2>/dev/null \
         | grep -q -m 1 'Started Google Compute Engine Startup Scripts'; then
     echo "MDSs are ready."
@@ -65,7 +65,7 @@ done
 
 while :
 do
-  if gcloud compute ssh "${cluster}-oss1" --zone "${zone}" --tunnel-through-iap \
+  if gcloud compute ssh "${cluster}-oss1" --zone "${zone}" \
         --command "sudo journalctl -u google-startup-scripts.service" 2>/dev/null \
         | grep -q -m 1 'Started Google Compute Engine Startup Scripts'; then
     echo "OSSs are ready."
