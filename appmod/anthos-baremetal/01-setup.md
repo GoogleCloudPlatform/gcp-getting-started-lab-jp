@@ -7,6 +7,7 @@
 <walkthrough-watcher-constant key="subnet-range" value="10.128.0.0/16"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="sa" value="sa-baremetal"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="cluster" value="baremetal-trial"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="anthos-ver" value="1.7.1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="vm-workst" value="workstation"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="vm-hybrid" value="hybrid-master"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="vm-worker" value="hybrid-worker"></walkthrough-watcher-constant>
@@ -286,7 +287,7 @@ kubectl version --client=true
 
 ```bash
 mkdir baremetal && cd baremetal
-gsutil cp gs://anthos-baremetal-release/bmctl/1.7.0/linux-amd64/bmctl .
+gsutil cp gs://anthos-baremetal-release/bmctl/{{anthos-ver}}/linux-amd64/bmctl .
 chmod a+x bmctl
 sudo mv bmctl /usr/local/sbin/
 bmctl version
@@ -337,7 +338,7 @@ export GOOGLE_APPLICATION_CREDENTIALS={{sa}}-creds.json
 
 ```bash
 cd ${HOME}
-gcloud iam service-accounts keys create "${GOOGLE_APPLICATION_CREDENTIALS}"  --iam-account={{sa}}@{{project-id}}.iam.gserviceaccount.com
+gcloud iam service-accounts keys create "${GOOGLE_APPLICATION_CREDENTIALS}" --iam-account={{sa}}@{{project-id}}.iam.gserviceaccount.com
 ```
 
 Anthos clusters on Bare Metal の設定雛形を出力し、中身を眺めてみましょう。
@@ -369,7 +370,7 @@ metadata:
   namespace: cluster-admins
 spec:
   type: hybrid
-  anthosBareMetalVersion: 1.7.0
+  anthosBareMetalVersion: {{anthos-ver}}
   gkeConnect:
     projectID: {{project-id}}
   controlPlane:
