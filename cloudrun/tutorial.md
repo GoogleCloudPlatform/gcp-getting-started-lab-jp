@@ -9,7 +9,7 @@
 
 <walkthrough-watcher-constant key="region" value="asia-northeast1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="repo-name" value="cloudrun-handson"></walkthrough-watcher-constant>
-<walkthrough-watcher-constant key="github-repo" value="GoogleCloudPlatform/gcp-getting-started-lab-jp/cloudrun"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="github-repo" value="GoogleCloudPlatform/gcp-getting-started-lab-jp/master/cloudrun"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="branch-name" value="master"></walkthrough-watcher-constant>
 
 ## **環境準備**
@@ -137,7 +137,7 @@ Response:
 
 ## **Dockerfile を使い、ローカルでコンテナを作成、レジストリにプッシュしてからデプロイ**
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/step_by_step_deployment.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/step_by_step_deployment.png)
 
 ### **準備**
 
@@ -198,7 +198,7 @@ curl -H "Content-Type: application/json" -d '{"numbers": [10, 20, 30, 300, 100]}
 
 ## **Buildpacks、Cloud Build を使い、Dockerfile 無し、かつリポジトリの指定無しにデプロイ**
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/single_step_deployment.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/single_step_deployment.png)
 
 ### **1. Dockerfile の削除（移動）**
 
@@ -259,7 +259,7 @@ Cloud Run ではリリースの構成、トラフィックのコントロール�
 
 カナリアリリースは新リビジョンをトラフィックを流さない状態でデプロイし、徐々にトラフィックを流すように設定することで実現します。
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/canary_release.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/canary_release.png)
 
 ### **1. アプリケーションの修正**
 
@@ -299,7 +299,7 @@ gcloud run services update-traffic sumservice --to-latest
 
 デプロイ時にタグを付与することで、リビジョンに特定の URL をもたせることが可能です。ここではタグと、前のページで出てきた --no-traffic を組み合わせ、新リビジョンを限定公開します。
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/limited_release.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/limited_release.png)
 
 ### **1. アプリケーションの修正**
 
@@ -348,7 +348,7 @@ Cloud Run ではソースコード リポジトリ（Cloud Source Repositories, 
 
 ここで構築するパイプラインのアーキテクチャは下記になります。
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/cicd_pipeline.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/cicd_pipeline.png)
 
 ## **Git クライアント設定**
 
@@ -423,18 +423,18 @@ CI / CD 設定を含めたデプロイは GUI を利用して行います。
 
 <walkthrough-spotlight-pointer spotlightId="run-create-service">サービスの作成</walkthrough-spotlight-pointer> ボタンをクリックし作成を開始します。
 
-### **3. サービスの設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/create_a_cloud_run_service.png)
+### **3. サービスの設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/create_a_cloud_run_service.png)
 
 1. サービス名に `sumservice` と入力します
 1. リージョンは `asia-northeast1 (Tokyo)` を選択します
 1. `次へ` ボタンをクリックします
 
-### **4. サービスの最初のリビジョンの構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_the_first_revision_of_the_service.png)
+### **4. サービスの最初のリビジョンの構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_the_first_revision_of_the_service.png)
 
 1. `ソース リポジトリから新しいリビジョンを継続的にデプロイする` をチェックします
 1. `SET UP WITH CLOUD BUILD` ボタンをクリックします
 
-### **5. Cloud Build の設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_source_repository.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_build.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/move_to_trigger_configuration.png)
+### **5. Cloud Build の設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_source_repository.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_build.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/move_to_trigger_configuration.png)
 
 1. リポジトリ プロバイダで `Cloud Source Repositories` を選択します
 1. リポジトリで `cloudrun-handson` を選択します
@@ -445,7 +445,7 @@ CI / CD 設定を含めたデプロイは GUI を利用して行います。
 1. `保存` ボタンをクリックします
 1. `次へ` ボタンをクリックします
 
-### **6. このサービスをトリガーする方法の構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_trigger.png)
+### **6. このサービスをトリガーする方法の構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_trigger.png)
 
 1. 認証の項目で `未認証の呼び出しを許可` をチェックします
 1. `作成` ボタンをクリックします
@@ -454,7 +454,7 @@ CI / CD 設定を含めたデプロイは GUI を利用して行います。
 
 デプロイが完了するまでに数分時間がかかります。完了すると自動的に画面がリロードされます。
 
-### **7. 動作確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/access_deployed_service.png)
+### **7. 動作確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/access_deployed_service.png)
 
 GUI に表示されている URL のリンクをクリックし、`Hello New Normal!` と表示されていれば成功です。
 
@@ -480,7 +480,7 @@ Cloud Build の GUI から履歴を選び、ビルドの進行状況が確認で
 
 <walkthrough-menu-navigation sectionId="CLOUD_BUILD_SECTION"></walkthrough-menu-navigation>
 
-### **3. 動作確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/confirm_cicd_pipeline.png)
+### **3. 動作確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/confirm_cicd_pipeline.png)
 
 Cloud Run の GUI に表示されている URL のリンクをクリックし、`Hello World!` と表示されていれば成功です。
 
@@ -516,7 +516,7 @@ Cloud Run の GUI に表示されている URL のリンクをクリックし、
 
 それは通貨情報も含めて足し算をし、結果を日本円に換算して返す機能です。
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/enhance_sample_application.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/enhance_sample_application.png)
 
 ### **インターフェース（sumservice の拡張 API）**
 
@@ -595,18 +595,18 @@ Cloud Run の GUI が開いていない方は、下記のボタンから Cloud R
 
 <walkthrough-spotlight-pointer spotlightId="run-create-service">サービスの作成</walkthrough-spotlight-pointer> ボタンをクリックし作成を開始します。
 
-### **3. サービスの設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/create_a_cloud_run_service_currency.png)
+### **3. サービスの設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/create_a_cloud_run_service_currency.png)
 
 1. サービス名に `currencyservice` と入力します
 1. リージョンは `asia-northeast1 (Tokyo)` を選択します
 1. `次へ` ボタンをクリックします
 
-### **4. サービスの最初のリビジョンの構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_the_first_revision_of_the_service.png)
+### **4. サービスの最初のリビジョンの構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_the_first_revision_of_the_service.png)
 
 1. `ソース リポジトリから新しいリビジョンを継続的にデプロイする` をチェックします
 1. `SET UP WITH CLOUD BUILD` ボタンをクリックします
 
-### **5. Cloud Build の設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_source_repository.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_build_currency.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/move_to_trigger_configuration.png)
+### **5. Cloud Build の設定** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_source_repository.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_build_currency.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/move_to_trigger_configuration.png)
 
 1. リポジトリ プロバイダで `Cloud Source Repositories` を選択します
 1. リポジトリで `cloudrun-handson` を選択します
@@ -617,7 +617,7 @@ Cloud Run の GUI が開いていない方は、下記のボタンから Cloud R
 1. `保存` ボタンをクリックします
 1. `次へ` ボタンをクリックします
 
-### **6. このサービスをトリガーする方法の構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/configure_trigger.png)
+### **6. このサービスをトリガーする方法の構成** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/configure_trigger.png)
 
 1. 認証の項目で `未認証の呼び出しを許可` をチェックします
 1. `作成` ボタンをクリックします
@@ -705,7 +705,7 @@ Cloud Run では様々なセキュリティを向上させる機能、プラク�
 - サービス個別の権限設定
 - sumservice + currencyservice のセキュアな連携
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/security.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/security.png)
 
 ## **Container Analysis と脆弱性スキャン**
 
@@ -719,13 +719,13 @@ Container Registry と Artifact Registry では格納されているコンテナ
 
 <walkthrough-menu-navigation sectionId="ARTIFACT_REGISTRY_SECTION"></walkthrough-menu-navigation>
 
-### **2. Container Analysis の有効化** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/enable_container_analysis.png)
+### **2. Container Analysis の有効化** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/enable_container_analysis.png)
 
 Container Analysis を有効化するにはプロジェクト単位で機能を有効化します。
 
 左メニューの `設定` をクリックし、次のページで脆弱性スキャンを `オン` にします。
 
-### **3. コンテナの再アップロード** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/click_cloudrun_handson.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/click_sumservice.png)
+### **3. コンテナの再アップロード** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/click_cloudrun_handson.png) [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/click_sumservice.png)
 
 左メニューの `リポジトリ` をクリック、次に `cloudrun-handson` 、`sumservice` の順にクリックし、コンテナイメージ一覧が見えるようにします。
 
@@ -735,7 +735,7 @@ Container Analysis を有効化するにはプロジェクト単位で機能を�
 gcloud builds submit src/sumservice/ --pack image={{region}}-docker.pkg.dev/{{project-id}}/cloudrun-handson/sumservice:v2
 ```
 
-### **4. スキャン結果の確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/container_analysis_result.png)
+### **4. スキャン結果の確認** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/container_analysis_result.png)
 
 脆弱性列の数字をクリックし、どのような脆弱性がコンテナイメージに残っているかを確認します。
 
@@ -902,7 +902,7 @@ kubectl --namespace default port-forward service/locust 8080:8089
 
 ## **アプリケーションへの負荷テスト**
 
-### **1. Locust からの負荷テスト** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/locust_ui.png)
+### **1. Locust からの負荷テスト** [![screenshot](https://raw.githubusercontent.com/{{github-repo}}/images/link_image.png)](https://raw.githubusercontent.com/{{github-repo}}/images/locust_ui.png)
 
 Locust からアプリケーションに負荷をかけ、スケーリング、エラー、負荷の状況を確認します。
 
@@ -940,7 +940,7 @@ Cloud Run は Load balancer と組み合わせることで、簡単にアプリ�
 
 今は東京リージョンのみ稼働しているアプリケーションを、アメリカにも配置してみましょう。
 
-[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/{{branch-name}}/images/global_deployment.png)
+[アーキテクチャ図](https://raw.githubusercontent.com/{{github-repo}}/images/global_deployment.png)
 
 この設定を行うことで、利用者から見ると同じサービスにアクセスしていながら、自動的に利用者により近い Cloud Run にルーティングされ、ユーザ体験が向上します。
 
