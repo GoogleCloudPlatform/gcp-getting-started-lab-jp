@@ -50,6 +50,10 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer client.Close()
 
+	// Redis クライアント作成
+	conn := pool.Get()
+	defer conn.Close()
+
 	switch r.Method {
 	// 追加処理
 	case http.MethodPost:
@@ -104,25 +108,39 @@ func firestoreHandler(w http.ResponseWriter, r *http.Request) {
 				w.Write(json)
 			}
 		} else {
-			// (Step 29) 置き換えここから
-			doc, err := client.Collection("users").Doc(id).Get(ctx)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
+			// (Step 28) 置き換えここから
+			cache, _ := redis.String(conn.Do("GET", id))
+			log.Printf("cache : %v", cache)
+
+			if cache != "" {
+				json, err := json.Marshal(cache)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				w.Write(json)
+				log.Printf("find cache")
+			} else {
+				doc, err := client.Collection("users").Doc(id).Get(ctx)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				var u Users
+				err = doc.DataTo(&u)
+				if err != nil {
+					log.Fatal(err)
+				}
+				u.Id = doc.Ref.ID
+				json, err := json.Marshal(u)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				conn.Do("SET", id, string(json))
+				w.Write(json)
 			}
-			var u Users
-			err = doc.DataTo(&u)
-			if err != nil {
-				log.Fatal(err)
-			}
-			u.Id = doc.Ref.ID
-			json, err := json.Marshal(u)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			w.Write(json)
-			// (Step 29) 置き換えここまで
+			// (Step 28) 置き換えここまで
 		}
 
 	// 更新処理

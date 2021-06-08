@@ -244,7 +244,7 @@ Cloud Run を利用したアプリケーション開発を体験します。
 <!-- Step 10 -->
 ## アプリケーション コードの確認
 
-**このステップのコードは answer/step11/main.go と同じです。**
+**このステップのコードは answer/step10/main.go と同じです。**
 
 ハンズオン用のサンプル Web アプリケーションとして　Go 言語で API サーバーを作成していきます。
 
@@ -448,7 +448,7 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT  --member serviceAc
 
 ### cloudbuild.yaml の確認
 
-Cloud Build のジョブの中身は `egg2-1` フォルダ下にある `cloudbuild.yaml` に定義されているので中身を確認してみましょう。
+Cloud Build のジョブの中身は `egg3-3` フォルダ下にある `cloudbuild.yaml` に定義されているので中身を確認してみましょう。
 
 ```
 steps:
@@ -515,10 +515,10 @@ Cloud Run のコンテナの Image URL が Cloud Build で作成されたイメ�
 Firestore にアクセスするためにクライアントライブラリを追加します。
 Go 言語の場合、 `go.mod` で Go パッケージの依存関係を設定できます。
 
-今回のハンズオンで使う依存関係を全て書いた `go.mod` ファイルは既に `egg2-1` フォルダに配置済みです。
+今回のハンズオンで使う依存関係を全て書いた `go.mod` ファイルは既に `egg3-3` フォルダに配置済みです。
 
 ```
-module github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/gaming/egg2-1
+module github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/gaming/egg3-3
 
 go 1.13
 
@@ -544,7 +544,7 @@ require (
 
 ### データの追加・取得機能
 
-**このステップで作成したコードは answer/step22/main.go になります。**
+**このステップで作成したコードは answer/step21/main.go になります。**
 
 `main.go` ファイルに以下のコードを追加します。
 まずは import の中に以下を追記してください。
@@ -712,7 +712,7 @@ curl ${URL}/firestore
 ## Firestore の利用
 ### データの更新・削除処理
 
-**このステップで作成したコードは answer/step24/main.go になります。**
+**このステップで作成したコードは answer/step23/main.go になります。**
 
 先程のステップで実装したデータの登録処理では、各データに対して一意な ID が付与されていました。
 ここでは、その ID を用いてデータを更新・削除する処理を追加します。
@@ -848,7 +848,7 @@ gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
 <!-- Step 27 -->
 ## Firestore ハンドラの修正
 
-**このステップで作成したコードは answer/step28/main.go になります。**
+**このステップで作成したコードは answer/step27/main.go になります。**
 
 現在、全件取っているだけでキャッシュする意味がないため、キーで取得できるようにまずは修正します。
 
@@ -920,7 +920,7 @@ gcloud redis instances create --network=eggvpc --region=us-central1 eggcache
 ## Firestore ハンドラの修正
 次に Redis 操作のためのコードを追加します。
 
-**このステップで作成したコードは answer/step29/main.go になります。**
+**このステップで作成したコードは answer/step28/main.go になります。**
 
 import に以下を追記してください。
 
@@ -1180,7 +1180,7 @@ gcloud source repos create egg1-handson
 Cloud Build に前の手順で作成した、プライベート Git リポジトリに push が行われたときに起動されるトリガーを作成します。
 
 ```bash
-gcloud beta builds triggers create cloud-source-repositories --description="egg1handson" --repo=egg1-handson --branch-pattern=".*" --build-config="gaming/egg2-1/cloudbuild.yaml"
+gcloud beta builds triggers create cloud-source-repositories --description="egg1handson" --repo=egg1-handson --branch-pattern=".*" --build-config="gaming/egg3-3/cloudbuild.yaml"
 ```
 
 **GUI**: [ビルドトリガー](https://console.cloud.google.com/cloud-build/triggers?project={{project-id}})
@@ -1302,7 +1302,7 @@ Container Registry コンソールから、イメージを選択して削除し�
 ### Owner 権限をつけた dev-key.json の削除
 
 ```bash
-rm ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg2-1/dev-key.json
+rm ~/cloudshell_open/gcp-getting-started-lab-jp/gaming/egg3-3/dev-key.json
 ```
 
 ### サービスアカウントに付与したロールの取り消し
