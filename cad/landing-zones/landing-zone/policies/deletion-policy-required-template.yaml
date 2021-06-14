@@ -1,0 +1,23 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: gcprequiredeletionpolicy
+spec:
+  crd:
+    spec:
+      names:
+        kind: GCPRequireDeletionPolicy
+      validation:
+        openAPIV3Schema:
+          properties:
+  targets:
+    - rego: |
+        package templates.gcp.GCPRequireDeletionPolicyConstraint
+
+        violation[{"msg": msg}] {
+          kind := input.review.object.kind
+          not input.review.object.metadata.annotations["cnrm.cloud.google.com/deletion-policy"] == "abandon"
+          msg := "Annotation cnrm.cloud.google.com/deletion-policy must be present and set to abandon"
+        }
+      target: admission.k8s.gatekeeper.sh
+status: {}

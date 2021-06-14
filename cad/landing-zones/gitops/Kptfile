@@ -1,0 +1,16 @@
+apiVersion: kpt.dev/v1
+kind: Kptfile
+metadata:
+  name: gitops
+info:
+  description: This blueprint generates a GitOps CI/CD pipeline for use with ACM
+pipeline:
+  mutators:
+    - image: gcr.io/kpt-fn/apply-setters:v0.1
+      configMap:
+        cluster-name: cluster-name
+        deployment-repo: deployment-repo
+        namespace: config-control
+        project-id: project-id
+        project-number: "1234567890123"
+        source-repo: source-repo

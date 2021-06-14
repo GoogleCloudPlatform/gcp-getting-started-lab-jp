@@ -1,0 +1,11 @@
+apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+kind: ResourceManagerPolicy
+metadata:
+  name: disable-sa-key-creation
+  namespace: policies
+spec:
+  booleanPolicy:
+    enforced: true
+  constraint: "constraints/iam.disableServiceAccountKeyCreation"
+  organizationRef:
+    external: "123456789012" # kpt-set: ${org-id}

@@ -1,0 +1,104 @@
+# Trigger for when changes are pushed into any branch of the yakima source repo.
+# This will run all your kpt functions and apply a blast radius analysis of
+# changes.
+# NOTE: Only changes to the "main" branch will result in actuation of resources.
+apiVersion: cloudbuild.cnrm.cloud.google.com/v1beta1
+kind: CloudBuildTrigger
+metadata:
+  name: source-repo-cicd-trigger # kpt-set: ${source-repo}-cicd-trigger
+  namespace: config-control # kpt-set: ${namespace}
+  annotations:
+    cnrm.cloud.google.com/project-id: project-id # kpt-set: ${project-id}
+spec:
+  build:
+    step:
+      - name: gcr.io/cloud-builders/gcloud:latest
+        volumes:
+          - name: deployment-workspace
+            path: /deployment-workspace
+        args:
+          - '-c'
+          - |
+            set -e
+            gcloud source repos clone $_DEPLOYMENT_REPO .
+            (git show-branch $BRANCH_NAME &>/dev/null) && (git checkout $BRANCH_NAME) || (git checkout -b $BRANCH_NAME)
+            git config user.email $(gcloud auth list --filter=status:ACTIVE --format='value(account)')
+            mkdir -p /deployment-workspace/config
+        dir: /deployment-workspace
+        entrypoint: /bin/sh
+        id: "Clone Deployment Repo"
+        timeout: 300s
+      - name: gcr.io/kpt-dev/kpt:v1.0.0-beta.1
+        volumes:
+          - name: hydrated-workspace
+            path: /hydrated-workspace
+        args:
+          - '-c'
+          - |
+            set -eo pipefail
+            SRC_DIR="."
+            DEST_DIR="/hydrated-workspace/config"
+            DEFAULT_CLUSTER_NAME_SELECTOR="${_ADMIN_CLUSTER_NAME}"
+            mkdir -p "$${DEST_DIR}"
+            echo "Default Cluster Name Selector: $${DEFAULT_CLUSTER_NAME_SELECTOR}"
+            echo "Executing Kpt Functions..."
+            rm -rf "$${DEST_DIR}" && kpt fn render "$${SRC_DIR}" -o stdout \
+            | kpt fn eval --image gcr.io/kpt-fn/set-annotation:v0.1 - \
+              -- "configsync.gke.io/cluster-name-selector=$${DEFAULT_CLUSTER_NAME_SELECTOR}" \
+            | kpt fn sink "$${DEST_DIR}"
+        entrypoint: /bin/bash
+        id: "Apply Hydration and Validation"
+      - name: gcr.io/yakima-eap/evaluate:latest
+        volumes:
+          - name: hydrated-workspace
+            path: /hydrated-workspace
+          - name: deployment-workspace
+            path: /deployment-workspace
+        args:
+          - '-c'
+          - |
+            set -e
+            printf "\n\nDiffing against deployment repo main branch:\n"
+            evaluate --before="/deployment-workspace/config" --after="/hydrated-workspace/config" --max_additions=1000 --max_modifications=1000 --max_deletions=1000
+        entrypoint: /bin/sh
+        id: "Evaluate hydrated changes"
+        waitFor:
+          - "Apply Hydration and Validation"
+          - "Clone Deployment Repo"
+      - name: gcr.io/cloud-builders/gcloud:latest
+        volumes:
+          - name: hydrated-workspace
+            path: /hydrated-workspace
+          - name: deployment-workspace
+            path: /deployment-workspace
+        args:
+          - '-c'
+          - |
+            set -e
+            git pull origin $BRANCH_NAME || true # Ignore errors in case branch doesn't exist
+            rm -rf /deployment-workspace/config/*
+            cp -r /hydrated-workspace/config /deployment-workspace/
+            touch /deployment-workspace/config/.gitkeep
+            # Configure Git to create commits with Cloud Build's service account
+            git config user.email $(gcloud auth list --filter=status:ACTIVE --format='value(account)')
+            git add -A
+            git status
+            if git diff --cached --exit-code; then echo "No changes"; true;
+            else git commit -m "Resources from ${COMMIT_SHA}" && git push origin $BRANCH_NAME; fi
+            printf "\n\nLatest deployment repo commit SHA: $(git rev-parse HEAD)\n"
+        dir: /deployment-workspace
+        entrypoint: /bin/sh
+        id: "Push Changes To Deployment Repo"
+        waitFor:
+          - "Evaluate hydrated changes"
+    timeout: 600s
+  description: Cloud Build Trigger for building source (DRY) repository pushes. This runs all user defined kpt fns applies a blast radius analysis and pushes to the deployment (WET) repository.
+  disabled: false
+  substitutions:
+    "_ADMIN_CLUSTER_NAME": "cluster-name" # kpt-set: ${cluster-name}
+    "_DEPLOYMENT_REPO": "deployment-repo" # kpt-set: ${deployment-repo}
+    "_SOURCE_REPO": "source-repo" # kpt-set: ${source-repo}
+  triggerTemplate:
+    branchName: ".*"
+    repoRef:
+      name: source-repo # kpt-set: ${source-repo}

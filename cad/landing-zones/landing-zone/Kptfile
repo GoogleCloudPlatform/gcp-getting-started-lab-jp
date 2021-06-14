@@ -1,0 +1,17 @@
+apiVersion: kpt.dev/v1
+kind: Kptfile
+metadata:
+  name: landing-zone
+info:
+  description: Foundational landing zone blueprint for Google Cloud
+pipeline:
+  mutators:
+    - image: gcr.io/kpt-fn/apply-setters:v0.1
+      configMap:
+        billing-account-id: AAAAAA-BBBBBB-CCCCCC
+        group-billing-admins: gcp-billing-admins@example.com
+        group-org-admins: gcp-organization-admins@example.com
+        management-namespace: config-control
+        management-project-id: management-project-id
+        org-id: "123456789012"
+    - image: gcr.io/config-management-release/policy-controller-validate
