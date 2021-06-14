@@ -1,0 +1,22 @@
+### https://raw.github.com/github/gitignore/3bb7b4b767f3f8df07e362dfa03c8bd425f16d32/Go.gitignore
+
+# GoLand
+.idea/
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+
