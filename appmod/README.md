@@ -21,3 +21,23 @@ teachme ~/cloudshell_open/gcp-getting-started-lab-jp/appmod/anthos-baremetal/01-
 teachme ~/cloudshell_open/gcp-getting-started-lab-jp/appmod/anthos-baremetal/02-devops.md
 teachme ~/cloudshell_open/gcp-getting-started-lab-jp/appmod/anthos-baremetal/09-teardown.md
 ```
+
+## Anthos Attached Clusters ウォークスルー
+
+1. 以下をクリックし、Cloud Shell 環境を起動してください。
+
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/home/dashboard?cloudshell=true)
+
+2. 以下のコマンドをブラウザ上のターミナルで実行してください。
+
+```sh
+git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git
+cd gcp-getting-started-lab-jp/
+git checkout appmod-attached-clusters
+```
+
+3. 以下のコマンドでチュートリアルが開始してください。
+
+```sh
+teachme appmod/attached-clusters/01-setup.md
+```
