@@ -395,7 +395,7 @@ curl コマンドを使って Eats サービスのルートパスにまずはア
 export EATS_URL=$(gcloud run services describe eats --format json | jq -r '.status.address.url')
 ```
 ```bash
-curl -X GET ${EATS_URL}/
+curl -X GET ${EATS_URL}/ | jq
 ```
 
 次のように返ってくれば、正しく Eats サービスが動作しています。
@@ -408,7 +408,7 @@ curl -X GET ${EATS_URL}/
 #### メニューの確認 (READ)
 /items に GET でアクセスしてみましょう。
 ```bash
-curl -X GET ${EATS_URL}/items
+curl -X GET ${EATS_URL}/items | jq
 ```
 次のように返ってくれば、OKです。
 わかりやすくするため改行を入れていますが、実際の出力は改行されません。
@@ -449,14 +449,14 @@ curl -X GET ${EATS_URL}/items
 まず注文が今のところ 1 件もないことを確認します。
 /orders に GET でアクセスしてみます。
 ```bash
-curl -X GET ${EATS_URL}/orders
+curl -X GET ${EATS_URL}/orders | jq
 ```
 
 次に注文を行います。
 注文を行う場合は、POST メソッドを使い、`-d` オプションで注文内容を json フォーマットで渡してあげます。
 `purchaser` と `item_id` はお好きなものを選択してください。
 ```bash
-curl -X POST -d '{"purchaser":"Taro Yamada","item_id":1}' ${EATS_URL}/orders
+curl -X POST -d '{"purchaser":"Taro Yamada","item_id":1}' ${EATS_URL}/orders | jq
 ```
 次のように返ってくれば、OKです。
 ```terminal
@@ -475,7 +475,7 @@ curl -X POST -d '{"purchaser":"Taro Yamada","item_id":1}' ${EATS_URL}/orders
 先程作成した注文の更新を行いましょう。例えばピザの調理が完了したことを示す、`item_completed` を `false` から `true` に変更してみます。
 更新は PUT メソッドを使うので注意してください。また URL の末尾で、先程作成した注文の ID を指定します。
 ```bash
-curl -X PUT -d '{"purchaser":"Taro Yamada","item_id":1,"item_completed":true}' ${EATS_URL}/orders/1
+curl -X PUT -d '{"purchaser":"Taro Yamada","item_id":1,"item_completed":true}' ${EATS_URL}/orders/1 | jq
 ```
 `item_completed` が `true` になって返ってくれば、OK です。
 ```terminal
@@ -496,7 +496,7 @@ curl -X PUT -d '{"purchaser":"Taro Yamada","item_id":1,"item_completed":true}' $
 先程作成した注文を削除しましょう。
 削除は DELETE メソッドを使います。
 ```bash
-curl -X DELETE ${EATS_URL}/orders/1
+curl -X DELETE ${EATS_URL}/orders/1 | jq
 ```
 次のように返ってくれば、OKです。
 ```terminal
@@ -676,7 +676,7 @@ gcloud run deploy eats \
 
 ルートパスにアクセスし、Eats サービスが v2 に更新されたことを確認します。
 ```bash
-curl -X GET ${EATS_URL}/
+curl -X GET ${EATS_URL}/ | jq
 ```
 
 次のように **v2** と返ってくれば、OK です。
@@ -740,7 +740,7 @@ export EATS_URL=$(gcloud run services describe eats --format json | jq -r '.stat
 尚、ここで複数回実行しているのはタイムラグがあるため、複数回同時に注文作成したほうが早く結果を確認できるためです。  
 `purchaser` と `item_id` はお好きなものを選択してください。
 ```bash
-curl -X POST -d '{"purchaser":"Taro Yamada","item_id":1}' ${EATS_URL}/orders
+curl -X POST -d '{"purchaser":"Taro Yamada","item_id":1}' ${EATS_URL}/orders | jq
 ```
 
 Notification Client を実行中のタブに戻って、通知が届いていることを確認してください。
@@ -759,7 +759,7 @@ Notification Client を実行中のタブに戻って、通知が届いている
 末尾のオーダー ID は各自の環境のお好きなものを使ってみてください。
 更新内容も API のスキーマに沿っていれば以下のものでなくて構いません。
 ```bash
-curl -X PUT -d '{"purchaser":"Taro Yamada","item_id":1,"item_completed":true}' ${EATS_URL}/orders/2
+curl -X PUT -d '{"purchaser":"Taro Yamada","item_id":1,"item_completed":true}' ${EATS_URL}/orders/2 | jq
 ```
 Notification Client を実行中のタブに戻って、通知が届いていることを確認してください。
 次のように表示されていれば、OK です。
@@ -791,7 +791,7 @@ gcloud run services update-traffic eats --to-revisions=${OLD_REV}=100
 
 ルートパスにアクセスし、**v1** にロールバックしたことを確認しましょう。
 ```bash
-curl -X GET ${EATS_URL}/
+curl -X GET ${EATS_URL}/ | jq
 ```
 
 ```terminal
@@ -811,7 +811,7 @@ gcloud run services update-traffic eats --to-revisions=LATEST=10
 
 ルートパスに適当数アクセスし、10 回に 1 回程度 **v2** が表示されることを確認しましょう。
 ```bash
-curl -X GET ${EATS_URL}/
+curl -X GET ${EATS_URL}/ | jq
 ```
 
 最後に、v2 に 100% のリクエストトラフィックが流れるようにしましょう。
@@ -821,7 +821,7 @@ gcloud run services update-traffic eats --to-revisions=LATEST=100
 
 ルートパスに適当数アクセスし、常に **v2** が表示されることを確認しましょう。
 ```bash
-curl -X GET ${EATS_URL}/
+curl -X GET ${EATS_URL}/ | jq
 ```
 
 <!-- Step 22 -->
