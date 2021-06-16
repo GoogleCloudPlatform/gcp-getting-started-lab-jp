@@ -174,7 +174,7 @@ firebase init
  ◯ Remote Config: Get, deploy, and rollback configurations for Remote Config
 ```
 
-矢印キーまたは j k で上下に移動し、 `Firestore` , `Hosting` を space キーで選択肢、 Enter キーで決定します。
+矢印キーまたは j k で上下に移動し、 `Firestore` , `Hosting` を space キーで選択し、 Enter キーで決定します。
 
 ### 2. Firebase プロジェクト名の入力
 
@@ -186,7 +186,7 @@ firebase init
   Don't set up a default project
 ```
 
-`Use an existing project` を選択肢、決定します。
+`Use an existing project` を選択し、決定します。
 
 ```
 ? Please input the project ID you would like to use:
