@@ -87,7 +87,8 @@ func makeConnection() (*grpc.ClientConn, error) {
 			log.Fatalf("Could not make cert pool: %v", err)
 		}
 		cred := credentials.NewTLS(&tls.Config{
-			RootCAs: systemRoots,
+			RootCAs:    systemRoots,
+			MinVersion: tls.VersionTLS12,
 		})
 		opts = append(opts, grpc.WithTransportCredentials(cred))
 	}
