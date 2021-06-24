@@ -1,0 +1,11 @@
+apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+kind: ResourceManagerPolicy
+metadata:
+  name: disable-guest-attributes
+  namespace: policies
+spec:
+  booleanPolicy:
+    enforced: true
+  constraint: "constraints/compute.disableGuestAttributesAccess"
+  organizationRef:
+    external: "123456789012" # kpt-set: ${org-id}

@@ -1,0 +1,25 @@
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: org-admins-iam
+  namespace: config-control # kpt-set: ${management-namespace}
+spec:
+  member: group:gcp-organization-admins@example.com # kpt-set: group:${group-org-admins}
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Organization
+    external: "123456789012" # kpt-set: ${org-id}
+  role: roles/resourcemanager.organizationAdmin
+---
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: billing-admins-iam
+  namespace: config-control # kpt-set: ${management-namespace}
+spec:
+  member: group:gcp-billing-admins@example.com # kpt-set: group:${group-billing-admins}
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Organization
+    external: "123456789012" # kpt-set: ${org-id}
+  role: roles/billing.admin

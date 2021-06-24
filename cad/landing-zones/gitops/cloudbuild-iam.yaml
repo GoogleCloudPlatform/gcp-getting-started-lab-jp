@@ -1,0 +1,31 @@
+# Provides write access to deployment repo for cloudbuild trigger
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: deployment-repo-cloudbuild-write
+  namespace: config-control # kpt-set: ${namespace}
+  annotations:
+    cnrm.cloud.google.com/project-id: project-id # kpt-set: ${project-id}
+spec:
+  member: serviceAccount:1234567890123@cloudbuild.gserviceaccount.com # kpt-set: serviceAccount:${project-number}@cloudbuild.gserviceaccount.com
+  resourceRef:
+    name: deployment-repo # kpt-set: ${deployment-repo}
+    apiVersion: sourcerepo.cnrm.cloud.google.com/v1beta1
+    kind: SourceRepoRepository
+  role: roles/source.writer
+---
+# Provides read access to source repo for cloudbuild trigger
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: source-repo-cloudbuild-read
+  namespace: config-control # kpt-set: ${namespace}
+  annotations:
+    cnrm.cloud.google.com/project-id: project-id # kpt-set: ${project-id}
+spec:
+  member: serviceAccount:1234567890123@cloudbuild.gserviceaccount.com # kpt-set: serviceAccount:${project-number}@cloudbuild.gserviceaccount.com
+  resourceRef:
+    name: source-repo # kpt-set: ${source-repo}
+    apiVersion: sourcerepo.cnrm.cloud.google.com/v1beta1
+    kind: SourceRepoRepository
+  role: roles/source.reader
