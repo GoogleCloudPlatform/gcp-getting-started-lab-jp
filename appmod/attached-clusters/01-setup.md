@@ -4,6 +4,7 @@
 <walkthrough-watcher-constant key="zone" value="asia-northeast1-c"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="sa" value="sa-anthos-ac"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="cluster" value="anthos"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="gke" value="1.18.19-gke.1700"></walkthrough-watcher-constant>
 
 ## 始めましょう
 
@@ -75,7 +76,7 @@ Google Cloud では利用したい機能ごとに、有効化を行う必要が�
 ここでは、以降のハンズオンで利用する機能を事前に有効化しておきます。
 
 ```bash
-gcloud services enable anthos.googleapis.com anthosgke.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com compute.googleapis.com container.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com
+gcloud services enable anthos.googleapis.com anthosgke.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com connectgateway.googleapis.com cloudresourcemanager.googleapis.com compute.googleapis.com container.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com
 ```
 
 `Operation 〜 finished successfully.` と表示が出ることを確認します。
@@ -139,15 +140,16 @@ account="${account%%@*}"
 ```bash
 gcloud container clusters create \
     "{{cluster}}-gke-${account}" \
+    --cluster-version "{{gke}}" \
     --machine-type "e2-medium" \
-    --num-nodes 2 --async
+    --num-nodes 2 --enable-ip-alias --async
 ```
 
 もう一つ Kubernetes クラスタを起動します。まず kind を内部で起動するための VM を起動し
 
 ```bash
 gcloud compute instances create \
-    "{{cluster}}-gce-${account}" \
+    "{{cluster}}-attached-${account}" \
     --zone {{zone}} --machine-type "n2-standard-2" \
     --metadata=enable-oslogin=TRUE \
     --scopes cloud-platform
@@ -157,11 +159,11 @@ gcloud compute instances create \
 
 ```bash
 gcloud compute firewall-rules create allow-from-iap --network=default --direction=INGRESS --priority=1000 --action=ALLOW --rules=tcp:22,icmp --source-ranges=35.235.240.0/20
-gcloud compute scp {{sa}}-creds.json "{{cluster}}-gce-${account}":~ --tunnel-through-iap
-gcloud compute ssh "{{cluster}}-gce-${account}" --tunnel-through-iap
+gcloud compute scp {{sa}}-creds.json "{{cluster}}-attached-${account}":~ --tunnel-through-iap
+gcloud compute ssh "{{cluster}}-attached-${account}" --tunnel-through-iap
 ```
 
-Kind をインストールし、Kubernetes クラスタを起動します。
+Kind をインストールし、
 
 ```bash
 sudo apt-get update
@@ -172,24 +174,43 @@ echo \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+sudo gpasswd -a $USER docker
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
 curl -Lo kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
 chmod +x kind
 sudo mv kind /usr/local/bin/
-sudo kind create cluster --name anthos-gce
+```
+
+一度ログアウトした後、改めて VM に入り Kubernetes クラスタを起動します。
+
+```bash
+kind create cluster --name anthos-kind
 ```
 
 ## Anthos への登録（クラスタの追加）
 
+（kind ではなく OpenShift クラスタを追加する場合は SCC (Security Context Constraints) で gke-connect を privileged グループに追加しておきましょう）
+
+```bash
+oc adm policy add-scc-to-group privileged system:serviceaccounts:gke-connect
+```
+
 Attached Clusters として、Kubernetes クラスタを Anthos に参加させます。
 
 ```bash
-sudo gcloud container hub memberships \
+gcloud container hub memberships \
     register "$(hostname)" \
-    --kubeconfig=/root/.kube/config \
-    --context="$(sudo kubectl config current-context)" \
+    --kubeconfig=$HOME/.kube/config \
+    --context="$(kubectl config current-context)" \
     --service-account-key-file={{sa}}-creds.json
+```
+
+正常にエージェントが稼働することが確認できたら Cloud Shell に戻りましょう。
+
+```bash
+kubectl get all -n gke-connect
 exit
 ```
 
@@ -212,7 +233,15 @@ gcloud container hub memberships \
 
 これは Google Cloud 以外で構築された Anthos クラスタの場合、実際のワークロードは追加で権限を付与しない限りコンソールから値を参照できない仕組みとなっているためです。具体的な手順は [こちら](https://cloud.google.com/anthos/multicluster-management/console/logging-in?hl=ja) にもありますが、以下それに従い、クラスタのより詳細な情報を Google Cloud へ連携してみます。
 
-### Kind ノードへ再度 SSH
+### **ユーザへの権限付与**
+
+いまみなさんはオーナー権限でログインされているかと思いますが、自分自身ではなく特定のユーザーやサービスアカウントの設定をする場合は、該当リソースに対して以下を参考に `gcloud projects add-iam-policy-binding` で権限を付与してください。
+
+- roles/gkehub.gatewayAdmin : Connect Gateway API にアクセスできるようになります
+- roles/gkehub.viewer : GKE コンソール ページでクラスタを表示できます
+- roles/container.viewer : Cloud Console でコンテナ リソースを表示できます
+
+### **Kind ノードへ再度 SSH**
 
 ```text
 account=$(gcloud config get-value core/account)
@@ -220,61 +249,77 @@ account="${account%%@*}"
 ```
 
 ```bash
-gcloud compute ssh "{{cluster}}-gce-${account}" --tunnel-through-iap
+gcloud compute ssh "{{cluster}}-attached-${account}" --tunnel-through-iap
 ```
 
-### **Kubernetes クラスタロールの作成**
+## Kubernetes 権限借用ポリシーの作成
 
-ロールベースのアクセス制御（RBAC）のためのカスタム ロールを作成します。クラスタのノード、永続ボリューム、ストレージ クラスに対する get、list、watch 権限をユーザーに付与します。
+各クラスタに配置される Anthos の Connect エージェントが指定されたユーザーまたはサービス アカウントに代わって API サーバーにリクエストを送信することを承認します。コンソールの右上、自分のアイコンをクリックし、ログインに利用しているメールアドレスを変数にセットし、
+
+```bash
+USER_ACCOUNT=
+```
+
+クラスタロールを作成しましょう。
 
 ```text
-cat <<EOF > cloud-console-reader.yaml
-kind: ClusterRole
+cat << EOF > impersonate.yaml
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: cloud-console-reader
+  name: gateway-impersonate
 rules:
-- apiGroups: [""]
-  resources: ["nodes", "persistentvolumes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["storageclasses"]
-  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - ""
+  resourceNames:
+  - ${USER_ACCOUNT}
+  resources:
+  - users
+  verbs:
+  - impersonate
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gateway-impersonate
+roleRef:
+  kind: ClusterRole
+  name: gateway-impersonate
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: connect-agent-sa
+  namespace: gke-connect
 EOF
-sudo kubectl apply -f cloud-console-reader.yaml
+kubectl apply -f impersonate.yaml
 ```
 
-### **Kubernetes サービス アカウント（KSA）の作成**
+## Kubernetes 権限ポリシーの作成
 
-サービス アカウントを作成し
+クラスタに対し、ユーザーに付与する権限を指定します。ここではかなり強力ですが、cluster-admin 権限を付与します。
 
-```bash
-KSA_NAME=abm-console-service-account
-sudo kubectl create serviceaccount "${KSA_NAME}"
-```
-
-view と先ほど作った cloud-console-reader カスタム ロールを関連付けます。
-
-```bash
-sudo kubectl create clusterrolebinding cloud-console-reader-binding --clusterrole cloud-console-reader --serviceaccount "default:${KSA_NAME}"
-sudo kubectl create clusterrolebinding cloud-console-view-binding --clusterrole view --serviceaccount "default:${KSA_NAME}"
-sudo kubectl create clusterrolebinding cloud-console-cluster-admin-binding --clusterrole cluster-admin --serviceaccount "default:${KSA_NAME}"
-```
-
-サービス アカウント（KSA）のトークンを取得しましょう。
-
-```bash
-SECRET_NAME=$(sudo kubectl get serviceaccount "${KSA_NAME}" -o jsonpath='{$.secrets[0].name}')
-sudo kubectl get secret "${SECRET_NAME}" -o jsonpath='{$.data.token}' | base64 --decode && echo ''
+```text
+cat << EOF > admin-permission.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gateway-cluster-admin
+subjects:
+- kind: User
+  name: ${USER_ACCOUNT}
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF
+kubectl apply -f admin-permission.yaml
 ```
 
 ### **クラスタへのログイン**
 
 1. Cloud コンソールにもどり、登録済みクラスタの横にある `ログイン` ボタンをクリックします
-2. `トークン` を選択して、フィールドに KSA のトークンを入力し、`ログイン` をクリックします
+2. `Use your Google identity to log-in` が選択されていることを確認して `ログイン`
 3. クラスタ名の左側のアイコンが緑色になり `ワークロード` などが参照できるようになります
-
-もしトークンが不正だとエラーがでた場合は、コピーした**トークンに改行文字列が入っている可能性があります**。改行のないように整形してから再度登録をお試しください。
 
 ## Kubernetes としてのクラスタ確認
 
@@ -309,5 +354,5 @@ Anthos として登録されたクラスタから何が見えるかを確認し�
 **（Kind ノード上ではなく、Cloud Shell にもどり、以下を実行してください）**
 
 ```bash
-teachme appmod/attached-clusters/02-devops.md
+teachme ~/cloudshell_open/gcp-getting-started-lab-jp/appmod/attached-clusters/02-devops.md
 ```

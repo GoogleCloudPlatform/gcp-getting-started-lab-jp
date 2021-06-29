@@ -24,7 +24,7 @@ Google Cloud 上で Anthos clusters on Bare Metal のクラスタを統合管理
 
 ```bash
 gcloud container hub memberships delete "{{cluster}}-gke-${account}" --quiet
-gcloud container hub memberships delete "{{cluster}}-gce-${account}" --quiet
+gcloud container hub memberships delete "{{cluster}}-attached-${account}" --quiet
 ```
 
 Anthos に関する API を停止しましょう。

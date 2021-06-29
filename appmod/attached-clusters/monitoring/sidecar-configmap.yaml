@@ -1,0 +1,38 @@
+# Prometheus Sidecar config.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stackdriver-prometheus-sidecar-config
+  namespace: kube-system
+data:
+  # Configuration file to add metadata for Fluent Bit metrics.
+  # ======================================================
+  config.yaml: |
+    static_metadata:
+    - metric: fluentbit_filter_add_records_total
+      type: counter
+      help: "Total count of records added by Fluent Bit filter plugin."
+    - metric: fluentbit_filter_drop_records_total
+      type: counter
+      help: "Total count of records dropped by Fluent Bit filter plugin."
+    - metric: fluentbit_input_records_total
+      type: counter
+      help: "Total count of records processed by Fluent Bit input plugin."
+    - metric: fluentbit_input_bytes_total
+      type: counter
+      help: "Total bytes processed by Fluent Bit input plugin."
+    - metric: fluentbit_output_errors_total
+      type: counter
+      help: "Total count of errors from Fluent Bit output plugin."
+    - metric: fluentbit_output_proc_records_total
+      type: counter
+      help: "Total count of records processed by Fluent Bit output plugin."
+    - metric: fluentbit_output_proc_bytes_total
+      type: counter
+      help: "Total bytes processed by Fluent Bit output plugin."
+    - metric: fluentbit_output_retries_total
+      type: counter
+      help: "Total count of retries performed by Fluent Bit output plugin."
+    - metric: fluentbit_output_retries_failed_total
+      type: counter
+      help: "Total count of failed retries encountered by Fluent Bit output plugin."

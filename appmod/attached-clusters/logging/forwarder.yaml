@@ -1,0 +1,409 @@
+# Service account for Log Forwarder (Fluent Bit).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stackdriver-log-forwarder
+  namespace: kube-system
+---
+# ClusterRole with permissions required by Log Forwarder (Fluent Bit).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stackdriver-user:stackdriver-log-forwarder
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - watch
+  - get
+  - list
+---
+# ClusterRoleBinding for Log Forwarder (Fluent Bit).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: stackdriver-user:stackdriver-log-forwarder
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stackdriver-user:stackdriver-log-forwarder
+subjects:
+- kind: ServiceAccount
+  name: stackdriver-log-forwarder
+  namespace: kube-system
+---
+# Log Forwarder (Fluent Bit) DaemonSet to tail log files.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: stackdriver-log-forwarder
+  namespace: kube-system
+  labels:
+    app: stackdriver-log-forwarder
+spec:
+  selector:
+    matchLabels:
+      app: stackdriver-log-forwarder
+      managed-by: stackdriver
+  template:
+    metadata:
+      labels:
+        app: stackdriver-log-forwarder
+        managed-by: stackdriver
+    spec:
+      containers:
+      - name: stackdriver-log-forwarder
+        image: fluent/fluent-bit:1.6.10
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2020
+        resources:
+          limits:
+            cpu: 100m
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: stackdriver-log-forwarder-config
+          mountPath: /fluent-bit/etc/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      serviceAccountName: stackdriver-log-forwarder
+      terminationGracePeriodSeconds: 60
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.gke.io/observability
+        effect: NoSchedule
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: stackdriver-log-forwarder-config
+        configMap:
+          name: stackdriver-log-forwarder-config
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+---
+# Log Forwarder (Fluent Bit) configuration map.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stackdriver-log-forwarder-config
+  namespace: kube-system
+  labels:
+    app: stackdriver-log-forwarder
+data:
+  # Configuration files for service, input, filter, and output plugins.
+  # ======================================================
+  filter-kubernetes.conf: |
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/kubernetes
+        Name                kubernetes
+        Match               k8s_container.*
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        Kube_Tag_Prefix     k8s_container.
+        Regex_Parser        k8s-container-custom-tag
+        Annotations         Off
+  fluent-bit.conf: |
+    [SERVICE]
+        # https://docs.fluentbit.io/manual/service
+        Flush         1
+        Log_Level     warn
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+        # https://docs.fluentbit.io/manual/configuration/buffering
+        storage.path               /var/log/fluent-bit-buffers/
+        storage.sync               normal
+        storage.checksum           off
+        storage.backlog.mem_limit  10M
+
+    @INCLUDE input-containers.conf
+    @INCLUDE filter-kubernetes.conf
+    @INCLUDE output-fluentd.conf
+  input-containers.conf: |
+
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*.log
+        Exclude_Path       *_kube-system_*.log,*_gke-connect_*.log,*_knative-serving_*.log,*_gke-system_*.log,*_istio-system_*.log,*_monitoring-system_*.log,*_config-management-system_*.log,*_gatekeeper-system_*.log,*_cnrm-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-application.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    5M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_kube-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-kube-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    5M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_gke-connect_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-gke-connect.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_knative-serving_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-knative-serving.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_gke-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-gke-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_istio-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-istio-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_monitoring-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-monitoring-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_config-management-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-config-management-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_gatekeeper-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-gatekeeper-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+
+    [INPUT]
+        # https://docs.fluentbit.io/manual/input/tail
+        Name               tail
+        Tag_Regex          var.log.containers.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)_(?<namespace_name>[^_]+)_(?<container_name>.+)-(?<docker_id>[a-z0-9]{64})\.log$
+        Tag                k8s_container.<namespace_name>.<pod_name>.<container_name>
+        Path               /var/log/containers/*_cnrm-system_*.log
+        Parser             docker
+        DB                 /var/log/fluent-bit-k8s-container-cnrm-system.db
+        Buffer_Chunk_Size  512KB
+        Buffer_Max_Size    2M
+        Rotate_Wait        30
+        Mem_Buf_Limit      30MB
+        Skip_Long_Lines    On
+        Refresh_Interval   10
+        storage.type       filesystem
+        Ignore_Older       4h
+    # Input collected above are with namespaces "kube-system", "gke-connect",
+    # "knative-serving", "gke-system", "istio-system", "monitoring-system",
+    # "config-management-system", "gatekeeper-system" and "cnrm-system",
+    # which are system namespaces.
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.kube-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.gke-connect.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.knative-serving.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.gke-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.istio-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.monitoring-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.config-management-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.gatekeeper-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/record_modifier
+        Name    record_modifier
+        Match   *.cnrm-system.*
+        Record  gke.googleapis.com/log_type system
+
+    [FILTER]
+        # https://docs.fluentbit.io/manual/filter/nest
+        Name    nest
+        Match   *
+        Operation nest
+        Wildcard gke.googleapis.com*
+        Nest_under logging.googleapis.com/labels
+
+  output-fluentd.conf: |
+    [OUTPUT]
+        # https://docs.fluentbit.io/manual/input/forward
+        Name        forward
+        Match       *
+        Host        stackdriver-log-aggregator-in-forward.kube-system
+        Port        8989
+        Retry_Limit 5
+  parsers.conf: |
+    [PARSER]
+        # https://docs.fluentbit.io/manual/parser/json
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   Off
+
+    [PARSER]
+        Name    k8s-container-custom-tag
+        Format  regex
+        Regex   ^(?<namespace_name>[^_.]+)\.(?<pod_name>[a-z0-9](?:[-a-z0-9]*[a-z0-9])?(?:\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*+)\.(?<container_name>[^.]+)$
