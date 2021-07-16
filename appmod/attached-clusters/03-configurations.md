@@ -113,7 +113,7 @@ kubectl apply -f config-management-operator.yaml
 Config Management リソースを作成します。
 
 ```text
-cat << EOF >config-management.yaml
+cat << EOF > config-management.yaml
 apiVersion: configmanagement.gke.io/v1
 kind: ConfigManagement
 metadata:
@@ -121,7 +121,7 @@ metadata:
 spec:
   clusterName: {{cluster}}
   git:
-    syncRepo: ssh://${logined_account}@source.developers.google.com:2022/p/{{project-id}}/r/{{repo}}
+    syncRepo: ssh://$(gcloud config get-value core/account)@source.developers.google.com:2022/p/{{project-id}}/r/{{repo}}
     syncBranch: master
     secretType: ssh
 EOF
@@ -146,14 +146,14 @@ kubectl get pods -n config-management-system
 ACM と連携した git リポジトリに、サンプルプロジェクトをコピーします。
 
 ```bash
-git clone https://github.com/GoogleCloudPlatform/csp-config-management.git ~/sample
-cd $HOME/{{repo}}
-cp -rf $HOME/sample/foo-corp/* ./
+git clone https://github.com/GoogleCloudPlatform/anthos-config-management-samples.git $HOME/acm-samples
+cp -rf $HOME/acm-samples/foo-corp/* $HOME/{{repo}}/
 ```
 
 CSR へ変更を送信しましょう。
 
 ```bash
+cd $HOME/{{repo}}
 git add .
 git commit -m 'init'
 git push origin master
