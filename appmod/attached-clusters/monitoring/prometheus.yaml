@@ -1,0 +1,244 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stackdriver-prometheus
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stackdriver-user:prometheus
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: stackdriver-user:prometheus
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stackdriver-user:prometheus
+subjects:
+- kind: ServiceAccount
+  name: stackdriver-prometheus
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stackdriver-prometheus-scrape
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: stackdriver-prometheus-scrape
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  verbs:
+  - get
+- nonResourceURLs:
+  - /metrics
+  - /metrics/cadvisor
+  - /api/v1/metrics/prometheus
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: stackdriver-prometheus-scrape
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: stackdriver-prometheus-scrape
+subjects:
+- kind: ServiceAccount
+  name: stackdriver-prometheus-scrape
+  namespace: kube-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stackdriver-prometheus-scrape
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: stackdriver-prometheus-scrape
+type: kubernetes.io/service-account-token
+---
+# Headless service is required for network identity of the pods inside StatefulSet.
+# See details at https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#limitations
+apiVersion: v1
+kind: Service
+metadata:
+  name: stackdriver-prometheus-k8s
+  namespace: kube-system
+  labels:
+    app: stackdriver-prometheus-k8s
+spec:
+  ports:
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  sessionAffinity: ClientIP
+  selector:
+    app: stackdriver-prometheus-k8s
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stackdriver-prometheus-k8s
+  namespace: kube-system
+  labels:
+    app: stackdriver-prometheus-k8s
+spec:
+  serviceName: "stackdriver-prometheus-k8s"
+  replicas: 1
+  podManagementPolicy: "Parallel"
+  selector:
+    matchLabels:
+      app: stackdriver-prometheus-k8s
+      managed-by: stackdriver
+  template:
+    metadata:
+      labels:
+        app: stackdriver-prometheus-k8s
+        managed-by: stackdriver
+    spec:
+      serviceAccount: stackdriver-prometheus
+      securityContext:
+        fsGroup: 2000
+        runAsUser: 1000
+        runAsNonRoot: true
+      containers:
+      - name: prometheus-server
+        image: prom/prometheus:v2.18.1
+        imagePullPolicy: IfNotPresent
+        args:
+        - "--config.file=/etc/prometheus/config/prometheus.yaml"
+        - "--storage.tsdb.path=/data"
+        - "--storage.tsdb.min-block-duration=4h"
+        - "--storage.tsdb.retention=8h"
+        ports:
+        - name: prometheus
+          containerPort: 9090
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 120 # Allow up to 10m on startup for data recovery
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 6
+        # Data based on 100 nodes + 3000 pods scalability test
+        # Limits removed because of b/147894327#comment37
+        resources:
+          requests:
+            cpu: 250m
+            memory: 2000Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus/config
+        - name: stackdriver-prometheus-data
+          mountPath: /data
+        - name: stackdriver-prometheus-scrape-token
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/stackdriver-prometheus-scrape
+      - name: stackdriver-prometheus-sidecar
+        image: gcr.io/stackdriver-prometheus/stackdriver-prometheus-sidecar:0.8.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /google-cloud-credentials/credentials.json
+        args:
+        # USER DOES NOT NEED TO CHANGE THESE
+        - "--config-file=/etc/sidecar/config.yaml"
+        - "--prometheus.wal-directory=/data/wal"
+        - "--stackdriver.metrics-prefix=kubernetes.io/anthos"
+        - "--stackdriver.generic.namespace=kube-system"
+        # USER NEEDS TO UPDATE THESE VALUES BEFORE DEPLOY
+        - "--stackdriver.project-id=[PROJECT_ID]"
+        - "--stackdriver.kubernetes.location=[CLUSTER_LOCATION]"
+        - "--stackdriver.generic.location=[CLUSTER_LOCATION]"
+        - "--stackdriver.kubernetes.cluster-name=[CLUSTER_NAME]"
+        ports:
+        - name: sidecar
+          containerPort: 9091
+        resources:
+          requests:
+            cpu: 100m
+            memory: 600Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: sidecar-config-volume
+          mountPath: /etc/sidecar
+        - name: stackdriver-prometheus-data
+          mountPath: /data
+        - mountPath: /google-cloud-credentials
+          name: google-cloud-credentials
+      volumes:
+      - name: sidecar-config-volume
+        configMap:
+          name: stackdriver-prometheus-sidecar-config
+      - name: config-volume
+        configMap:
+          name: stackdriver-prometheus-k8s
+      - name: stackdriver-prometheus-data
+        emptyDir: {}
+      - name: stackdriver-prometheus-scrape-token
+        secret:
+          defaultMode: 420
+          secretName: stackdriver-prometheus-scrape
+      - name: google-cloud-credentials
+        secret:
+          defaultMode: 420
+          secretName: google-cloud-credentials
+
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: node-role.gke.io/observability
+        effect: NoSchedule
+      terminationGracePeriodSeconds: 300
+  volumeClaimTemplates:
+    - metadata:
+        name: stackdriver-prometheus-data
+      spec:
+        # storageClassName: standard #GCP
+        # storageClassName: gp2 #AWS EKS
+        # storageClassName: default #Azure AKS
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "40Gi"
