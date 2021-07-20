@@ -1,9 +1,24 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 apiVersion: iam.cnrm.cloud.google.com/v1beta1
 kind: IAMServiceAccount
 metadata:
   name: networking-sa
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   displayName: networking-sa
@@ -14,6 +29,7 @@ metadata:
   name: networking-sa-networkadmin-permissions
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: "serviceAccount:networking-sa@management-project-id.iam.gserviceaccount.com" # kpt-set: serviceAccount:networking-sa@${management-project-id}.iam.gserviceaccount.com
@@ -29,6 +45,7 @@ metadata:
   name: networking-sa-security-permissions
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: "serviceAccount:networking-sa@management-project-id.iam.gserviceaccount.com" # kpt-set: serviceAccount:networking-sa@${management-project-id}.iam.gserviceaccount.com
@@ -44,6 +61,7 @@ metadata:
   name: networking-sa-dns-permissions
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: "serviceAccount:networking-sa@management-project-id.iam.gserviceaccount.com" # kpt-set: serviceAccount:networking-sa@${management-project-id}.iam.gserviceaccount.com
@@ -59,6 +77,7 @@ metadata:
   name: networking-sa-service-control-permissions
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: "serviceAccount:networking-sa@management-project-id.iam.gserviceaccount.com" # kpt-set: serviceAccount:networking-sa@${management-project-id}.iam.gserviceaccount.com
@@ -74,6 +93,7 @@ metadata:
   name: networking-sa-xpnadmin-permissions
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: "serviceAccount:networking-sa@management-project-id.iam.gserviceaccount.com" # kpt-set: serviceAccount:networking-sa@${management-project-id}.iam.gserviceaccount.com
@@ -89,6 +109,7 @@ metadata:
   name: networking-sa-workload-identity-binding
   namespace: config-control # kpt-set: ${management-namespace}
   annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
     cnrm.cloud.google.com/project-id: management-project-id # kpt-set: ${management-project-id}
 spec:
   member: serviceAccount:management-project-id.svc.id.goog[cnrm-system/cnrm-controller-manager-networking] # kpt-set: serviceAccount:${management-project-id}.svc.id.goog[cnrm-system/cnrm-controller-manager-networking]
@@ -115,14 +136,16 @@ roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
 subjects:
-  - name: cnrm-controller-manager-networking
-    namespace: cnrm-system
-    kind: ServiceAccount
+- name: cnrm-controller-manager-networking
+  namespace: cnrm-system
+  kind: ServiceAccount
 ---
 apiVersion: core.cnrm.cloud.google.com/v1beta1
 kind: ConfigConnectorContext
 metadata:
   name: configconnectorcontext.core.cnrm.cloud.google.com
   namespace: networking
+  annotations:
+    cnrm.cloud.google.com/blueprint: cnrm/landing-zone/v0.2.0
 spec:
   googleServiceAccount: networking-sa@management-project-id.iam.gserviceaccount.com # kpt-set: networking-sa@${management-project-id}.iam.gserviceaccount.com

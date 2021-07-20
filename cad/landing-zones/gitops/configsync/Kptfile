@@ -7,9 +7,4 @@ info:
 pipeline:
   mutators:
     - image: gcr.io/kpt-fn/apply-setters:v0.1
-      configMap:
-        cluster-name: cluster-name
-        configsync-dir: config
-        deployment-repo: deployment-repo
-        namespace: config-control
-        project-id: project-id
+      configPath: setters.yaml

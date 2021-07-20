@@ -1,0 +1,9 @@
+apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+kind: Folder
+metadata: # kpt-merge: hierarchy/root-hierarchy
+  name: shared
+  namespace: hierarchy # kpt-set: ${namespace}
+spec:
+  displayName: shared
+  organizationRef:
+    external: "123456789012" # kpt-set: ${org-id}

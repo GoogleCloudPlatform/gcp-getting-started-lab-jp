@@ -38,33 +38,15 @@ spec:
             set -eo pipefail
             SRC_DIR="."
             DEST_DIR="/hydrated-workspace/config"
-            DEFAULT_CLUSTER_NAME_SELECTOR="${_ADMIN_CLUSTER_NAME}"
-            mkdir -p "$${DEST_DIR}"
-            echo "Default Cluster Name Selector: $${DEFAULT_CLUSTER_NAME_SELECTOR}"
+
+            echo "Initializing kpt"
+            kpt pkg init "$${SRC_DIR}"
+
             echo "Executing Kpt Functions..."
-            rm -rf "$${DEST_DIR}" && kpt fn render "$${SRC_DIR}" -o stdout \
-            | kpt fn eval --image gcr.io/kpt-fn/set-annotation:v0.1 - \
-              -- "configsync.gke.io/cluster-name-selector=$${DEFAULT_CLUSTER_NAME_SELECTOR}" \
-            | kpt fn sink "$${DEST_DIR}"
+            rm -rf "$${DEST_DIR}"
+            kpt fn render "$${SRC_DIR}" --output="$${DEST_DIR}" --truncate-output=false
         entrypoint: /bin/bash
         id: "Apply Hydration and Validation"
-      - name: gcr.io/yakima-eap/evaluate:latest
-        volumes:
-          - name: hydrated-workspace
-            path: /hydrated-workspace
-          - name: deployment-workspace
-            path: /deployment-workspace
-        args:
-          - '-c'
-          - |
-            set -e
-            printf "\n\nDiffing against deployment repo main branch:\n"
-            evaluate --before="/deployment-workspace/config" --after="/hydrated-workspace/config" --max_additions=1000 --max_modifications=1000 --max_deletions=1000
-        entrypoint: /bin/sh
-        id: "Evaluate hydrated changes"
-        waitFor:
-          - "Apply Hydration and Validation"
-          - "Clone Deployment Repo"
       - name: gcr.io/cloud-builders/gcloud:latest
         volumes:
           - name: hydrated-workspace
@@ -90,9 +72,9 @@ spec:
         entrypoint: /bin/sh
         id: "Push Changes To Deployment Repo"
         waitFor:
-          - "Evaluate hydrated changes"
+          - "Apply Hydration and Validation"
     timeout: 600s
-  description: Cloud Build Trigger for building source (DRY) repository pushes. This runs all user defined kpt fns applies a blast radius analysis and pushes to the deployment (WET) repository.
+  description: Cloud Build Trigger for rendering from the soure repo to the deployment repo.
   disabled: false
   substitutions:
     "_ADMIN_CLUSTER_NAME": "cluster-name" # kpt-set: ${cluster-name}

@@ -1,10 +1,11 @@
 apiVersion: kpt.dev/v1
 kind: Kptfile
 metadata:
-  name: gitops
+  name: simple-hierarchy
 info:
-  description: This blueprint generates a GitOps CI/CD pipeline for use with ACM
+  description: Resource hierarchy blueprint for GCP
 pipeline:
   mutators:
     - image: gcr.io/kpt-fn/apply-setters:v0.1
       configPath: setters.yaml
+    - image: gcr.io/yakima-eap/generate-folders:latest

@@ -4,7 +4,7 @@ metadata:
   name: org-admins-iam
   namespace: config-control # kpt-set: ${management-namespace}
 spec:
-  member: group:gcp-organization-admins@example.com # kpt-set: group:${group-org-admins}
+  member: group:gcp-organization-admins@example.com # kpt-set: ${group-org-admins}
   resourceRef:
     apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
     kind: Organization
@@ -17,7 +17,7 @@ metadata:
   name: billing-admins-iam
   namespace: config-control # kpt-set: ${management-namespace}
 spec:
-  member: group:gcp-billing-admins@example.com # kpt-set: group:${group-billing-admins}
+  member: group:gcp-billing-admins@example.com # kpt-set: ${group-billing-admins}
   resourceRef:
     apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
     kind: Organization

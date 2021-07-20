@@ -2,7 +2,8 @@
 
 <walkthrough-watcher-constant key="region" value="us-central1"></walkthrough-watcher-constant>
 <walkthrough-watcher-constant key="config-controller" value="managed-config"></walkthrough-watcher-constant>
-<walkthrough-watcher-constant key="kpt-ver" value="v1.0.0-beta.1"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="namespace" value="config-control"></walkthrough-watcher-constant>
+<walkthrough-watcher-constant key="kpt-ver" value="v1.0.0-beta.2"></walkthrough-watcher-constant>
 
 ## 始めましょう
 
@@ -53,7 +54,7 @@ gcloud services enable krmapihosting.googleapis.com cloudresourcemanager.googlea
 請求アカウントや組織 ID を取得し、
 
 ```bash
-export CONFIG_CONTROLLER_NAME={{config-controller}}
+export CONFIG_CONTROLLER_NAME="{{config-controller}}"
 export BILLING_ACCOUNT=$( gcloud beta billing projects describe "${GOOGLE_CLOUD_PROJECT}" \
   '--format=value(billingAccountName)' | sed 's/.*\///' )
 export ORG_ID=$( gcloud projects get-ancestors "${GOOGLE_CLOUD_PROJECT}" --format='get(id)' | tail -1 )
@@ -78,14 +79,25 @@ gcloud alpha anthos config controller get-credentials "${CONFIG_CONTROLLER_NAME}
   --location {{region}}
 ```
 
-Config Controller に、組織レベルのものも含め、Google Cloud のリソースを操作する権限を付与します。
+Config Controller が正しくインストールされたことを kubectl から確認してみましょう。
 
 ```bash
-export SA_EMAIL="$( kubectl get ConfigConnectorContext -n config-control \
+kubectl wait -n cnrm-system --for=condition=Ready pod --all
+```
+
+Config Controller に Google Cloud のリソースを操作する権限を付与します。
+
+```bash
+export SA_EMAIL="$( kubectl get ConfigConnectorContext -n {{namespace}} \
   -o jsonpath='{.items[0].spec.googleServiceAccount}' 2> /dev/null )"
 gcloud projects add-iam-policy-binding "${GOOGLE_CLOUD_PROJECT}" \
   --member "serviceAccount:${SA_EMAIL}" \
   --role "roles/owner"
+```
+
+組織レベルの変更も許可する場合、組織管理者ロールも付与します。
+
+```bash
 gcloud organizations add-iam-policy-binding "${ORG_ID}" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role "roles/resourcemanager.organizationAdmin" \
@@ -112,23 +124,18 @@ kpt pkg get https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.gi
 プロジェクト ID やプロジェクト番号を修正します。
 
 ```text
-cat << EOF > gitops/Kptfile
-apiVersion: kpt.dev/v1
-kind: Kptfile
-metadata:
-  name: gitops
-info:
-  description: This blueprint generates a GitOps CI/CD pipeline for use with ACM
-pipeline:
-  mutators:
-    - image: gcr.io/kpt-fn/apply-setters:v0.1
-      configMap:
-        cluster-name: "${CONFIG_CONTROLLER_NAME}"
-        deployment-repo: deployment-repo
-        namespace: config-control
-        project-id: "${GOOGLE_CLOUD_PROJECT}"
-        project-number: "${PROJECT_NUMBER}"
-        source-repo: source-repo
+cat << EOF > gitops/setters.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: # kpt-merge: /setters-config
+  name: setters-config
+data:
+  namespace: {{namespace}}
+  cluster-name: "${CONFIG_CONTROLLER_NAME}"
+  deployment-repo: deployment-repo
+  project-id: "${GOOGLE_CLOUD_PROJECT}"
+  project-number: "${PROJECT_NUMBER}"
+  source-repo: source-repo
 EOF
 ```
 
@@ -143,16 +150,24 @@ kpt fn render gitops/ -o unwrap | kubectl apply -f -
 ソースリポジトリの準備が整うまで 5 分ほど待機します。`error: timed out` が表示される場合は繰り返し実行し、リソースが作成されるのをお待ち下さい。
 
 ```bash
-kubectl wait --for=condition=READY --timeout=300s -n config-control \
+kubectl wait --for=condition=READY --timeout=300s -n {{namespace}} \
     cloudbuildtrigger/source-repo-cicd-trigger
 ```
 
-ここまでで Config Controller により、主に以下のリソースが作成されます。
+作成されたリソースを確認してみます。
+
+```bash
+kubectl get -n {{namespace}} gcp
+```
+
+ここまでで主に、以下のリソースが作成されています。
 
 - source-repo: インフラの理想状態を人間が相互レビュー、承認、自動テストするための git リポジトリ
 - deployment-repo: 実環境が理想状態の Single Source of Truth として参照する git リポジトリ
 - Cloud Build トリガー: source-repo への push でテストなどを起動
 - Config Management: Config Controller が deployment-repo の master ブランチを監視する設定
+
+実運用において `source-repo` をお使いの GitHub や GitLab とする場合は [こちらの設定](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/landing-zones/cad/landing-zones/gitops/hydration-trigger.yaml) を参考に Cloud Build トリガーをそれに併せて設定し、ビルドステップの中で、適用すべきリソースを `deployment-repo` に git push することで同様のパイプラインが構成できます。
 
 ## パイプラインそのものを GitOps 管理下へ
 
@@ -172,7 +187,7 @@ cat << EOF > Kptfile
 apiVersion: kpt.dev/v1
 kind: Kptfile
 metadata:
-  name: config-control
+  name: {{namespace}}
 EOF
 git add Kptfile
 git commit -m "init"
@@ -188,19 +203,7 @@ git commit -m "Add GitOps blueprint"
 git push
 ```
 
-## リソースの確認
-
-Config Controller が正しくインストールされたことを確認してみましょう。
-
-```bash
-kubectl wait -n cnrm-system --for=condition=Ready pod --all
-```
-
-Config Controller によって Google Cloud のリソースが正常に作成されたかを確認します。
-
-```bash
-kubectl get -n config-control gcp
-```
+これにより先に構築したパイプラインが起動し、パイプラインそのものが Config Controller 管理下に入ります。実環境の Single Source of Truth となるテンプレートは、変数が Kpt によりレンダリングされた実際の値と置換され [`deployment-repo`](https://source.cloud.google.com/{{project-id}}/) へ連携されています。
 
 ## Landing zone の初期化
 
@@ -215,30 +218,32 @@ git commit -m "Add landing zone"
 プロジェクト ID や請求アカウントなどの適切な設定に変更しましょう。
 
 ```text
-cat << EOF > landing-zone/Kptfile
-apiVersion: kpt.dev/v1
-kind: Kptfile
+cat << EOF > landing-zone/setters.yaml
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: landing-zone
-info:
-  description: Foundational landing zone blueprint for Google Cloud
-pipeline:
-  mutators:
-    - image: gcr.io/kpt-fn/apply-setters:v0.1
-      configMap:
-        billing-account-id: "${BILLING_ACCOUNT}"
-        group-billing-admins: "${OWNER_EMAIL}"
-        group-org-admins: "${OWNER_EMAIL}"
-        management-namespace: config-control
-        management-project-id: "${GOOGLE_CLOUD_PROJECT}"
-        org-id: "${ORG_ID}"
-    - image: gcr.io/config-management-release/policy-controller-validate
+  name: setters-config
+data:
+  billing-account-id: "${BILLING_ACCOUNT}"
+  group-billing-admins: "user:${OWNER_EMAIL}"
+  group-org-admins: "user:${OWNER_EMAIL}"
+  management-namespace: {{namespace}}
+  management-project-id: "${GOOGLE_CLOUD_PROJECT}"
+  org-id: "${ORG_ID}"
 EOF
 ```
 
+このブループリントには namespaces 以下に次のリソース定義が含まれています。
+
+- 組織管理するためのサービスアカウント
+- ログを分析するためのサービスアカウント
+- ネットワークを管理するためのサービスアカウント
+- 組織のポリシー管理権限をもつサービスアカウント
+- プロジェクトを管理するためのサービスアカウント
+
 ## 組織ポリシーの編集
 
-このリポジトリでは以下の組織ポリシーが作成されます。
+Landing zones では[組織ポリシー](https://cloud.google.com/resource-manager/docs/organization-policy/overview?hl=ja)も管理できます。[GitHub リポジトリ](https://github.com/GoogleCloudPlatform/blueprints/tree/main/catalog/landing-zone/policies) には以下のような制限サンプルがあります。
 
 - compute.disableNestedVirtualization KVM 互換のハイパーバイザが VM 内にインストールされないようにします
 - compute.disableSerialPortAccess VM へのシリアルポート アクセスを無効化します
@@ -250,11 +255,7 @@ EOF
 - iam.disableServiceAccountKeyCreation サービス アカウント キーの発行を制限します
 - storage.uniformBucketLevelAccess 均一なバケットレベルのアクセスを有効にします
 
-これら制約のいずれかが組織に問題を引き起こしそうであれば、関連する YAML ファイルを削除する必要があります。例えば、シリアルポートアクセスを無効化するポリシーを作りたくない場合、該当のファイルを削除してください。
-
-```bash
-git rm landing-zone/policies/disable-serial-port.yaml
-```
+試しにこれらも Landing zones で試される場合は landing-zone/policies 以下に YAML をコピーしてください。
 
 ## Landing zone の作成・確認
 
@@ -281,24 +282,236 @@ kubectl get ns
 ここまでに生成されたリソースの一覧を取得します。
 
 ```bash
-kubectl get gcp --all-namespaces
+kubectl get -n {{namespace}} gcp
 ```
 
-組織ポリシーが正常に生成されたことを確認してみます。
+実際に作られたリソースの一つを確認してみましょう。
+
+```bash
+kubectl describe -n {{namespace}} iampolicymember/org-admins-ia
+```
+
+組織ポリシーを指定した方は、それが正常に生成されたことを確認してみます。
 
 ```bash
 gcloud resource-manager org-policies list --organization "${ORG_ID}"
 ```
 
-## リソースの削除
+## リソース階層の設定
 
-Config Controller 管理下のリソースを GitOps を利用せず "簡易的に" 削除していきます。
+組織下に環境フォルダを配置するシンプルなブループリントを取得し
 
 ```bash
-kpt fn render -o unwrap | kubectl delete -f -
+cd ~/source-repo
+kpt pkg get https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git/cad/landing-zones/resources/org@landing-zones landing-zone/org
 ```
 
-Config Controller を削除します。
+プロジェクト ID や請求アカウントなどの適切な設定に変更しましょう。
+
+```text
+cat << EOF > landing-zone/org/setters.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: setters-config
+data:
+  namespace: hierarchy
+  org-id: "${ORG_ID}"
+EOF
+```
+
+資材を commit、リモートリポジトリに push します。
+
+```bash
+git add landing-zone/org/
+git commit -m "Add resource hierarchy and update folder naming convention."
+git push
+```
+
+フォルダが作成されるまで待機します。
+
+```bash
+kubectl wait -n hierarchy --for=condition=Ready --timeout=300s folders --all
+```
+
+Landing zones によりフォルダが生成されたことを確認しましょう。
+
+```bash
+gcloud resource-manager folders list --organization="${ORG_ID}"
+```
+
+## 共有 VPC ホストプロジェクトの作成
+
+Landing zone の一部として、[共有 VPC ネットワーク](https://cloud.google.com/architecture/best-practices-vpc-design?hl=ja#single-host-project-multiple-service-projects-single-shared-vpc) の管理を推奨しています。
+
+開発環境フォルダ (dev) に共有 VPC ホスト プロジェクトを作りましょう。名前を決め、
+
+```bash
+export HOST_PROJECT_ID="dev-sharedvpc-${ORG_ID}"
+```
+
+`projects` フォルダ以下にプロジェクトの雛形をダウンロードします。
+
+```bash
+mkdir -p ~/source-repo/landing-zone/projects
+kpt pkg get https://github.com/GoogleCloudPlatform/blueprints.git/catalog/project@kpt-v1 landing-zone/projects/${HOST_PROJECT_ID}
+```
+
+さらに一つブループリントを追加して、プロジェクトを `共有 VPC ホスト プロジェクト` にします。
+
+```bash
+kpt pkg get https://github.com/GoogleCloudPlatform/blueprints.git/catalog/networking/shared-vpc@kpt-v1 landing-zone/projects/${HOST_PROJECT_ID}/host-project
+```
+
+プロジェクト ID や請求アカウントなどの適切な設定に変更しましょう。
+
+```text
+cat << EOF > landing-zone/projects/${HOST_PROJECT_ID}/setters.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: setters
+data:
+  folder-name: dev
+  folder-namespace: hierarchy
+  networking-namespace: networking
+  project-id: "${HOST_PROJECT_ID}"
+EOF
+cat << EOF > landing-zone/projects/${HOST_PROJECT_ID}/host-project/setters.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: setters
+data:
+  namespace: networking
+  project-id: "${HOST_PROJECT_ID}"
+EOF
+```
+
+資材を commit、リモートリポジトリに push します。
+
+```bash
+git add landing-zone/projects/
+git commit -m "Add networking host project"
+git push
+```
+
+ホスト プロジェクトが作成されるのを待機します。
+
+```bash
+kubectl wait --for=condition=READY --timeout=300s -n projects \
+    project "${HOST_PROJECT_ID}"
+```
+
+## 共有 VPC の作成
+
+開発環境フォルダ (dev) に共有 VPC を作りましょう。VPC のブループリントを取得し、
+
+```bash
+kpt pkg get https://github.com/GoogleCloudPlatform/blueprints.git/catalog/networking/network@kpt-v1 landing-zone/network/dev/
+```
+
+プロジェクト ID や請求アカウントなどの適切な設定に変更しましょう。
+
+```text
+cat << EOF > landing-zone/network/dev/setters.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: # kpt-merge: /setters
+  name: setters
+data:
+  namespace: networking
+  network-name: dev-network-shared
+  project-id: "${HOST_PROJECT_ID}"
+  region: asia-northeast1
+  vpn-secret-key: vpn-shared-secret
+  vpn-secret-name: vpn-shared-secret
+  prefix: ""
+EOF
+```
+
+ここで [Cloud VPN で使用される事前共有キー](https://cloud.google.com/network-connectivity/docs/vpn/how-to/generating-pre-shared-key?hl=ja) を作成するのすが、機密性が高いため Config Controller に直接送信しておきます。
+
+```bash
+SECRET_VALUE=$(openssl rand -base64 24)
+kubectl create secret generic vpn-shared-secret \
+    --from-literal=vpn-shared-secret="${SECRET_VALUE}" \
+    -n networking
+echo "SECRET_VALUE: ${SECRET_VALUE}"
+```
+
+資材を commit、リモートリポジトリに push します。
+
+```bash
+git add landing-zone/network/
+git commit -m "Add network setup"
+git push
+```
+
+共有 VPC トンネルが作成されるのを待ちましょう。
+
+```bash
+kubectl wait --for=condition=READY --timeout=300s -n networking \
+    computevpntunnel dev-network-shared-vpn-tunnel
+```
+
+## トラブルシュート
+
+### テンプレートの不整合
+
+**Cloud Build** コンソールから、履歴をご確認ください。
+
+<walkthrough-menu-navigation sectionId="CLOUD_BUILD_SECTION"></walkthrough-menu-navigation>
+
+### Config Sync の同期エラー
+
+[nomos コマンド](https://cloud.google.com/anthos-config-management/docs/how-to/nomos-command?hl=ja)により、状況を把握できます。
+
+```bash
+nomos status
+```
+
+## リソースの削除
+
+依存するリソースから段階的に削除します。まずは最後に作った共有 VPC などを消し、
+
+```bash
+git rm -rf landing-zone/network
+git commit -m "Delete downstream resources"
+git push
+```
+
+プロジェクトを削除します。
+
+```bash
+git rm -rf landing-zone/projects
+git commit -m "Delete projects"
+git push
+```
+
+フォルダなど組織リソースを削除します。
+
+```bash
+git rm -rf landing-zone/org
+git commit -m "Delete hierarchy"
+git push
+```
+
+組織をまたいだサービスアカウントなどを削除します。
+
+```bash
+git rm -rf landing-zone
+git commit -m "Delete hierarchy"
+git push
+```
+
+Config Controller を使った CI/CD パイプラインを削除し、
+
+```bash
+kpt fn render gitops/ -o unwrap | kubectl delete -f -
+```
+
+最後に Config Controller を削除します。
 
 ```bash
 gcloud alpha anthos config controller delete \
