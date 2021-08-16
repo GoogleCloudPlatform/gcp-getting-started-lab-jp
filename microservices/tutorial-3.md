@@ -158,6 +158,7 @@ firebase init hosting
 次のコマンドを実行して、ビルドした Web アプリケーションを Firebase hosting にデプロイします。ここでは、先ほど環境変数 `CLIENT_ID` に設定したクライアント ID を HTML ファイルに書き込んだ上でデプロイしています。
 
 ```
+cd $HOME/transactional-microservice-examples/frontend/firebase_hosting
 cp -r ../web_frontend_example/build/web/* public/
 sed -i "s/__CLIENT_ID__/$CLIENT_ID/" public/index.html
 cp ../firebase/firebase.json ./
