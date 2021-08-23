@@ -137,6 +137,7 @@ firebase login --reauth --no-localhost
 cd $HOME/transactional-microservice-examples/frontend
 mkdir firebase_hosting
 cd firebase_hosting
+mkdir public
 firebase init hosting
 ```
 
