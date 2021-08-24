@@ -458,7 +458,9 @@ gcloud pubsub topics create storage-event
 Created topic [projects/microservices-hands-on/topics/storage-event].
 ```
 
-この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、Pub/Sub は内部的に API 認証のアクセストークンを取得する必要があります。このため、Pub/Sub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを取得する権限を設定しておきます。
+この後、Push サブスクリプションを作成して、Cloud Run で稼働中のサービスの REST API を呼び出すように設定しますが、API を呼び出す際には、Pub/Sub は内部的に API 認証のアクセストークンを生成する必要があります。このため、Pub/Sub に紐づけられたサービスアカウント `service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com` に対して、アクセストークンを生成する権限を設定しておきます。
+
+**参考** : [GCP からの HTTP リクエストをセキュアに認証する](https://medium.com/google-cloud-jp/gcp-%E3%81%8B%E3%82%89%E3%81%AE-http-%E3%83%AA%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%82%92%E3%82%BB%E3%82%AD%E3%83%A5%E3%82%A2%E3%81%AB%E8%AA%8D%E8%A8%BC%E3%81%99%E3%82%8B-dda4933afcd6)
 
 次のコマンドを実行して、Cloud IAM のポリシー設定を追加します。ここでは、Pub/Sub のサービスアカウントが、プロジェクト全体に対して、`iam.serviceAccountTokenCreator` ロールを持つように設定しています。
 
