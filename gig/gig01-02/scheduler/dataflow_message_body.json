@@ -1,7 +1,0 @@
-{
-  "jobName": "run_template_from_scheduler",
-  "parameters": {
-    "input": "gs://<PROJECT_ID>/data_files/head_usa_names.csv",
-    "output": "lake.usa_names_transformed_scheduler"
-  }
-}
