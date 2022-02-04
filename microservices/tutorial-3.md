@@ -129,7 +129,7 @@ firebase login --reauth --no-localhost
 
 認証用のリンクが表示されるので、ブラウザーでリンクを開き、プロジェクトオーナーの Google アカウントで認証してください。表示された認証コードをコピペして、Cloud Shell に入力すると認証が完了します。
 
-> Cloud Shellの端末に表示されたリンクをクリックすると、端末画面の右端でリンクの文字列が切れるため「認証エラー（エラー 400: invalid_request / Required parameter is missing: response_type）」と表示されることがあります。リンクをそのままクリックするのではなく、コピー＆ペーストでブラウザに入力してください。
+> Cloud Shellの端末に表示されたリンクをクリックすると、端末画面の右端でリンクの文字列が切れるため「認証エラー（エラー 400: invalid_request / Required parameter is missing: response_type）」と表示されることがあります。そのような場合は、リンクをそのままクリックするのではなく、コピー＆ペーストでブラウザに入力してください。
 
 次のコマンドを実行して、Firebase hosting の環境を初期化します。
 
