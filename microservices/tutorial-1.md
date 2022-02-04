@@ -427,10 +427,13 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16091
 ...中略...
 
 DONE
-------------------------------------------------------------------------------------------------------------------------
-
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                                IMAGES                                                           STATUS
-6fb28c89-a470-440f-a107-b3049be5d77e  2020-12-28T00:17:25+00:00  33S       gs://microservices-hands-on_cloudbuild/source/1609114643.194448-6fd1aaa87c1641ffa5366058e6cf6312.tgz  gcr.io/microservices-hands-on/storage-logging-service (+1 more)  SUCCESS
+------------------------------------------------------------------------------------------------------------------------------------
+ID: 30743ab7-89af-4168-9994-1aeecf540824
+CREATE_TIME: 2022-02-04T04:52:10+00:00
+DURATION: 36S
+SOURCE: gs://microservices-hands-on_cloudbuild/source/1643950329.491441-5f2fa6c9f34a447b9f95ea663b6fbfc3.tgz
+IMAGES: gcr.io/microservices-hands-on/storage-logging-service (+1 more)
+STATUS: SUCCESS
 ```
 
 次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`storage-logging-service` を指定しています。
