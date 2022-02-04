@@ -280,9 +280,13 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16090
 ...中略...
 
 DONE
-------------------------------------------------------------------------------------------------------------------------
-
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                               IMAGES                                                       STATUS18ee06e6-bb5e-49e7-9d8a-b233a20fa3f0  2020-12-27T09:47:38+00:00  31S       gs://microservices-hands-on_cloudbuild/source/1609062456.723272-599b79cc128348d7a17c165a7f817d20.tgz  gcr.io/microservices-hands-on/message-board-service (+1 more)  SUCCESS
+------------------------------------------------------------------------------------------------------------------------------------
+ID: f3d1c139-ab76-4a26-8e1a-c26dd5599286
+CREATE_TIME: 2022-02-04T04:42:06+00:00
+DURATION: 36S
+SOURCE: gs://microservices-hands-on_cloudbuild/source/1643949725.367287-e5348b85342442e7ab2d1b7b995c6eac.tgz
+IMAGES: gcr.io/microservices-hands-on/message-board-service (+1 more)
+STATUS: SUCCESS
 ```
 
 次のコマンドを実行します。ここでは、先ほど作成したイメージを Cloud Run の実行環境にデプロイしています。サービス名には、`message-board-service` を指定しています。
