@@ -157,9 +157,13 @@ Uploading tarball of [.] to [gs://microservices-hands-on_cloudbuild/source/16090
 ...中略...
 
 DONE
------------------------------------------------------------------------------------------------------------------------------------------------
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                               IMAGES                                                       STATUS
-40cf97df-aeb7-44a9-b007-d906a56319c3  2020-12-27T06:39:59+00:00  22S       gs://microservices-hands-on_cloudbuild/source/1609051197.03811-c0082d92ec804586ae303353057a9dc0.tgz  gcr.io/microservices-hands-on/hello-world-service (+1 more)  SUCCESS
+------------------------------------------------------------------------------------------------------------------------------------
+ID: f0d982dd-0457-4d92-848f-b29e30289ab8
+CREATE_TIME: 2022-02-04T04:34:24+00:00
+DURATION: 26S
+SOURCE: gs://microservices-hands-on_cloudbuild/source/1643949262.986796-d464c7da1df640369ca8947109491ee0.tgz
+IMAGES: gcr.io/microservices-hands-on/hello-world-service (+1 more)
+STATUS: SUCCESS
 ```
 
 ビルドの履歴とログは、Cloud Console から「[Cloud Build](https://console.cloud.google.com/cloud-build/)」メニューを開いて確認することができます。
@@ -182,8 +186,8 @@ gcloud container images list-tags gcr.io/$PROJECT_ID/hello-world-service
 ```
 *コマンドの出力例*
 ```
-DIGEST        TAGS    TIMESTAMP
-894a35cdfc88  latest  2020-12-27T06:40:16
+DIGEST: fb0dd321f167
+TAGS: latest
 ```
 
 ### Cloud Run にイメージをデプロイ
