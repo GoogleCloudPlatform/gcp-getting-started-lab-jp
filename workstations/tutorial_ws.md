@@ -374,7 +374,14 @@ GUI から作成したワークステーション `ws-customized` を `START`, `
 
 ### **4. ワークステーションの停止**
 
-次のカスタマイズに備え、GUI からワークステーションを停止しておきます。
+次のカスタマイズに備え、ワークステーションを停止しておきます。
+
+```bash
+gcloud beta workstations stop ws-customized \
+  --region asia-northeast1 \
+  --cluster cluster-handson \
+  --config codeoss-customized
+```
 
 ## **ホームディレクトリのカスタマイズ**
 
