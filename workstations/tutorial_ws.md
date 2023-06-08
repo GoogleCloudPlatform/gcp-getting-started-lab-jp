@@ -302,7 +302,6 @@ gcloud artifacts repositories create ws-repo \
 
 ```bash
 gcloud builds submit codeoss-customized/ \
-  --region asia-northeast1 \
   --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-customized:v1.0.0 \
   --machine-type e2-highcpu-8
 ```
@@ -362,7 +361,12 @@ gcloud beta workstations create ws-customized \
 GUI から作成したワークステーション `ws-customized` を `START`, `LAUNCH` し、ブラウザからアクセスします。その後、以下のカスタマイズが入っていることを確認します。
 
 - `Prettier` の拡張機能がインストール済みなこと
+
+  Extensions の一覧から Prettier を検索し確認します
+
 - `Node.js` の 18.x がインストール済みなこと
+
+  Terminal から下記のコマンドを実行します
 
   ```shell
   node --version
@@ -417,7 +421,7 @@ EOF
 ### **3. コンテナのビルド、プッシュ**
 
 ```bash
-gcloud builds submit codeoss-customized/ --region asia-northeast1 \
+gcloud builds submit codeoss-customized/ \
   --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-customized:v2.0.0 \
   --machine-type e2-highcpu-8
 ```
@@ -438,6 +442,8 @@ gcloud beta workstations configs update codeoss-customized \
 GUI から更新したワークステーション構成に紐づいているワークステーション `ws-customized` を `START`, `LAUNCH` し、ブラウザからアクセスします。その後、以下のカスタマイズが入っていることを確認します。
 
 - Home ディレクトリ配下に `nodejs-docs-samples` がクローンされている
+
+  Terminal から `ls` コマンドを実行し確認します
 
 ## **チャレンジ問題**
 
@@ -488,11 +494,11 @@ Python が社内の公式開発言語の１つになっているとします。
 
 ### **3. 開発者に Cloud Workstations Operation 閲覧者 の権限を付与する**
 
-`test-developer@gmail.com` を実際の擬似的な開発者アカウントのメールアドレスに置き換えて実行してください。
+`test-developer@gmail.com` を開発者アカウントのメールアドレスに置き換えて実行してください。
 
 ```bash
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-  --member "user:testdeveloper@gmail.com" \
+  --member "user:test-developer@gmail.com" \
   --role "roles/workstations.operationViewer"
 ```
 
