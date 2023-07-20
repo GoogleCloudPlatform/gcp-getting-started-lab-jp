@@ -137,24 +137,13 @@ gcloud compute routers nats create ws-nat \
 
 ### **5. ワークステーションクラスタの作成**
 
-ワークステーションクラスタは GUI から作成します。
-
-1. <walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> `ツール` -> `Cloud Workstations` の順にクリックします。
-1. 左のメニューから `クラスタ管理` をクリックします。
-1. `CREATE WORKSTATION CLUSTER` をクリックします。
-1. `Create workstation cluster` ページで以下のように進めます。
-
-   1. 名前に `cluster-handson` を入力します。
-
-      ```shell
-      cluster-handson
-      ```
-
-   1. リージョンで `asia-northeast1 (東京)` を選択します。
-   1. `Network settings` をクリックし、詳細設定を開きます。
-   1. ネットワークで `ws-network` を選択します。
-   1. サブネットワークで `ws-subnet` を選択します。
-   1. 最下部の `作成` をクリックします。
+```bash
+gcloud workstations clusters create cluster-handson \
+  --network "projects/$PROJECT_ID/global/networks/ws-network" \
+  --subnetwork "projects/$PROJECT_ID/regions/asia-northeast1/subnetworks/ws-subnet" \
+  --region asia-northeast1 \
+  --async
+```
 
 <walkthrough-info-message>クラスタの作成完了まで最大 20 分程度かかります</walkthrough-info-message>
 
