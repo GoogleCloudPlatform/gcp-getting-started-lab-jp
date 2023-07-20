@@ -195,7 +195,7 @@ gcloud config set project ${PROJECT_ID}
 ### **1. ワークステーション構成の作成**
 
 ```bash
-gcloud beta workstations configs create codeoss-default \
+gcloud workstations configs create codeoss-default \
   --machine-type e2-standard-4 \
   --region asia-northeast1 \
   --cluster cluster-handson \
@@ -222,7 +222,7 @@ gcloud beta workstations configs create codeoss-default \
 ### **2. ワークステーションの作成**
 
 ```bash
-gcloud beta workstations create ws01 \
+gcloud workstations create ws01 \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-default
@@ -249,7 +249,7 @@ gcloud beta workstations create ws01 \
 無駄なコストがかかるのを避けるため稼働している `ws01` を STOP しておきます。
 
 ```bash
-gcloud beta workstations stop ws01 \
+gcloud workstations stop ws01 \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-default
@@ -335,7 +335,7 @@ gcloud artifacts repositories add-iam-policy-binding ws-repo \
 カスタマイズしたコンテナイメージと一緒に、サービスアカウントも指定しているところがポイントです。
 
 ```bash
-gcloud beta workstations configs create codeoss-customized \
+gcloud workstations configs create codeoss-customized \
   --machine-type e2-standard-4 \
   --region asia-northeast1 \
   --cluster cluster-handson \
@@ -350,7 +350,7 @@ gcloud beta workstations configs create codeoss-customized \
 ### **2. ワークステーションの作成**
 
 ```bash
-gcloud beta workstations create ws-customized \
+gcloud workstations create ws-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-customized
@@ -377,7 +377,7 @@ GUI から作成したワークステーション `ws-customized` を `START`, `
 次のカスタマイズに備え、ワークステーションを停止しておきます。
 
 ```bash
-gcloud beta workstations stop ws-customized \
+gcloud workstations stop ws-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-customized
@@ -438,7 +438,7 @@ gcloud builds submit codeoss-customized/ \
 今回は新規作成ではなく、カスタムコンテナイメージを新しいバージョン (v2.0.0) に更新しています。
 
 ```bash
-gcloud beta workstations configs update codeoss-customized \
+gcloud workstations configs update codeoss-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --container-custom-image asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-customized:v2.0.0
