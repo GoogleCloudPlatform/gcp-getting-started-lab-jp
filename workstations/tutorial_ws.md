@@ -266,8 +266,8 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.13.0/file/esbenp.prettier-vscode-9.13.0.vsix && \
-  unzip esbenp.prettier-vscode-9.13.0.vsix "extension/*" && \
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
+  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
   mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
@@ -400,8 +400,8 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.13.0/file/esbenp.prettier-vscode-9.13.0.vsix && \
-  unzip esbenp.prettier-vscode-9.13.0.vsix "extension/*" && \
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
+  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
   mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
