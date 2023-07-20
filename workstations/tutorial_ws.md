@@ -137,24 +137,13 @@ gcloud compute routers nats create ws-nat \
 
 ### **5. ワークステーションクラスタの作成**
 
-ワークステーションクラスタは GUI から作成します。
-
-1. <walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> `ツール` -> `Cloud Workstations` の順にクリックします。
-1. 左のメニューから `クラスタ管理` をクリックします。
-1. `CREATE WORKSTATION CLUSTER` をクリックします。
-1. `Create workstation cluster` ページで以下のように進めます。
-
-   1. 名前に `cluster-handson` を入力します。
-
-      ```shell
-      cluster-handson
-      ```
-
-   1. リージョンで `asia-northeast1 (東京)` を選択します。
-   1. `Network settings` をクリックし、詳細設定を開きます。
-   1. ネットワークで `ws-network` を選択します。
-   1. サブネットワークで `ws-subnet` を選択します。
-   1. 最下部の `作成` をクリックします。
+```bash
+gcloud workstations clusters create cluster-handson \
+  --network "projects/$PROJECT_ID/global/networks/ws-network" \
+  --subnetwork "projects/$PROJECT_ID/regions/asia-northeast1/subnetworks/ws-subnet" \
+  --region asia-northeast1 \
+  --async
+```
 
 <walkthrough-info-message>クラスタの作成完了まで最大 20 分程度かかります</walkthrough-info-message>
 
@@ -195,7 +184,7 @@ gcloud config set project ${PROJECT_ID}
 ### **1. ワークステーション構成の作成**
 
 ```bash
-gcloud beta workstations configs create codeoss-default \
+gcloud workstations configs create codeoss-default \
   --machine-type e2-standard-4 \
   --region asia-northeast1 \
   --cluster cluster-handson \
@@ -222,7 +211,7 @@ gcloud beta workstations configs create codeoss-default \
 ### **2. ワークステーションの作成**
 
 ```bash
-gcloud beta workstations create ws01 \
+gcloud workstations create ws01 \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-default
@@ -249,7 +238,7 @@ gcloud beta workstations create ws01 \
 無駄なコストがかかるのを避けるため稼働している `ws01` を STOP しておきます。
 
 ```bash
-gcloud beta workstations stop ws01 \
+gcloud workstations stop ws01 \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-default
@@ -277,8 +266,8 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.13.0/file/esbenp.prettier-vscode-9.13.0.vsix && \
-  unzip esbenp.prettier-vscode-9.13.0.vsix "extension/*" && \
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
+  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
   mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
@@ -335,7 +324,7 @@ gcloud artifacts repositories add-iam-policy-binding ws-repo \
 カスタマイズしたコンテナイメージと一緒に、サービスアカウントも指定しているところがポイントです。
 
 ```bash
-gcloud beta workstations configs create codeoss-customized \
+gcloud workstations configs create codeoss-customized \
   --machine-type e2-standard-4 \
   --region asia-northeast1 \
   --cluster cluster-handson \
@@ -350,7 +339,7 @@ gcloud beta workstations configs create codeoss-customized \
 ### **2. ワークステーションの作成**
 
 ```bash
-gcloud beta workstations create ws-customized \
+gcloud workstations create ws-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-customized
@@ -377,7 +366,7 @@ GUI から作成したワークステーション `ws-customized` を `START`, `
 次のカスタマイズに備え、ワークステーションを停止しておきます。
 
 ```bash
-gcloud beta workstations stop ws-customized \
+gcloud workstations stop ws-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --config codeoss-customized
@@ -411,8 +400,8 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.13.0/file/esbenp.prettier-vscode-9.13.0.vsix && \
-  unzip esbenp.prettier-vscode-9.13.0.vsix "extension/*" && \
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
+  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
   mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
@@ -438,7 +427,7 @@ gcloud builds submit codeoss-customized/ \
 今回は新規作成ではなく、カスタムコンテナイメージを新しいバージョン (v2.0.0) に更新しています。
 
 ```bash
-gcloud beta workstations configs update codeoss-customized \
+gcloud workstations configs update codeoss-customized \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --container-custom-image asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-customized:v2.0.0
