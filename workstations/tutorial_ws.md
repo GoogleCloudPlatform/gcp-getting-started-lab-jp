@@ -467,26 +467,48 @@ Python が社内の公式開発言語の１つになっているとします。
 
 ### **1. 開発者にどのような権限を与えるか検討する**
 
-今回は管理者がワークステーションクラスタ、ワークステーション構成を管理し、開発者は個別に割り当てられたワークステーション構成を使いワークステーションを自身で作成、管理することとします。
+権限を制御することで、ワークステーションを開発者にどのように利用させるかを制御することが可能です。
 
-- 管理者
-  - ワークステーションクラスタを作成、編集、削除
-  - ワークステーション構成を作成、編集、削除
-  - ワークステーションを作成、編集、削除
-  - 開発者にワークステーションを作成する権限を付与
-- 開発者
-  - 割り当てられたワークステーション構成を使い、ワークステーションを作成、編集、削除
+一般的に以下 2 つの提供形態のいずれかが選ばれます。
 
-### **2. 開発者に Cloud Workstations 作成者 の権限を付与する**
+1. 管理者がワークステーションを払い出し、開発者はそれを利用する
+1. 開発者自身がワークステーションを作成し、利用する
+
+本ステップでは `1. 管理者がワークステーションを払い出し、開発者はそれを利用する` の手順を説明します。`2. 開発者自身がワークステーションを作成し、利用する` を試す場合は次のステップに進んでください。
+
+### **2. 専用のカスタムロールを作成する**
+
+開発者がワークステーションを削除できないようにするためには、専用のカスタムロールが必要です。
+
+```shell
+cat << EOF > workstationDeveloper.yaml
+title: "Workstations Developer"
+description: "Developer who only uses workstations"
+stage: "GA"
+includedPermissions:
+- workstations.operations.get
+- workstations.workstations.get
+- workstations.workstations.start
+- workstations.workstations.stop
+- workstations.workstations.update
+- workstations.workstations.use
+EOF
+gcloud iam roles create workstationDeveloper \
+  --project ${PROJECT_ID} \
+  --file workstationDeveloper.yaml
+```
+
+### **2. 開発者に作成したカスタムロールを付与する**
 
 こちらは GUI から設定します。
 
 1. Cloud Workstations の UI にアクセスします。
-1. `ワークステーションの構成` をクリックします。
-1. 一覧から `codeoss-customized` をクリックします。
-1. `編集` をクリックします。
-1. `Basic information`, `Machine settings`, `Environment settings` は何も修正せず、最下部の `続行` をクリックします。
-1. `IAM Policy` の `ユーザー` に開発者のメールアドレスを入力し、`保存` ボタンをクリックします。
+1. `ワークステーション` をクリックします。
+1. 一覧から `ws-customized` をクリックします。
+1. 上のメニューから `ADD USERS` をクリックします。
+1. 新しいプリンシパルに開発者のメールアドレスを入力します。
+1. ロールにカスタム -> `Workstations Developer` を選択します。
+1. `保存` ボタンをクリックします。
 
 ### **3. 開発者に Cloud Workstations Operation 閲覧者 の権限を付与する**
 
@@ -506,10 +528,49 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
 echo "https://console.cloud.google.com/workstations/list?project=$PROJECT_ID"
 ```
 
-### **5. (開発者) ワークステーションを作成、アクセスする**
+先程権限を付与したワークステーションのみが見え、以下の操作ができれば問題なく設定ができています。
+
+- 起動
+- 停止
+
+管理者は本手順を繰り返すことで、開発者に安全にワークステーションを利用させることができます。
+
+## **開発者自身がワークステーションを作成し、利用する**
+
+### **1. 開発者に Cloud Workstations 作成者 の権限を付与する**
+
+こちらは GUI から設定します。
+
+1. Cloud Workstations の UI にアクセスします。
+1. `ワークステーションの構成` をクリックします。
+1. 一覧から `codeoss-customized` をクリックします。
+1. 上のメニューから `ADD USERS` をクリックします。
+1. 新しいプリンシパルに開発者のメールアドレスを入力します。
+1. ロールが `Cloud Workstations Creator` になっていることを確認します。
+1. `保存` ボタンをクリックします。
+
+### **2. 開発者に Cloud Workstations Operation 閲覧者 の権限を付与する**
+
+`test-developer@gmail.com` を開発者アカウントのメールアドレスに置き換えて実行してください。
+
+```bash
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member "user:test-developer@gmail.com" \
+  --role "roles/workstations.operationViewer"
+```
+
+### **3. (開発者) ワークステーションの管理コンソールにアクセスする**
+
+下記コマンドで出力された URL に **開発者アカウント** でアクセスします。
+
+```bash
+echo "https://console.cloud.google.com/workstations/list?project=$PROJECT_ID"
+```
+
+### **4. (開発者) ワークステーションを作成、アクセスする**
 
 1. `+ 作成` をクリックします。
-1. `名前` に `developer-ws` と入力します。
+1. `名前` に `ws-developer` と入力します。
 
    ```shell
    ws-developer
@@ -571,7 +632,7 @@ Google が提供している [事前構成されたベースイメージ](https:
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
-これにて Cloud Workstations を利用した開発者目線でのアプリケーション実行、デプロイ、管理者目線でのカスタマイズ、本番提供の Tips 学習が完了しました。
+これにて Cloud Workstations を利用した開発者目線でのアプリケーション実行、デプロイ、管理者目線でのカスタマイズ、本番提供にむけたプラクティスの学習が完了しました。
 
 デモで使った資材が不要な方は、次の手順でクリーンアップを行って下さい。
 
