@@ -1,0 +1,8 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: balloon-priority
+value: -10
+preemptionPolicy: Never
+globalDefault: false
+description: "Balloon pod priority."

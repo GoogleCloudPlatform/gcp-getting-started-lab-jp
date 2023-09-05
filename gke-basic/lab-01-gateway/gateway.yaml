@@ -1,0 +1,17 @@
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: external-http
+spec:
+  gatewayClassName: gke-l7-gxlb
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        options:
+          networking.gke.io/pre-shared-certs: gke-dojo-cert
+  addresses:
+    - type: NamedAddress
+      value: gatewayip
