@@ -116,7 +116,7 @@ gcloud config set project ${PROJECT_ID} && gcloud config set compute/region asia
 ```
 
 
-## Lab00.GKE Autopilot クラスタの作成
+## **Lab00.GKE Autopilot クラスタの作成**
 <walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
 
 GKE 以下のコマンドを実行し、GKE Autopilot クラスタを作成します。
@@ -127,11 +127,11 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "gke-dojo-cluster"
 
 クラスタの作成には10分〜20分程度の時間がかかります。
 
-## Lab01.サンプルアプリケーションのデプロイ
+## **Lab01.サンプルアプリケーションのデプロイ**
 
 <walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
 
-クラスタの作成が完了しましたら、サンプルアプリケーションをデプロイします。 [Online Boutique microservices demo](https://github.com/GoogleCloudPlatform/microservices-demo)アプリケーションは、EC サイトをモチーフにしたマイクロサービスアプリケーションとなっています。kuberenetes のマニフェストについては、`lab-01-deploy-sample-app` フォルダのファイルをご確認ください。
+クラスタの作成が完了しましたら、サンプルアプリケーションをデプロイします。 [Online Boutique microservices demo](https://github.com/GoogleCloudPlatform/microservices-demo)アプリケーションは、EC サイトをモチーフにしたマイクロサービスアプリケーションとなっています。kuberenetes のマニフェストについては、`lab-01/app/` フォルダのファイルをご確認ください。
 
 ### **1. Deployment/Service マニフェストの適用**
 以下のコマンドで、マニフェストの適用を行ってください。
@@ -205,13 +205,20 @@ kubectl apply -f lab-01/gateway/
 ### **5. Demo サイトの確認**
 Gateway の設定が完了するまで数分かかります。数分後、以下のコマンドでアプリケーションの URL を確認します。
 確認した URL をコピーして Chrome などの Web ブラウザのアドレスバーに貼り付けアプリケーションを確認します。
+なお、設定が完了するまでの数分間（場合によってはそれ以上）は、Connection reset by peer のエラーが出力されます。
+その場合は、さらにしばらくお待ちください。
 
 ```bash
 kubectl get httproutes
 ```
+以下のコマンドでも URL を出力することが可能です。
+
+```bash
+echo http://$DOMAIN
+```
 
 以下が出力例です。HOSTNAMES に記載されているのが、アプリケーションの URL になります。
-```bash
+```
 admin_@cloudshell:~ (projectname)$ kubectl get httproutes
 NAME             HOSTNAMES                  AGE
 frontend-route   ["xxx-xxx-xxx-xxx.nip.io"]   43h
@@ -358,5 +365,28 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 
 先ほどの手順と同様に本番環境のアプリケーションの動作を確認できましたら、本ハンズオンは終了です。
 
-## Configurations!
+## **Configurations!**
 これで、GKE での基本的なアプリケーションのデプロイと操作、Autopilot Mode におけるスケールの方法、CI/CD の操作を学ぶことができました。引き続き応用編もお楽しみ下さい。
+
+## **クリーンアップ（プロジェクトを削除）**
+
+ハンズオン用に利用したプロジェクトを削除し、コストがかからないようにします。
+
+### **1. Google Cloud のデフォルトプロジェクト設定の削除**
+
+```bash
+gcloud config unset project
+```
+
+### **2. プロジェクトの削除**
+
+```bash
+gcloud projects delete ${PROJECT_ID}
+```
+
+### **3. ハンズオン資材の削除**
+
+```bash
+cd $HOME && rm -rf gcp-getting-started-lab-jp gopath
+```
+
