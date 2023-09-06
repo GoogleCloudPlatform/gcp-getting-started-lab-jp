@@ -266,15 +266,21 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
-  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
-  mv extension /opt/code-oss/extensions/prettier
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/10.1.0/file/esbenp.prettier-vscode-10.1.0.vsix \
+  && unzip esbenp.prettier-vscode-10.1.0.vsix "extension/*" \
+  && mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt update && apt install -y \
-    nodejs \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y ca-certificates curl gnupg \
+  && mkdir -p /etc/apt/keyrings \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+  | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" \
+  | tee /etc/apt/sources.list.d/nodesource.list \
+  && apt update \
+  && apt install -y nodejs \
+  && rm -rf /var/lib/apt/lists/*
 EOF
 ```
 
@@ -400,15 +406,21 @@ cat << EOF > codeoss-customized/Dockerfile
 FROM asia-northeast1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
 # Install prettier
-RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/9.19.0/file/esbenp.prettier-vscode-9.19.0.vsix && \
-  unzip esbenp.prettier-vscode-9.19.0.vsix "extension/*" && \
-  mv extension /opt/code-oss/extensions/prettier
+RUN wget https://open-vsx.org/api/esbenp/prettier-vscode/10.1.0/file/esbenp.prettier-vscode-10.1.0.vsix \
+  && unzip esbenp.prettier-vscode-10.1.0.vsix "extension/*" \
+  && mv extension /opt/code-oss/extensions/prettier
 
 # Install Node 18.x
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt update && apt install -y \
-    nodejs \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y ca-certificates curl gnupg \
+  && mkdir -p /etc/apt/keyrings \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+  | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" \
+  | tee /etc/apt/sources.list.d/nodesource.list \
+  && apt update \
+  && apt install -y nodejs \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY 200_clone_nodejs_samples.sh /etc/workstation-startup.d/
 EOF
@@ -479,6 +491,8 @@ Python が社内の公式開発言語の１つになっているとします。
 ### **2. 専用のカスタムロールを作成する**
 
 開発者がワークステーションを削除できないようにするためには、専用のカスタムロールが必要です。
+
+<walkthrough-info-message>コピー&ペーストして実行してください</walkthrough-info-message>
 
 ```shell
 cat << EOF > workstationDeveloper.yaml
