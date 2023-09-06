@@ -175,19 +175,16 @@ SUBNET:
 STATUS: RESERVED
 ```
 
-### **3. 証明書の作成**
+### **3. IP アドレスとドメインの設定**
 
-アプリケーションの公開に利用する SSL 証明書を発行します。
-使用するドメインは、この後の工程で利用する`nip.io`を利用します。
+アプリケーションの公開に使用するドメインは、`nip.io`を利用します。以下のコマンドで環境変数として保存しておきます。
 `nip.io`はサブドメインに記載した任意の IP アドレスに合わせたレコードを返す DNS サービスです。
 今回はこのサービスを利用して、簡易的にドメインを用意します。
 本番環境においては、別途ドメインを用意して利用ください。 
-以下のコマンドで先ほど取得した IP アドレスに合わせたドメインで証明書を作成します。
 
 ```bash
 IP_ADDR=$(gcloud compute addresses list --format='value(ADDRESS)' --filter="NAME:gatewayip")
 DOMAIN="${IP_ADDR//./-}.nip.io"
-gcloud compute ssl-certificates create gke-dojo-cert --domains="$DOMAIN" --global
 ```
 
 ### **4. Gateway マニフェストの適用**
