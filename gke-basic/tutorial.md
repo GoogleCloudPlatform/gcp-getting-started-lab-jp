@@ -94,7 +94,7 @@ gcloud config set compute/region asia-northeast1 && gcloud config set compute/zo
 ### **1. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gke-handson2023
+cd ~/gcp-getting-started-lab-jp/gke-basic
 ```
 
 ### **2. チュートリアルを開く**
@@ -283,7 +283,7 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "gke-dojo-cluster-
 こちらはテキストを出力するシンプルな Flask アプリケーションです。
 
 ```bash
-cat ex01-cicd/app.py
+cat ex01-cicd/main.py
 ```
 
 ### **2. レポジトリ作成**
@@ -310,11 +310,11 @@ gcloud builds submit --config ex01-cicd/cloudbuild.yaml
 前の手順で用意した Flask アプリケーションを Kubernetes マニフェストを確認します。
 
 ```bash
-cat ex01-cicd/kubernetes/deployment.yaml
+cat ex01-cicd/k8s/deployment.yaml
 ```
 
 ```bash
-cat ex01-cicd/kubernetes/service.yaml
+cat ex01-cicd/k8s/service.yaml
 ```
 
 続いて Cloud Deploy にてターゲットとなる GKE クラスタにデプロイするための定義ファイルを確認します。
@@ -322,7 +322,7 @@ cat ex01-cicd/kubernetes/service.yaml
 cat ex01-cicd/clouddeploy.yaml
 ```
 
-以下のコマンドで `clouddeploy.yaml` 内の`PROJECT_ID`を実際の環境変数へ置き換えます。
+以下のコマンドで `clouddeploy.yaml` 内の`PROJECT_ID`を実際の環境変数(プロジェクトID)へ置き換えます。
 ```
 sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' ex01-cicd/clouddeploy.yaml
 ```
@@ -341,21 +341,24 @@ cat ex01-cicd/skaffold.yaml
 それでは、デプロイを開始します。以下のコマンドでリリースを作成します。
 
 ```bash
-gcloud deploy releases create initial-release-1 \
+cd ex01-cicd/
+gcloud deploy releases create release01 \
     --delivery-pipeline=gke-dojo \
     --region=asia-northeast1 \
-    --source=ex01-cicd/ \
-    --images=gke-dojo-app=asia-northeast-1-docker.pkg.dev/$PROJECT_ID/gke-dojo/gke-dojo-app:v1
+    --skaffold-file=skaffold.yaml \
+    --source=./ \
+    --images=gke-dojo="asia-northeast1-docker.pkg.dev/$PROJECT_ID/gke-dojo/gke-dojo-app:v1"
 ```
 数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
 
 [Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
-左側のメニューバーより Services & Ingress を選択し、gke-dojo-svc という名前のサービスを見つけます。
-Endpoints 列に IP アドレスが表示されるため、それをクリックして、アプリケーションが期待どおりに動作していることを確認します。
+左側のメニューバーより Services & Ingress を選択し、gke-dojo-service という名前のサービスを見つけます。
+Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、アプリケーションが期待どおりに動作していることを確認します。
 
 ステージングでテストしたので、本番環境に昇格する準備が整いました。
 [Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
-すると、Promote という青いリンクが表示されています。Promote release を選択し、本番環境へのデプロイを実施します。
+デリバリーパイプラインの一覧から、`gke-dojo` をクリックします。
+すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
 
 先ほどの手順と同様に本番環境のアプリケーションの動作を確認できましたら、本ハンズオンは終了です。
 
