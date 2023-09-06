@@ -138,7 +138,7 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "gke-dojo-cluster"
 実行時 Warning が複数出力されますが、デプロイ自体には問題ございません。
 
 ```bash
-kubectl apply -f lab-01-deploy-sample-app/
+kubectl apply -f lab-01/app/
 ```
 以下のコマンドで、現在の Pod および Node のステータスを取得を継続して行います。
 Pod の作成に伴い、Node が複製され、Pod がデプロイされる様子が確認できます。
@@ -193,14 +193,13 @@ DOMAIN="${IP_ADDR//./-}.nip.io"
 以下のコマンドのコマンドを実行してください。
 
 ```bash
-sed -i "s/x-x-x-x.nip.io/$DOMAIN/g" lab-01-gateway/httproute.yaml
+sed -i "s/x-x-x-x.nip.io/$DOMAIN/g" lab-01/gateway/httproute.yaml
 ```
 
 編集した Gateway マニフェストを適用し、アプリケーションを外部公開します。
 
 ```bash
-kubectl apply -f lab-01-gateway/gateway.yaml
-kubectl apply -f lab-01-gateway/httproute.yaml
+kubectl apply -f lab-01/gateway/
 ```
 
 ### **5. Demo サイトの確認**
@@ -230,8 +229,8 @@ Autopilot モードで迅速にスケールアップするためには、Balloon
 まずは、Priority の定義リソースである Priority Class と Balloon Pod を作成します。
 
 ```bash
-kubectl apply -f lab-02-spare-capacity-balloon/balloon-priority.yaml 
-kubectl apply -f lab-02-spare-capacity-balloon/balloon-deploy.yaml 
+kubectl apply -f lab-02/balloon-priority.yaml 
+kubectl apply -f lab-02/balloon-deploy.yaml 
 ```
 
 Balloon Pod の作成により、ノードがスケールすることを watch コマンドで動的に確認します。
@@ -280,7 +279,7 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "gke-dojo-cluster-
 こちらはテキストを出力するシンプルな Flask アプリケーションです。
 
 ```bash
-cat ex01-cicd/main.py
+cat lab-ex01/main.py
 ```
 
 ### **2. レポジトリ作成**
@@ -298,7 +297,7 @@ Cloud Build に含まれている Buildpacks により Dockerfile を書かな�
 以下のコマンドで、ビルドを実行します。
 
 ```bash
-gcloud builds submit --config ex01-cicd/cloudbuild.yaml
+gcloud builds submit --config lab-ex01/cloudbuild.yaml
 ```
 最終的に`STATUS: SUCCESS`と表示されましたら、ビルド成功です。
 
@@ -307,38 +306,38 @@ gcloud builds submit --config ex01-cicd/cloudbuild.yaml
 前の手順で用意した Flask アプリケーションを Kubernetes マニフェストを確認します。
 
 ```bash
-cat ex01-cicd/k8s/deployment.yaml
+cat lab-ex01/k8s/deployment.yaml
 ```
 
 ```bash
-cat ex01-cicd/k8s/service.yaml
+cat lab-ex01/k8s/service.yaml
 ```
 
 続いて Cloud Deploy にてターゲットとなる GKE クラスタにデプロイするための定義ファイルを確認します。
 ```bash
-cat ex01-cicd/clouddeploy.yaml
+cat lab-ex01/clouddeploy.yaml
 ```
 
 以下のコマンドで `clouddeploy.yaml` 内の`PROJECT_ID`を実際の環境変数(プロジェクトID)へ置き換えます。
 ```
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' ex01-cicd/clouddeploy.yaml
+sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex01/clouddeploy.yaml
 ```
 
 このファイルを利用して、アプリケーションをデプロイするためのパイプラインを用意します。
 ```bash
-gcloud deploy apply --file=ex01-cicd/clouddeploy.yaml --region asia-northeast1 --project=$PROJECT_ID
+gcloud deploy apply --file=lab-ex01/clouddeploy.yaml --region asia-northeast1 --project=$PROJECT_ID
 ```
 
 Cloud Deploy ではテンプレートとなる Kubernetes のマニフェストを環境に合わせてレンダリングするために、Skaffold を利用します。
 ここでは、コンテナイメージを今回のアプリケーションに書き換えるのみのため、シンプルなコンフィグを作成しています。
 
 ```bash
-cat ex01-cicd/skaffold.yaml
+cat lab-ex01/skaffold.yaml
 ```
 それでは、デプロイを開始します。以下のコマンドでリリースを作成します。
 
 ```bash
-cd ex01-cicd/
+cd lab-ex01/
 gcloud deploy releases create release01 \
     --delivery-pipeline=gke-dojo \
     --region=asia-northeast1 \
