@@ -187,7 +187,7 @@ STATUS: RESERVED
 ```bash
 IP_ADDR=$(gcloud compute addresses list --format='value(ADDRESS)' --filter="NAME:gatewayip")
 DOMAIN="${IP_ADDR//./-}.nip.io"
-gcloud compute ssl-certificates create gke-gateway-cert --domains="$DOMAIN" --global
+gcloud compute ssl-certificates create gke-dojo-cert --domains="$DOMAIN" --global
 ```
 
 ### **4. Gateway マニフェストの適用**
