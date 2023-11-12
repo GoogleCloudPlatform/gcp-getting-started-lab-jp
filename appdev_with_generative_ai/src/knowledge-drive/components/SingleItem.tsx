@@ -99,7 +99,7 @@ const SingleItem = ({
       {isFolder ? (
         <Link href={getUrl()}>{renderInnerContent()}</Link>
       ) : (
-        <a href={getUrl()} target="_blank">
+        <a href={getUrl()} target="_blank" rel="noopener noreferrer">
           {renderInnerContent()}
         </a>
       )}
