@@ -95,8 +95,8 @@ const SearchInput = ({ csrfToken, user }: SearchInputProps) => {
             />
           </form>
         </Form>
-        <div>
-          <IoMdOptions size={40} className="p-[8px] m-[3px]" />
+        <div onClick={toggleFormType}>
+          <IoMdOptions size={40} className="p-[8px] m-[3px] cursor-pointer" />
         </div>
       </div>
       <SearchDialog
