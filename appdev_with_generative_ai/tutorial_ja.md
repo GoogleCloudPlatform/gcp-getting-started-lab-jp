@@ -1,8 +1,8 @@
-# **2 時間で分かる Google Cloud 生成 AI 開発入門**
+# **Google Cloud で始める生成 AI を活用したアプリケーション開発入門**
 
 ## **ハンズオン概要**
 
-本ハンズオンでは、[Cloud Run](https://cloud.google.com/run), [Firebase](https://firebase.google.com/) といった Google Cloud イチ押しのマネージドなサービスをフル活用し、クラウドネイティブなアプリケーション開発を体験します。そしてそのアプリケーションに生成 AI を使ったインテリジェントな機能を追加することで、実際のサービスと生成 AI の組み合わせの事例を学んで頂けます。
+本ハンズオンでは、[Cloud Run](https://cloud.google.com/run), [Firebase](https://firebase.google.com/) といった Google Cloud イチ押しのマネージドなサービスをフル活用し、クラウドネイティブなアプリケーション開発を体験します。そしてそのアプリケーションに生成 AI を使ったインテリジェントな機能を追加することで、実際のサービスと生成 AI の組み合わせの事例を学んでいただけます。
 
 以下が今回のハンズオンで利用する主要なサービスです。
 
@@ -14,34 +14,32 @@
 
 **Firebase**
 
-- 認証
-- NoSQL データベース
-- オブジェクトストレージ
-- etc...
+- 認証 (Firebase Authentication)
+- NoSQL データベース (Firestore)
+- オブジェクトストレージ (Cloud Storage for Firebase)
 
 **Vertex AI**
 
-- 生成 AI の API
+- 生成 AI の API (Palm2 API)
 - モデルの作成
 - モデルのチューニング
-- etc...
 
 今回は以下の 2 つのアプリケーションを構築していくことで、Google Cloud を使った生成 AI のアプリケーション組み込みを学びます。
 
 - クラウドにファイルを保存する Web アプリケーション (Knowledge Drive)
 - 生成 AI 機能を担当するアプリケーション (GenAI App)
 
-## **Google Cloud プロジェクトの設定、確認**
+## **Google Cloud プロジェクトの確認**
 
-### **プロジェクトの課金が有効化されていることを確認する**
+開いている Cloud Shell のプロンプトに `(黄色の文字)` の形式でプロジェクト ID が表示されていることを確認してください。
 
-```bash
-gcloud beta billing projects describe $GOOGLE_CLOUD_PROJECT | grep billingEnabled
-```
+これが表示されている場合は、Google Cloud のプロジェクトが正しく認識されています。
 
-**Cloud Shell の承認** という確認メッセージが出た場合は **承認** をクリックします。
+表示されていない場合は、以下の手順で Cloud Shell を開き直して下さい
 
-出力結果の `billingEnabled` が **true** になっていることを確認してください。**false** の場合は、こちらのプロジェクトではハンズオンが進められません。別途、課金を有効化したプロジェクトを用意し、本ページの #1 の手順からやり直してください。
+1. Cloud Shell を閉じる
+1. 上のメニューバーのプロジェクト選択部分で払い出されたプロジェクトが選択されていることを確認する。
+1. Cloud Shell を再度開く
 
 ## **環境準備**
 
@@ -82,18 +80,22 @@ gcloud config set run/platform managed
 
 ## **参考: Cloud Shell の接続が途切れてしまったときは?**
 
-一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` が切れてしまう、またはブラウザのリロードが必要になる場合があります。その場合は以下の対応を行い、チュートリアルを再開してください。
+一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` の接続が切れてしまう場合があります。
+
+その場合は `再接続` をクリックした後、以下の対応を行い、チュートリアルを再開してください。
+
+![再接続画面](https://raw.githubusercontent.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/master/workstations_with_generative_ai/images/reconnect_cloudshell.png)
 
 ### **1. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/genai-handson-20230929
+cd ~/gcp-getting-started-lab-jp/appdev_with_generative_ai
 ```
 
 ### **2. チュートリアルを開く**
 
 ```bash
-teachme tutorial.md
+teachme tutorial_ja.md
 ```
 
 ### **3. gcloud のデフォルト設定**
@@ -167,6 +169,8 @@ firebase apps:create -P $GOOGLE_CLOUD_PROJECT WEB knowledge-drive
 ```bash
 ./scripts/firebase_config.sh ./src/knowledge-drive
 ```
+
+全ての NEXT_PUBLIC_FIREBASE_XXXX という出力の右辺 (=より後ろ) に、文字列が設定されていれば成功です。
 
 ## **Firebase Authentication の設定**
 
@@ -370,8 +374,7 @@ Cloud Build でコンテナイメージを作成、作成したイメージを C
 
 ```bash
 gcloud builds submit ./src/knowledge-drive \
-  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
-  --machine-type e2-highcpu-8 && \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive && \
 gcloud run deploy knowledge-drive \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
   --service-account knowledge-drive@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
@@ -462,9 +465,10 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 ```shell
 CREATE TABLE docs_embeddings(
-  product_id VARCHAR(1024) NOT NULL,
+  document_id VARCHAR(1024) NOT NULL,
   content TEXT,
   metadata TEXT,
+  user_id TEXT,
   embedding vector(768));
 ```
 
@@ -517,7 +521,7 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
 
 ```bash
 gcloud builds submit ./src/genai-app \
-  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/genai-app
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/genai-app && \
 gcloud run deploy genai-app \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/genai-app \
   --service-account genai-app@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
@@ -590,8 +594,7 @@ git switch genai-app-integration
 ```bash
 GENAI_APP_URL=$(gcloud run services describe genai-app --region asia-northeast1 --format json | jq -r '.status.url')
 gcloud builds submit ./src/knowledge-drive \
-  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
-  --machine-type e2-highcpu-8 && \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive && \
 gcloud run deploy knowledge-drive \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
   --service-account knowledge-drive@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
@@ -631,22 +634,4 @@ GenAI App への質問に切り替え、先程アップロードしたファイ�
 
 これにて生成 AI を用いたアプリケーション開発ハンズオンが完了です。
 
-デモで使った資材が不要な方は、次の手順でクリーンアップを行って下さい。
-
-注: 本手順でプロジェクトが削除されます。削除に問題がある方は実施しないでください。
-
-## **クリーンアップ（プロジェクトを削除）**
-
-ハンズオン用に利用したプロジェクトを削除し、コストがかからないようにします。
-
-### **1. プロジェクトの削除**
-
-```bash
-gcloud projects delete $GOOGLE_CLOUD_PROJECT
-```
-
-### **2. ハンズオン資材の削除**
-
-```bash
-cd $HOME && rm -rf genai-handson-20230929
-```
+Qwiklabs に戻り、`ラボを終了` ボタンをクリックし、ハンズオンを終了します。
