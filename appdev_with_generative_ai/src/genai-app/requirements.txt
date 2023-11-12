@@ -1,0 +1,13 @@
+flask[async]==2.3.2
+gunicorn==20.1.0
+cloudevents==1.9.0
+pypdf==3.16.1
+google-cloud-aiplatform==1.30.1
+langchain==0.0.294
+pgvector==0.1.8
+asyncio==3.4.3
+asyncpg==0.27.0
+cloud-sql-python-connector[asyncpg]==1.2.3
+numpy==1.22.4
+firebase-admin==6.2.0
+transformers==4.34.0
