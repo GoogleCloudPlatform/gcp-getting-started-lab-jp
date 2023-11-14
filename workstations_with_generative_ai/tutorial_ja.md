@@ -58,7 +58,7 @@ gcloud services enable workstations.googleapis.com \
 
 ワークステーション専用のネットワークを作成します。
 
-<walkthrough-info-message>デフォルトでは `default` ネットワークが使わるため好ましくありません。また今回はセキュリティを高めるため、ワークステーションに Public IP を付与しない設定とします。そのため、ここで Router, NAT も合わせて作成します</walkthrough-info-message>
+<walkthrough-info-message>デフォルトでは `default` ネットワークが使われるため好ましくありません。また今回はセキュリティを高めるために、ワークステーションに Public IP を付与しない設定とします。そのため、ここで Router, NAT も合わせて作成します</walkthrough-info-message>
 
 ### **1. VPC ネットワークの作成**
 
