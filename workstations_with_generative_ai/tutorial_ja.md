@@ -1,5 +1,7 @@
 # **次世代の開発スタイルを体験してみよう / Cloud Workstations を使ったクラウドでの開発環境構築**
 
+## **作業概要**
+
 本ハンズオンでは、Google Cloud でカスタマイズ可能で安全なマネージド開発環境を提供する [Cloud Workstations](https://cloud.google.com/workstations?hl=ja) の様々な機能を体験します。
 
 - ワークステーション用ネットワークの設定
