@@ -144,86 +144,23 @@ kubectl apply -f lab-01/app/
 Pod の作成に伴い、Node が複製され、Pod がデプロイされる様子が確認できます。
 デプロイには3-5分程度の時間がかかります。
 ```bash
-watch -d kubectl get pods,nodes
+watch -d kubectl get pods,nodes,svc
 ```
 
 数分後、すべての Pod の Status が Running となることを確認できたら、 `Ctrl-C` でコマンドの実行を終了します。
 
-### **2. 外部 IP アドレスの予約**
-
-アプリケーションの外部公開用 IP アドレスを予約します。
-
-```bash
-gcloud compute addresses create gatewayip --global --ip-version IPV4
-```
-
-取得した IP アドレスを確認します。
-
-```bash
-gcloud compute addresses list
-```
-
-出力例
-```bash
-NAME: gatewayip
-ADDRESS/RANGE: [こちらに IPアドレスが記載されます]
-TYPE: EXTERNAL
-PURPOSE: 
-NETWORK: 
-REGION: 
-SUBNET: 
-STATUS: RESERVED
-```
-
-### **3. IP アドレスとドメインの設定**
-
-アプリケーションの公開に使用するドメインは、`nip.io`を利用します。以下のコマンドで環境変数として保存しておきます。
-`nip.io`はサブドメインに記載した任意の IP アドレスに合わせたレコードを返す DNS サービスです。
-今回はこのサービスを利用して、簡易的にドメインを用意します。
-本番環境においては、別途ドメインを用意して利用ください。 
-
-```bash
-IP_ADDR=$(gcloud compute addresses list --format='value(ADDRESS)' --filter="NAME:gatewayip")
-DOMAIN="${IP_ADDR//./-}.nip.io"
-```
-
-### **4. Gateway マニフェストの適用**
-
-前の手順で予約した IP アドレスに合わせて、マニフェストファイルの編集が必要です。
-以下のコマンドのコマンドを実行してください。
-
-```bash
-sed -i "s/x-x-x-x.nip.io/$DOMAIN/g" lab-01/gateway/httproute.yaml
-```
-
-編集した Gateway マニフェストを適用し、アプリケーションを外部公開します。
-
-```bash
-kubectl apply -f lab-01/gateway/
-```
-
-### **5. Demo サイトの確認**
-Gateway の設定が完了するまで数分かかります。数分後、以下のコマンドでアプリケーションの URL を確認します。
+### **2. Demo サイトの確認**
+ロードバランサーの設定が完了するまで数分かかります。数分後、以下のコマンドでアプリケーションの URL を確認します。
 確認した URL をコピーして Chrome などの Web ブラウザのアドレスバーに貼り付けアプリケーションを確認します。
 なお、設定が完了するまでの数分間（場合によってはそれ以上）は、Connection reset by peer のエラーが出力されます。
 その場合は、さらにしばらくお待ちください。
 
 ```bash
-kubectl get httproutes
-```
-以下のコマンドでも URL を出力することが可能です。
-
-```bash
-echo http://$DOMAIN
+kubectl get svc | grep LoadBalancer | awk '{print "http://"$4}'
 ```
 
-以下が出力例です。HOSTNAMES に記載されているのが、アプリケーションの URL になります。
-```
-admin_@cloudshell:~ (projectname)$ kubectl get httproutes
-NAME             HOSTNAMES                  AGE
-frontend-route   ["xxx-xxx-xxx-xxx.nip.io"]   43h
-```
 Lab01 はこちらで完了となります。
+
 
 ## **Lab02.Balloon Pod の利用による高速なスケーリング**
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
