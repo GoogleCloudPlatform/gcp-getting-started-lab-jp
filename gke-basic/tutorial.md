@@ -238,12 +238,23 @@ gcloud artifacts repositories create gke-dojo --repository-format=docker --locat
 Cloud Build を利用して、クラウド上でコンテナイメージのビルドを行います。
 Cloud Build に含まれている Buildpacks により Dockerfile を書かなくとも、アプリケーションの構成を認識して適切なコンテナイメージを作成することができます。
 
-以下のコマンドで、ビルドを実行します。
+以下のコマンドで、ディレクトリを移動します。
 
 ```bash
-gcloud builds submit --config lab-ex01/cloudbuild.yaml
+cd lab-ex01
+```
+移動後、ビルドを実行します。
+
+```bash
+gcloud builds submit --config cloudbuild.yaml
 ```
 最終的に`STATUS: SUCCESS`と表示されましたら、ビルド成功です。
+
+カレントディレクトリを戻しておきます。
+
+```bash
+cd ..
+```
 
 ### **4. Cloud Deploy による デプロイ**
 
