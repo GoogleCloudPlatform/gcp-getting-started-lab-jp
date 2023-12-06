@@ -41,43 +41,6 @@
 1. 上のメニューバーのプロジェクト選択部分で払い出されたプロジェクトが選択されていることを確認する。
 1. Cloud Shell を再度開く
 
-## **環境準備**
-
-<walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
-
-最初に、ハンズオンを進めるための環境準備を行います。
-
-下記の設定を進めていきます。
-
-- gcloud コマンドラインツール設定
-- Google Cloud 機能（API）有効化設定
-
-## **gcloud コマンドラインツール**
-
-Google Cloud は、コマンドライン（CLI）、GUI から操作が可能です。ハンズオンでは主に CLI を使い作業を行いますが、GUI で確認する URL も合わせて掲載します。
-
-### **1. gcloud コマンドラインツールとは?**
-
-gcloud コマンドライン インターフェースは、Google Cloud でメインとなる CLI ツールです。このツールを使用すると、コマンドラインから、またはスクリプトや他の自動化により、多くの一般的なプラットフォーム タスクを実行できます。
-
-たとえば、gcloud CLI を使用して、以下のようなものを作成、管理できます。
-
-- Google Kubernetes Engine クラスタ
-- Google Cloud SQL インスタンス
-
-**ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
-
-### **2. gcloud からの Cloud Run のデフォルト設定**
-
-Cloud Run の利用するリージョン、プラットフォームのデフォルト値を設定します。
-
-```bash
-gcloud config set run/region asia-northeast1
-gcloud config set run/platform managed
-```
-
-ここではリージョンを東京、プラットフォームをフルマネージドに設定しました。この設定を行うことで、gcloud コマンドから Cloud Run を操作するときに毎回指定する必要がなくなります。
-
 ## **参考: Cloud Shell の接続が途切れてしまったときは?**
 
 一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` の接続が切れてしまう場合があります。
@@ -98,14 +61,17 @@ cd ~/gcp-getting-started-lab-jp/appdev_with_generative_ai
 teachme tutorial_ja.md
 ```
 
-### **3. gcloud のデフォルト設定**
-
-```bash
-gcloud config set run/region asia-northeast1
-gcloud config set run/platform managed
-```
-
 途中まで進めていたチュートリアルのページまで `Next` ボタンを押し、進めてください。
+
+## **環境準備**
+
+<walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
+
+最初に、ハンズオンを進めるための環境準備を行います。
+
+下記の設定を進めていきます。
+
+- Google Cloud 機能（API）有効化設定
 
 ## **Google Cloud 環境設定**
 
@@ -130,7 +96,7 @@ gcloud services enable \
 
 <walkthrough-footnote>必要な機能が使えるようになりました。次に Firebase の設定方法を学びます。</walkthrough-footnote>
 
-## **Firebase の設定**
+## **Firebase プロジェクトの設定**
 
 Knowledge Drive では、ユーザー情報は [Firebase Authentication](https://firebase.google.com/docs/auth)、アプリケーションのメタデータは [Cloud Firestore](https://firebase.google.com/docs/firestore)、 そしてファイルの格納場所として [Cloud Storage for Firebase](https://firebase.google.com/docs/storage) を活用します。Firebase の機能を活用することで、リアルタイム性の高い Web アプリケーションを開発することができます。
 
@@ -156,7 +122,21 @@ Knowledge Drive では、ユーザー情報は [Firebase Authentication](https:/
 
 1. `新しいプロジェクトの準備ができました` と表示されたら `続行` をクリックします。
 
-### **2. Firebase アプリケーションの作成**
+### **2. アプリケーション設定のショートカット**
+
+以下のコマンドを実行することで、**ここからステップ 11 までに手動で実行する各種設定をショートカット**することが可能です。生成 AI 関連の機能を中心に学習したい方は、こちらのコマンドを実行して下さい。完了まで 10 分弱かかります。
+
+コマンドの途中で進めるかどうか確認されますので `yes` と入力して進めてください。
+
+```bash
+(cd tf/; terraform init && terraform apply -var="project_id=$GOOGLE_CLOUD_PROJECT")
+```
+
+コマンドを実行した場合は **ステップ 12** に進んでください。
+
+## **Firebase アプリケーションの設定**
+
+### **1. Firebase アプリケーションの作成**
 
 **CLI** から実行します。
 
@@ -164,7 +144,7 @@ Knowledge Drive では、ユーザー情報は [Firebase Authentication](https:/
 firebase apps:create -P $GOOGLE_CLOUD_PROJECT WEB knowledge-drive
 ```
 
-### **3. Firebase 設定のアプリケーションへの埋め込み**
+### **2. Firebase 設定のアプリケーションへの埋め込み**
 
 ```bash
 ./scripts/firebase_config.sh ./src/knowledge-drive
@@ -377,7 +357,8 @@ gcloud builds submit ./src/knowledge-drive \
 gcloud run deploy knowledge-drive \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
   --service-account knowledge-drive@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --region asia-northeast1
 ```
 
 **注**: デプロイ完了まで 5 分程度かかります。
@@ -386,7 +367,7 @@ gcloud run deploy knowledge-drive \
 
 ### **1. アプリケーションへブラウザからアクセス**
 
-前のコマンドで出力された `Service URL` から URL をクリックすると、ブラウザのタブが開きチャットアプリケーションが起動します。
+前のコマンドで出力された `Service URL` or `Service_URL` から URL をクリックすると、ブラウザのタブが開きチャットアプリケーションが起動します。
 
 ### **2. 新規ユーザーの登録**
 
@@ -524,7 +505,9 @@ gcloud builds submit ./src/genai-app \
 gcloud run deploy genai-app \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/genai-app \
   --service-account genai-app@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-  --no-allow-unauthenticated --set-env-vars "PJID=$GOOGLE_CLOUD_PROJECT"
+  --no-allow-unauthenticated \
+  --set-env-vars "PJID=$GOOGLE_CLOUD_PROJECT" \
+  --region asia-northeast1
 ```
 
 ## **Eventarc の設定**
@@ -540,7 +523,8 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
   --role='roles/pubsub.publisher'
 gcloud run services add-iam-policy-binding genai-app \
   --member="serviceAccount:genai-app@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com" \
-  --role='roles/run.invoker'
+  --role='roles/run.invoker' \
+  --region asia-northeast1
 ```
 
 ### **2. Eventarc トリガーの作成**
@@ -577,7 +561,8 @@ gcloud pubsub subscriptions update \
 ```bash
 gcloud run services add-iam-policy-binding genai-app \
   --member=serviceAccount:knowledge-drive@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-  --role=roles/run.invoker
+  --role=roles/run.invoker \
+  --region asia-northeast1
 ```
 
 ### **2. GenAI App との連携機能追加**
@@ -597,7 +582,9 @@ gcloud builds submit ./src/knowledge-drive \
 gcloud run deploy knowledge-drive \
   --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/drive-repo/knowledge-drive \
   --service-account knowledge-drive@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-  --allow-unauthenticated --set-env-vars "SEARCH_HOST=$GENAI_APP_URL"
+  --allow-unauthenticated \
+  --set-env-vars "SEARCH_HOST=$GENAI_APP_URL" \
+  --region asia-northeast1
 ```
 
 ## **連携機能の確認**
