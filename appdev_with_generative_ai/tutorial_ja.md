@@ -546,12 +546,44 @@ gcloud eventarc triggers create genai-app \
 ERROR: (gcloud.eventarc.triggers.create) FAILED_PRECONDITION: Invalid resource state for "": Permission denied while using the Eventarc Service Agent.
 ```
 
-### **3. サブスクリプションの確認応答時間の修正**
+## **非同期連携の設定**
+
+今の非同期連携では以下の 2 つの問題があります。
+
+- PDF ファイルの処理が 10 秒以内に終わらないと、エラー扱いになりリトライしてしまう
+- リトライ回数に制限がなく、PDF ファイルの処理に失敗するとリトライされ続けてしまう＝リソースコストが上がり続けてしまう
+
+これを解決するために以下の設定を行います。
+
+- PDF ファイルの処理待ち時間を 300 秒 (5 分) に修正
+- 合計 5 回同じファイルの処理に失敗したら、リトライをやめる (デッドレタートピックに入れる)
+
+### **1. デッドレタートピックの作成**
+
+```bash
+gcloud pubsub topics create genai-app-dead-letter
+```
+
+### **2. デッドレタートピック関連の権限設定**
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe $GOOGLE_CLOUD_PROJECT --format="value(projectNumber)")
+SUBSCRIPTION=$(gcloud pubsub subscriptions list --format json | jq -r '.[].name')
+gcloud pubsub topics add-iam-policy-binding genai-app-dead-letter \
+  --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \
+  --role="roles/pubsub.publisher"
+gcloud pubsub subscriptions add-iam-policy-binding $SUBSCRIPTION \
+  --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \
+  --role="roles/pubsub.subscriber"
+```
+
+### **3. デッドレタートピックの設定、サブスクリプションの確認応答時間の修正**
 
 ```bash
 SUBSCRIPTION=$(gcloud pubsub subscriptions list --format json | jq -r '.[].name')
-gcloud pubsub subscriptions update \
-  $SUBSCRIPTION --ack-deadline=300
+gcloud pubsub subscriptions update $SUBSCRIPTION \
+  --ack-deadline 300 \
+  --dead-letter-topic genai-app-dead-letter
 ```
 
 ## **Knowledge Drive の更新**
