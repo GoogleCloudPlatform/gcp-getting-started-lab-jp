@@ -59,7 +59,7 @@
 ### **1. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gcp-getting-started-lab-jp/appdev_with_generative_ai
+cd ~/gcp-getting-started-lab-jp/appdev_genai_googlecloud
 ```
 
 ### **2. チュートリアルを開く**
