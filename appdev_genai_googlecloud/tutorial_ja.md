@@ -162,7 +162,7 @@ gcloud sql users create knowledge_drive_user \
 
 ## **Cloud SQL データベースの設定**
 
-### **1. データベースに接続**
+### \*_1. データベースに接続_。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 ```bash
 gcloud sql connect appdev-ai \
@@ -170,7 +170,7 @@ gcloud sql connect appdev-ai \
   --database=knowledge_drive
 ```
 
-パスワードを聞かれますので `handson01` と入力してください。
+パスワードを聞かれますので `handson01` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -212,6 +212,10 @@ gsutil mb -l asia-northeast1 gs://$GOOGLE_CLOUD_PROJECT-knowledge-drive
 
 ### **2. バケットへの CORS 設定**
 
+Cloud Storage はデフォルトで [クロスオリジンリソースシェアリング (CORS)](https://cloud.google.com/storage/docs/cross-origin?hl=ja) のセキュリティポリシーが設定されています。
+
+このセキュリティポリシーのため、Knowledge Drive のクライアントアプリ (ブラウザで稼働) から、Cloud Storage へのファイルアップロードが拒否されてしまいます。ここではそのセキュリティを緩和し、ファイルアップロードを行えるように設定しています。
+
 ```bash
 gcloud storage buckets update gs://$GOOGLE_CLOUD_PROJECT-knowledge-drive \
   --cors-file=./assets/cors.json
@@ -233,7 +237,7 @@ gcloud iam service-accounts create knowledge-drive
 
 ### **2. サービスアカウントへの権限追加**
 
-Knowledge Drive は認証情報の操作、Firestore の読み書き権限が必要です。先程作成したサービスアカウントに権限を付与します。
+Knowledge Drive は署名付き URL の作成、Cloud SQL の読み書き権限が必要です。先程作成したサービスアカウントに権限を付与します。
 
 ```bash
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
@@ -299,6 +303,29 @@ gcloud run deploy knowledge-drive \
 
 **注**: URL を知っている方は誰でもアクセス可能です。機密情報を含んだファイルはアップロードしないようにご注意ください。
 
+## **チャレンジ問題: Knowledge Drive の更新**
+
+本チャレンジ問題では Cloud Run のデプロイ機能を利用して、Knowledge Drive のソースコードを修正し、以下の手順でアプリケーションを更新してみましょう。
+
+- 更新内容: アプリケーションのヘッダ左上の `ドライブ` を任意の別の単語に変更する
+
+### **修正手順**
+
+1. Cloud Shell Editor から対象のファイルを開き、単語を書き換える
+
+   ```bash
+   cloudshell edit ./src/knowledge-drive/src/components/app-name.tsx
+   ```
+
+   `ターミナルを開く` ボタンから Cloud Shell に戻れます。
+
+1. ソースコードを修正したため、コンテナイメージを再ビルドする
+1. [タグ付きリビジョン](https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration?hl=ja#deploy-with-tags) を参考にタグを付けたリビジョンでサービスをデプロイする
+1. タグ付きリビジョンのアプリケーションにアクセスし、更新が問題なく行われていることを確認する
+1. [トラフィックを最新のリビジョンに送信する](https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration?hl=ja#send-to-latest) を参考にタグ付きリビジョンにアクセスを割り振る
+
+更新が上手くいくと、以降 Knowledge Drive のヘッダ左上の単語は更新された単語のままになります。
+
 ## **生成 AI を活用しアップロード済みファイルをベースにした回答生成機能 (GenAI App) の追加**
 
 Knowledge Drive に、生成 AI を活用し質問文への回答を返す機能である GenAI App を追加します。
@@ -334,7 +361,7 @@ gcloud sql connect appdev-ai \
   --database=docs
 ```
 
-パスワードを聞かれますので `handson` と入力してください。
+パスワードを聞かれますので `handson` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -379,7 +406,7 @@ gcloud sql connect appdev-ai \
   --database=knowledge_drive
 ```
 
-パスワードを聞かれますので `handson01` と入力してください。
+パスワードを聞かれますので `handson01` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -570,79 +597,16 @@ GenAI App への質問に切り替え、先程アップロードしたファイ�
 
 無事、回答が返ってくれば成功です。
 
-### **3. 色々試してみる**
+## **チャレンジ問題: 様々な PDF を利用した生成 AI 機能の確認**
 
-様々な PDF をアップロードして回答がどのように変わるか試してみましょう。
+インターネットからダウンロード可能な PDF をアップロードし、生成 AI 機能が正しく動くかを確認しましょう。
 
-## **Log Analytics (BigQuery) を使ったログ分析**
+おすすめ PDF ダウンロードサイト
 
-### **1. Log Analytics 画面に遷移**
+- [デジタル社会推進標準ガイドライン](https://www.digital.go.jp/resources/standard_guidelines)
+- [政府機関等のサイバーセキュリティ対策のための統一基準群](https://www.nisc.go.jp/policy/group/general/kijun.html)
 
-<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> ロギング -> ログ分析 の順に進みます。
-
-### **2. データが取得されているかを確認**
-
-以下のコマンドの出力結果をクエリ入力画面に貼り付け、`クエリを実行` ボタンをクリックし実行してみてください。
-
-```shell
-cat << EOF
-
-SELECT
-  timestamp, severity, resource.type, log_name, text_payload, proto_payload, json_payload
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-LIMIT 50
-
-EOF
-```
-
-うまくログが取れていた場合、いくつかのログがテーブル形式で表示されます。
-
-### **3. 様々なクエリを試してみる**
-
-以下のクエリは前の手順と同様に `test-project` は置き換えて実行します。
-
-1. リクエスト数が多い順に URL へのアクセス数を調べる
-
-```shell
-cat << EOF
-
-SELECT
-  http_request.request_url, COUNT(http_request.request_url) AS request_count
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-WHERE
-  http_request IS NOT NULL AND
-  http_request.request_url IS NOT NULL
-GROUP BY
-  http_request.request_url
-ORDER BY
-  COUNT(http_request.request_url) DESC
-LIMIT 50
-
-EOF
-```
-
-2. リクエストに関係ない、アプリケーションログ情報
-
-```shell
-cat << EOF
-
-SELECT
-  text_payload
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-WHERE
-  text_payload IS NOT NULL AND
-  log_id != "run.googleapis.com/requests"
-LIMIT 50
-
-EOF
-```
-
-様々な条件でログをクエリすることが可能です。
-
-[サンプル SQL クエリ](https://cloud.google.com/logging/docs/analyze/examples?hl=ja) を参考に色々試してみてください。
+**注**: ページ数が多すぎる PDF ファイルでは処理が失敗する可能性があります。
 
 ## Identity-Aware Proxy の利用
 
@@ -782,6 +746,8 @@ echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 
 ## **アクセス可能ユーザーの追加**
 
+今回は Qwiklabs から払い出されたアカウント (student-xxxxxxxx@qwiklabs.net) をアクセス可能なように設定します。
+
 ### **1. Identity-Aware Proxy 有効化の確認**
 
 先程アクセスしていた Load Balancer 経由の URL にアクセスします。
@@ -798,7 +764,7 @@ echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 ### **2. OAuth 同意画面からテストユーザーを追加**
 
 1. [OAuth 同意画面](https://console.cloud.google.com/apis/credentials/consent) をクリックし、OAuth 同意画面に遷移
-1. `テストユーザー` の `+ ADD USERS` ボタンをクリックし、自分の Google アカウントのメールアドレスを入力し、`保存` ボタンをクリックする
+1. `テストユーザー` の `+ ADD USERS` ボタンをクリックし、 Qwiklabs アカウントのメールアドレスを入力し、`保存` ボタンをクリックする
 1. `テストユーザー` のリストに、入力したメールアドレスが追加されたことを確認する
 
 ### **3. Identity-Aware Proxy へユーザーの追加**
@@ -811,13 +777,11 @@ gcloud iap web add-iam-policy-binding \
   --member 'user:XXXXXXXXXXX'
 ```
 
-`XXXXXXXXXXX` の部分を、実際のメールアドレスに書き換えてから実行してください。
-
 ## **Identity-Aware Proxy の動作確認**
 
 ### **1. アプリケーションへのアクセス確認**
 
-再度、Load Balancer 経由の URL にアクセスし、Google サインイン画面から #2, #3 で追加したアカウントを選びます。
+再度、Load Balancer 経由の URL にアクセスし、Google サインイン画面から Qwiklabs のアカウントを選びます。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
@@ -869,6 +833,78 @@ Load Balancer 経由の URL にアクセスし、問題なくアクセスでき�
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
 echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 ```
+
+## **Log Analytics (BigQuery) を使ったログ分析**
+
+### **1. Log Analytics 画面に遷移**
+
+<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> ロギング -> ログ分析 の順に進みます。
+
+### **2. データが取得されているかを確認**
+
+以下のコマンドの出力結果をクエリ入力画面に貼り付け、`クエリを実行` ボタンをクリックし実行してみてください。
+
+```shell
+cat << EOF
+
+SELECT
+  timestamp, severity, resource.type, log_name, text_payload, proto_payload, json_payload
+FROM
+  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
+LIMIT 50
+
+EOF
+```
+
+うまくログが取れていた場合、いくつかのログがテーブル形式で表示されます。
+
+### **3. 様々なクエリを試してみる**
+
+1. リクエスト数が多い順に URL へのアクセス数を調べる
+
+```shell
+cat << EOF
+
+SELECT
+  http_request.request_url, COUNT(http_request.request_url) AS request_count
+FROM
+  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
+WHERE
+  http_request IS NOT NULL AND
+  http_request.request_url IS NOT NULL
+GROUP BY
+  http_request.request_url
+ORDER BY
+  COUNT(http_request.request_url) DESC
+LIMIT 50
+
+EOF
+```
+
+2. リクエストに関係ない、アプリケーションログ情報
+
+```shell
+cat << EOF
+
+SELECT
+  text_payload, count(text_payload) as payload_count
+FROM
+  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
+WHERE
+  text_payload IS NOT NULL AND
+  log_id != "run.googleapis.com/requests"
+GROUP BY
+  text_payload
+ORDER BY
+  count(text_payload) DESC
+LIMIT 50
+
+EOF
+```
+
+様々な条件でログをクエリすることが可能です。
+
+[サンプル SQL クエリ](https://cloud.google.com/logging/docs/analyze/examples?hl=ja) を参考に色々試してみてください。
 
 ## **Congraturations!**
 
