@@ -620,11 +620,11 @@ GenAI App への質問に切り替え、先程アップロードしたファイ�
 - アップロードしたファイルがユーザーごとに保存される
 - 生成 AI を用いた回答もユーザーごとのファイルから回答が生成される
 
-## **HTTPS Load Balancer の作成 (1/3)**
+## **外部アプリケーション ロードバランサの作成 (1/3)**
 
-Identity-Aware Proxy を利用するには、まず Load Balancer を作成する必要があります。
+Identity-Aware Proxy を利用するには、まずロードバランサを作成する必要があります。
 
-Load Balancer の作成は複数のコマンドが必要になるため、3 ステップに分けて実行します。
+ロードバランサの作成は複数のコマンドが必要になるため、3 ステップに分けて実行します。
 
 ### **1. IP アドレスの取得**
 
@@ -649,7 +649,7 @@ gcloud compute ssl-certificates create knowledge-drive-cert \
   --global
 ```
 
-## **HTTPS Load Balancer の作成 (2/3)**
+## **外部アプリケーション ロードバランサの作成 (2/3)**
 
 ### **1. ネットワーク エンドポイント グループの作成**
 
@@ -677,7 +677,7 @@ gcloud compute backend-services add-backend knowledge-drive-bs \
   --network-endpoint-group-region=asia-northeast1
 ```
 
-## **HTTPS Load Balancer の作成 (3/3)**
+## **外部アプリケーション ロードバランサの作成 (3/3)**
 
 ### **1. URL マップの作成**
 
@@ -706,9 +706,9 @@ gcloud compute forwarding-rules create knowledge-drive-forwardingrule \
   --ports=443
 ```
 
-## **Load Balancer 経由でのアクセス確認**
+## **ロードバランサ経由でのアクセス確認**
 
-以下のコマンドの出力をクリックし、Load Balancer 経由で Knowledge Drive にアクセスできることを確認します。
+以下のコマンドの出力をクリックし、ロードバランサ経由で Knowledge Drive にアクセスできることを確認します。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
@@ -750,7 +750,7 @@ echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 
 ### **1. Identity-Aware Proxy 有効化の確認**
 
-先程アクセスしていた Load Balancer 経由の URL にアクセスします。
+先程アクセスしていたロードバランサ経由の URL にアクセスします。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
@@ -770,18 +770,19 @@ echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 ### **3. Identity-Aware Proxy へユーザーの追加**
 
 ```bash
+ACCOUNT=$(gcloud config get account)
 gcloud iap web add-iam-policy-binding \
   --resource-type backend-services \
   --service knowledge-drive-bs \
   --role 'roles/iap.httpsResourceAccessor' \
-  --member 'user:XXXXXXXXXXX'
+  --member "user:$ACCOUNT"
 ```
 
 ## **Identity-Aware Proxy の動作確認**
 
 ### **1. アプリケーションへのアクセス確認**
 
-再度、Load Balancer 経由の URL にアクセスし、Google サインイン画面から Qwiklabs のアカウントを選びます。
+再度、ロードバランサ経由の URL にアクセスし、Google サインイン画面から Qwiklabs のアカウントを選びます。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
@@ -802,7 +803,7 @@ echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 
 ## **セキュリティの向上**
 
-Load Balancer 経由でのアクセスに認証を設定しましたが、直接 Cloud Run にアクセスすると認証無しで管理画面にアクセスできてしまいます。
+ロードバランサ経由でのアクセスに認証を設定しましたが、直接 Cloud Run にアクセスすると認証無しで管理画面にアクセスできてしまいます。
 
 そこで、Cloud Run の設定を変更し、直接のアクセスをさせないようにします。
 
@@ -815,7 +816,7 @@ gcloud run services describe knowledge-drive \
   --region asia-northeast1 --format "value(status.url)"
 ```
 
-### **2. アクセス元を Google Cloud の内部、または Load Balancer に限定**
+### **2. アクセス元を Google Cloud の内部、またはロードバランサに限定**
 
 ```bash
 gcloud run services update knowledge-drive \
@@ -825,9 +826,9 @@ gcloud run services update knowledge-drive \
 
 出力された URL をクリックし、アクセスができないこと (Error: Page not Found) が表示されることを確認します。
 
-### **3. Load Balancer 経由でのアクセス確認**
+### **3. ロードバランサ経由でのアクセス確認**
 
-Load Balancer 経由の URL にアクセスし、問題なくアクセスできることを確認します。
+ロードバランサ経由の URL にアクセスし、問題なくアクセスできることを確認します。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
