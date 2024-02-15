@@ -4,8 +4,9 @@ import { GetSignedUrlConfig, Storage } from "@google-cloud/storage";
 import { DEFAULT_OWNER, ROOT_FOLDER_ID } from "@/lib/constants";
 import { createPoolWithConnector } from "@/lib/db";
 import { DBItem, TItem } from "@/lib/types";
+import { printCreatedAtInJST } from "@/lib/utils";
+import { logError, logInfo } from "@/lib/logging";
 import { nanoid } from "nanoid";
-import { printCreatedAtInJST } from "./utils";
 import { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 import { headers } from "next/headers";
 
@@ -15,13 +16,21 @@ export const createFolder = async (
   folderName: string | null,
   parent: string,
 ) => {
+  const action = "createFolder";
   const headersList = headers();
   const owner = getOwner(headersList);
+  const sourceIP = getSourceIP(headersList);
   const id = nanoid();
   const query = `INSERT INTO items(id, name, is_folder, parent, owner) VALUES ($1, $2, $3, $4, $5)`;
   const values = [id, folderName, true, parent, owner];
   const pool = await createPoolWithConnector();
   await pool.query(query, values);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${folderName}: Created a folder under ${parent}`,
+  });
 };
 
 export const createFile = async (
@@ -31,12 +40,20 @@ export const createFile = async (
   size: number,
   contentType: string,
 ) => {
+  const action = "createFile";
   const headersList = headers();
   const owner = getOwner(headersList);
+  const sourceIP = getSourceIP(headersList);
   const query = `INSERT INTO items(id, name, is_folder, size, type, parent, owner) VALUES ($1, $2, $3, $4, $5, $6, $7)`;
   const values = [id, name, false, size, contentType, parent, owner];
   const pool = await createPoolWithConnector();
   await pool.query(query, values);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${name}: Created a folder under ${parent}`,
+  });
 };
 
 export const generateUploadSignedURL = async (
@@ -44,11 +61,19 @@ export const generateUploadSignedURL = async (
   filename: string,
   contentType: string,
 ) => {
-  if (!process.env.BUCKET_NAME) {
-    throw new Error("BUCKET_NAME is not defined");
-  }
+  const action = "generateUploadSignedURL";
   const headersList = headers();
   const owner = getOwner(headersList);
+  const sourceIP = getSourceIP(headersList);
+  if (!process.env.BUCKET_NAME) {
+    logError({
+      owner: owner,
+      sourceIP: sourceIP,
+      action: action,
+      message: `${sourceIP}/${owner}/${action}/${filename}: BUCKET_NAME is not defined`,
+    });
+    throw new Error("BUCKET_NAME is not defined");
+  }
   const filepath = createFilepathOnGCS(id, filename, owner);
   const options: GetSignedUrlConfig = {
     version: "v4",
@@ -60,11 +85,27 @@ export const generateUploadSignedURL = async (
     .bucket(process.env.BUCKET_NAME)
     .file(filepath)
     .getSignedUrl(options);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${filename}: Generated an upload signed URL`,
+  });
   return url;
 };
 
 export const generateDownloadSignedURL = async (storagePath: string) => {
+  const action = "generateDownloadSignedURL";
+  const headersList = headers();
+  const owner = getOwner(headersList);
+  const sourceIP = getSourceIP(headersList);
   if (!process.env.BUCKET_NAME) {
+    logError({
+      owner: owner,
+      sourceIP: sourceIP,
+      action: action,
+      message: `${sourceIP}/${owner}/${action}/${storagePath}: BUCKET_NAME is not defined`,
+    });
     throw new Error("BUCKET_NAME is not defined");
   }
   const options: GetSignedUrlConfig = {
@@ -76,6 +117,12 @@ export const generateDownloadSignedURL = async (storagePath: string) => {
     .bucket(process.env.BUCKET_NAME)
     .file(storagePath)
     .getSignedUrl(options);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${storagePath}: Generated a download signed URL`,
+  });
   return url;
 };
 
@@ -83,10 +130,19 @@ export const searchItemsByQueryAndOwner = async (
   queryText: string,
   owner: string,
 ) => {
+  const action = "searchItem";
+  const headersList = headers();
+  const sourceIP = getSourceIP(headersList);
   const query = `SELECT * FROM items WHERE owner = $1 AND name ILIKE $2 ORDER BY created_at DESC`;
   const values = [owner, "%" + queryText + "%"];
   const pool = await createPoolWithConnector();
   const { rows } = await pool.query(query, values);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${queryText}: Searched items by ${queryText}`,
+  });
   return convertDBItemsToDBItems(rows as DBItem[]);
 };
 
@@ -153,10 +209,19 @@ export const getItemsByParentAndOwner = async (
   parent: string,
   owner: string,
 ) => {
+  const action = "getItems";
+  const headersList = headers();
+  const sourceIP = getSourceIP(headersList);
   const query = `SELECT * FROM items WHERE parent = $1 AND owner = $2 ORDER BY created_at DESC`;
   const values = [parent, owner];
   const pool = await createPoolWithConnector();
   const { rows } = await pool.query(query, values);
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${parent}: Get items by ${parent}`,
+  });
   return convertDBItemsToDBItems(rows as DBItem[]);
 };
 
@@ -168,7 +233,19 @@ export const getOwner = (headers: ReadonlyHeaders): string => {
   return userEmailHeaderValue.replace("accounts.google.com:", "");
 };
 
+export const getSourceIP = (headers: ReadonlyHeaders): string => {
+  const ipHeaderValue = headers.get("x-forwarded-for");
+  if (!ipHeaderValue) {
+    return "unknown";
+  }
+  return ipHeaderValue;
+};
+
 export const getParents = async (id: string) => {
+  const action = "getParents";
+  const headersList = headers();
+  const owner = getOwner(headersList);
+  const sourceIP = getSourceIP(headersList);
   const query = `WITH RECURSIVE parents AS (
     SELECT id, name, parent, 1 AS level
     FROM items
@@ -188,5 +265,11 @@ export const getParents = async (id: string) => {
   if (rows.length < 3) {
     rows.unshift({ id: ROOT_FOLDER_ID, name: "マイドライブ", parent: null });
   }
+  logInfo({
+    owner: owner,
+    sourceIP: sourceIP,
+    action: action,
+    message: `${sourceIP}/${owner}/${action}/${id}: Get parents by ${id} and found ${rows.length} folders`,
+  });
   return rows;
 };
