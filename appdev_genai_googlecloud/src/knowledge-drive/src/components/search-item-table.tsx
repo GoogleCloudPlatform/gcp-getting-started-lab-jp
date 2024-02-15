@@ -3,7 +3,6 @@ import EmptyList from "@/components/empty-list";
 import Item from "@/components/item";
 import ItemHeader from "@/components/item-header";
 import { headers } from "next/headers";
-import SkeletonItemHeader from "./skeleton-item-header";
 
 type SearchItemProps = {
   queryText: string;

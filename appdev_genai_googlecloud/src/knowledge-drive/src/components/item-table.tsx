@@ -3,23 +3,33 @@ import { notFound } from "next/navigation";
 import {
   getItemsByParentAndOwner,
   getOwner,
+  getSourceIP,
   isFolderExist,
 } from "@/lib/actions";
 import EmptyList from "@/components/empty-list";
 import Item from "@/components/item";
 import ItemHeader from "@/components/item-header";
 import Refresh from "@/components/refresh";
+import { logWarn } from "@/lib/logging";
 
 type ItemTableProps = {
   parent: string;
 };
 
 const ItemTable = async ({ parent }: ItemTableProps) => {
+  const action = "showItemTable";
   const headersList = headers();
+  const sourceIP = getSourceIP(headersList);
   const owner = getOwner(headersList);
 
   const folderExist = await isFolderExist(parent, owner);
   if (!folderExist) {
+    logWarn({
+      owner: owner,
+      sourceIP: sourceIP,
+      action: action,
+      message: `${sourceIP}/${owner}/${action}/${parent}: Failed to find folder with id ${parent}`,
+    });
     return notFound();
   }
 
