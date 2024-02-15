@@ -15,7 +15,6 @@ export default async function PerItemPage({
   const { slug: id } = params;
 
   const res = await getDownloadURL(id);
-  console.log(res);
 
   if (!res.url) {
     logWarn({
