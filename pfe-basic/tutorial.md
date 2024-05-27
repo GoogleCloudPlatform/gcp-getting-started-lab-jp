@@ -6,7 +6,7 @@
 
 <walkthrough-disable-features toc></walkthrough-disable-features>
 
-# GKE 道場 入門編
+# Platform Engineering Handson 入門編
 
 ## Google Cloud プロジェクトの設定、確認
 
@@ -15,7 +15,7 @@
 ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID を環境変数に設定し、以降の手順で利用できるようにします。 **(右辺の [PROJECT_ID] を手動で置き換えてコマンドを実行します)**
 
 ```bash
-export PROJECT_ID=[PROJECT_ID(自身のIDに置き換えます[]は不要です)]
+export PROJECT_ID=[PROJECT_ID]
 ```
 
 `プロジェクト ID` は [ダッシュボード](https://console.cloud.google.com/home/dashboard) に進み、左上の **プロジェクト情報** から確認します。
@@ -116,7 +116,7 @@ gcloud config set project ${PROJECT_ID} && gcloud config set compute/region asia
 ```
 
 
-## **Lab-00.Lab 向けクラスタの準備**
+### **Lab-00.Lab 向けクラスタの準備**
 <walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
 
 
@@ -204,7 +204,8 @@ gcloud workstations clusters create cluster-handson \
   --async
 ```
 
-### 割り当ての拡張
+### **割り当ての拡張**
+
 本ラボではデフォルトでの割り当て(クオータ)が不足する可能性があります。そのため事前に不足が予想される項目を拡張を申請します。
 [割り当てとシステム制限](https://console.cloud.google.com/iam-admin/quotas)に移動します。
 中央のフィルタに、`Compute Engine API` と入力します。リストから、名前が`Persistent Disk SSD (GB)`、項目(ロケーションなど)が`region : asia-northeast1` となっているものを見つけます。
@@ -214,7 +215,6 @@ gcloud workstations clusters create cluster-handson \
 `リクエストを送信`をクリックします。
 通常、数分後に承認され、登録しているアカウントのメールアドレスに結果が送信されています。
 その後、5分程度経過すると、割り当てが拡張されます。
-
 以上で事前準備は完了です。
 
 ### **Lab-01 GKE Enterprise によるマルチチームでの GKE の利用**
@@ -223,22 +223,25 @@ GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用
 Platform Engineering における、Internal Developer Platform は複数のストリーンアラインドチーム(アプリ開発チーム)によって利用されることを想定しているため、このようなマルチテナントの機能を実装しておくと管理がしやすくなります。
 
 
-## **Lab-01-01.GKE Enterprise の有効化**
+### **Lab-01-01.GKE Enterprise の有効化**
 
 Platform Engeering に役立つマルチチームの機能を持つ、GKE Enterprise を有効化します。
+
 ```bash
 gcloud services enable --project "$PROJECT_ID" \
    anthos.googleapis.com \
    gkehub.googleapis.com
 ```
 
-## **Lab-01-02.GKE Enterprise チーム機能の有効化**
+### **Lab-01-02.GKE Enterprise チーム機能の有効化**
 
 まず、チーム機能に必要なフリートを作成します。フリートは船団という意味で、GKE クラスタの論理的なグループです。
+
 ```bash
   gcloud container fleet create \
     --project "$PROJECT_ID"
 ```
+
 作成したフリートに dev-cluster を登録しておきます。
 
 ```bash
@@ -246,12 +249,13 @@ gcloud container clusters update dev-cluster --enable-fleet --location asia-nort
 ```
 
 同様に Prod Cluster も登録します。
+
 ```bash
 gcloud container clusters update prod-cluster --enable-fleet --location asia-northeast1
 ```
 
 
-## **Lab-01-03.GKE Enterprise チームスコープの作成**
+### **Lab-01-03.GKE Enterprise チームスコープの作成**
 
 フリートの中にチームスコープを作成します。チームスコープは複数クラスタにまたがる開発チームが利用する範囲とメンバーなどを定義するリソースです。
 ```bash
@@ -286,26 +290,28 @@ gcloud container clusters get-credentials dev-cluster --region asia-northeast1 -
 ```
 
 以下のコマンドで名前空間を確認します。チームスコープで作成した`ec-site`名前空間が作成されていることを確認します。
+
 ```bash
 kubectl get ns
 ```
 
 `ec-site`名前空間にサンプルアプリケーションをデプロイします。
+
 ```bash
 kubectl apply -f lab-01/sampleapp.yaml -n ec-site
 ```
 
-```
 以下のコマンドで、現在の Pod および Node のステータスを取得を継続して行います。
 Pod の作成に伴い、Node が複製され、Pod がデプロイされる様子が確認できます。
 デプロイには3-5分程度の時間がかかります。
+
 ```bash
 watch -d kubectl get pods,nodes,svc -n  ec-site
 ```
 
 数分後、すべての Pod の Status が Running となることを確認できたら、 `Ctrl-C` でコマンドの実行を終了します。
 
-## **Lab-01-06. Demo サイトの確認**
+### **Lab-01-06. Demo サイトの確認**
 ロードバランサーの設定が完了するまで数分かかります。数分後、以下のコマンドでアプリケーションの URL を確認します。
 確認した URL をコピーして Chrome などの Web ブラウザのアドレスバーに貼り付けアプリケーションを確認します。
 なお、設定が完了するまでの数分間（場合によってはそれ以上）は、Connection reset by peer のエラーが出力されます。
@@ -315,7 +321,7 @@ watch -d kubectl get pods,nodes,svc -n  ec-site
 kubectl get svc -n ec-site | grep LoadBalancer | awk '{print "http://"$4}'
 ```
 
-## **Lab-01-07. ダッシュボードの確認**
+### **Lab-01-07. ダッシュボードの確認**
 
 再び、GUI(ブラウザ上のコンソール)で作業します。ブラウザ上の別のタブを開き（または同タブにURLを入力して）[チーム](https://console.cloud.google.com/kubernetes/teams)へ移動します。
 チームのページより、チーム名 `app-a-team` がリンクになっているためクリックします。
@@ -334,7 +340,7 @@ Lab-01はここで完了となります。
 Platform Engineering の観点から、開発者に作成ずみの開発環境とサンプルとなるアプリケーションのテンプレートを提供します。
 また、Platform 利用者に立場に立って、アプリケーションのデプロイを試してみます。
 
-## **Lab-02-01. Artifact Resistry 作成**
+### **Lab-02-01. Artifact Resistry 作成**
 Cloud Workstations イメージを保管するためにレポジトリを作成します。
 
 ```bash
@@ -353,7 +359,7 @@ gcloud artifacts repositories create spring-app \
   --description="Docker repository for spring-app"
 ```
 
-## **Lab-02-02. Cloud Workstations コンテナイメージの作成**
+### **Lab-02-02. Cloud Workstations コンテナイメージの作成**
 
 開発者がサンプルコードを起動するためのライブラリや Code OSS 拡張機能を事前に有効化したイメージを作成します。
 今回はあらかじめ用意したサンプルコードを利用します。中身は以下で確認できます。
@@ -369,7 +375,7 @@ gcloud builds submit lab-02/workstations/ \
   --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-spring:v1.0.0
 ```
 
-## **Lab-02-03. Cloud Workstations イメージ Pull 用のサービスアカウントの設定**
+### **Lab-02-03. Cloud Workstations イメージ Pull 用のサービスアカウントの設定**
 
 プライベートなカスタムイメージを利用するため、Artifact Resistry から Pull できる権限を持つサービスアカウントを作成しておきます。
 
@@ -387,7 +393,7 @@ gcloud artifacts repositories add-iam-policy-binding ws-repo \
   --role=roles/artifactregistry.reader
 ```
 
-## **Lab-02-04. Cloud Workstations 構成の作成**
+### **Lab-02-04. Cloud Workstations 構成の作成**
 
 開発者むけにカスタマイズしたコンテナイメージを利用して Cloud Workstations の構成を作成します。
 
@@ -404,7 +410,7 @@ gcloud workstations configs create codeoss-spring \
   --container-custom-image asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-spring:v1.0.0
 ```
 
-## **Lab-02-05. Workstations の作成**
+### **Lab-02-05. Workstations の作成**
 
 開発者むけに一台、Workstations を作成します。この作業は、通常、開発者ごとに行うことになります。
 
@@ -419,14 +425,14 @@ Lab-02 は完了となります。
 
 ### **Lab-03. 開発者として利用する**
 
-## **Lab-03-01. Workstations の起動**
+### **Lab-03-01. Workstations の起動**
 GUI での作業となります。
 ブラウザで新しいタブを開き、[Workstations一覧](https://console.cloud.google.com/workstations/list)を開きます。
 **My workstations** に表示される `ws-spring-dev`の START(開始) をクリックします。
 起動には数分程度かかります。
 ステータスが、稼働中になりましたら、開始をクリックします。新しいタブで Code OSS の Welcome 画面が開きます。初回は表示に少し時間がかかります。
 
-## **Lab-03-01. サンプルアプリケーションの入手**
+### **Lab-03-01. サンプルアプリケーションの入手**
 git よりサンプルアプリケーションを取得します。
 左側の2番目のアイコンをクリック、または、Ctr + Shift +E の入力で、EXPLORER が開きます。
 Clone Repository を選択します。
@@ -437,11 +443,12 @@ Clone Repository を選択します。
 複製するフォルダーを選択してください、はそのまま OK を教えてください。
 続いて 複製したレポジトリを開きますか？または現在のワークスペースに追加しますか？という選択には、`開く`を選択してください。
 
-## **Lab-03-01. サンプルアプリケーションの実行**
+### **Lab-03-01. サンプルアプリケーションの実行**
 左上の３本の線のアイコンから、Terminal > New Terminal を選択します。
 画面下にターミナルが現れますので、こちらで作業を実施します。
 
 complete ディレクトリに移動します。
+
 ```bash
 cd complete
 ```
@@ -451,28 +458,34 @@ cd complete
 ```bash
 mvn clean install
 ```
+
 ビルドしたアプリケーションをまずは Workstations 上で実行します。
 
 ```bash
 java -jar target/spring-boot-complete-0.0.1-SNAPSHOT.jar
 ```
+
 実行すると 右下に Open Preview という吹き出しが現れるので、クリックします。
 続いて、Open をクリックするとシンプルなアプリケーションにアクセスできます。
 完了したら、ターミナルに戻り、Ctrl-C でアプリケーションを停止しておきます。
 
-## **Lab-03-02. GKE でのアプリケーションの実行**
+### **Lab-03-02. GKE でのアプリケーションの実行**
 引き続き Cloud Workstations で作業をします。
 サンプルアプリケーションと一緒に、Dockerfile も Golden Path として git から提供されています。
 以前の手順と同様に Cloud Build でコンテナの作成を行います。
 
 Workstations 上のターミナルで実行します。ディレクトリを移動しておきます。
+
 ```bash
 cd /home/user/gs-spring-boot/complete
 ```
+
 Workstations 上では Google Cloud にログインに別途ログインする必要があります。
+
 ```bash
 gcloud auth login
 ```
+
 表示される URL を Ctr+クリックで Open、もしくはコピー&ペーストで別のタブで開きます。
 すると Google アカウントへのログイン画面になるため、ログインを実施します。
 最後に表示される `4/0` から始まる verification code をコピーして、Cloud Workstations の ターミナルに貼り付けます。
@@ -480,14 +493,17 @@ gcloud auth login
 `You are now loggeid in as [アカウント]`と表示されます。
 
 また、Cloud Shell と同じように以下設定を行います。
+
 ```bash
 export PROJECT_ID=[PROJECT_ID(自身のIDに置き換えます[]は不要です)]
 ```
+
 ```bash
 gcloud config set project ${PROJECT_ID}
 ```
 
 提供されている Dockerfile を利用して、コンテナ化を行います。
+
 ```bash
 gcloud builds submit . --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring-app/spring-app:v1.0.0
 ```
@@ -497,11 +513,13 @@ gcloud builds submit . --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring
 17行目の `asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring-app/spring-app:v1.0.0` の`${PROJECT_ID}`を実際のプロジェクトID に置き換えます。(Cloud Workstations は編集すると即時反映となるため、保存は不要です。）
 
 GKE への接続を行います
+
 ```bash
 gcloud container clusters get-credentials dev-cluster --region asia-northeast1 --project ${PROJECT_ID}
 ```
 
 GKE のデプロイを実施します。
+
 ```bash
 kubectl apply -f k8s.yaml 
 ```
@@ -511,6 +529,7 @@ kubectl apply -f k8s.yaml
 ```bash
 kubectl get all 
 ```
+
 期待通り Running になっていれば、開発者として、 GKE への初期デプロイを完了することができました。
 
 ## **Configurations!**
