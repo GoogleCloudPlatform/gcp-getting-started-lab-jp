@@ -1,0 +1,16 @@
+steps:
+- name: 'python:3.9'
+  entrypoint: 'pip'
+  args: ['install', '-r', 'requirements.txt']
+
+- name: 'python:3.9'
+  entrypoint: 'flake8'
+  args: ['.']
+
+- name: 'python:3.9'
+  entrypoint: 'python'
+  args: ['-m', 'unittest', 'discover'
+
+- name: 'gcr.io/k8s-skaffold/pack'
+  entrypoint: 'pack'
+  args: ['build', '--builder=gcr.io/buildpacks/builder', '--publish', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1']
