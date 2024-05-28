@@ -116,7 +116,7 @@ gcloud config set project ${PROJECT_ID} && gcloud config set compute/region asia
 ```
 
 
-### **Lab-00.Lab 向けクラスタの準備**
+## **Lab-00.Lab 向けクラスタの準備**
 <walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
 
 
@@ -208,16 +208,23 @@ gcloud workstations clusters create cluster-handson \
 
 本ラボではデフォルトでの割り当て(クオータ)が不足する可能性があります。そのため事前に不足が予想される項目を拡張を申請します。
 [割り当てとシステム制限](https://console.cloud.google.com/iam-admin/quotas)に移動します。
+
 中央のフィルタに、`Compute Engine API` と入力します。リストから、名前が`Persistent Disk SSD (GB)`、項目(ロケーションなど)が`region : asia-northeast1` となっているものを見つけます。
 該当するものにチェックを入れて、上部の`割り当てを編集`をクリックします。
+
 `新しい値`に 1000 を入力します。
+
 リクエストの説明に、`Platform Engineering Hands-on で利用するため`と入力し、`次へ`をクリックします。
+
 `リクエストを送信`をクリックします。
+
 通常、数分後に承認され、登録しているアカウントのメールアドレスに結果が送信されています。
 その後、5分程度経過すると、割り当てが拡張されます。
+
+
 以上で事前準備は完了です。
 
-### **Lab-01 GKE Enterprise によるマルチチームでの GKE の利用**
+## **Lab-01 GKE Enterprise によるマルチチームでの GKE の利用**
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
 その中の一つとして、入門編では、チーム管理機能を利用します。
 Platform Engineering における、Internal Developer Platform は複数のストリーンアラインドチーム(アプリ開発チーム)によって利用されることを想定しているため、このようなマルチテナントの機能を実装しておくと管理がしやすくなります。
@@ -262,7 +269,7 @@ gcloud container clusters update prod-cluster --enable-fleet --location asia-nor
 gcloud container fleet scopes create app-a-team
 ```
 
-## **Lab-01-04. チームスコープへのクラスタの登録**
+### **Lab-01-04. チームスコープへのクラスタの登録**
 
 ここからは GUI で操作します。
 ブラウザ上の別のタブを開き（または同タブにURLを入力して）[チーム](https://console.cloud.google.com/kubernetes/teams)へ移動します。
@@ -271,14 +278,14 @@ gcloud container fleet scopes create app-a-team
 `すべて選択` にチェックを入れ `OK` を押します。
 `チームスコープを更新`をクリックします。
 
-## **Lab-01-05. 名前空間の追加**
+### **Lab-01-05. 名前空間の追加**
 
 チーム機能では、複数クラスタにまたがる名前空間を作成することが可能です。
 ページ上部の` + 名前空間を追加` をクリックします。
 
 Namespace の下に 'ec-site' を入力して、`チームスコープを更新`をクリックします。
 
-## **Lab-01-06. チームスコープ内の名前空間へのアプリケーションのデプロイ**
+### **Lab-01-06. チームスコープ内の名前空間へのアプリケーションのデプロイ**
 
 クラスタの作成が完了しましたら、サンプルアプリケーションをデプロイします。 [Online Boutique microservices demo](https://github.com/GoogleCloudPlatform/microservices-demo)アプリケーションは、EC サイトをモチーフにしたマイクロサービスアプリケーションとなっています。kuberenetes のマニフェストについては、`lab-01/sampleapp.yaml` をご確認ください。
 
@@ -333,10 +340,11 @@ kubectl get svc -n ec-site | grep LoadBalancer | awk '{print "http://"$4}'
 本日の説明範囲を超えますが、セキュリティに関するダッシュボードを確認することが可能です。
 [セキュリティ](https://console.cloud.google.com/kubernetes/security/dashboard)
 
+
 Lab-01はここで完了となります。
 
 
-### **Lab-02. Cloud Workstations による Golden Path の提供**
+## **Lab-02. Cloud Workstations による Golden Path の提供**
 Platform Engineering の観点から、開発者に作成ずみの開発環境とサンプルとなるアプリケーションのテンプレートを提供します。
 また、Platform 利用者に立場に立って、アプリケーションのデプロイを試してみます。
 
@@ -423,7 +431,7 @@ gcloud workstations create ws-spring-dev \
 
 Lab-02 は完了となります。
 
-### **Lab-03. 開発者として利用する**
+## **Lab-03. 開発者として Platform を利用する**
 
 ### **Lab-03-01. Workstations の起動**
 GUI での作業となります。
@@ -531,6 +539,8 @@ kubectl get all
 ```
 
 期待通り Running になっていれば、開発者として、 GKE への初期デプロイを完了することができました。
+
+
 
 ## **Configurations!**
 これで、入門編のハンズオンは完了となります。引き続き実践編、セキュリティガードレール編もお楽しみ下さい。
