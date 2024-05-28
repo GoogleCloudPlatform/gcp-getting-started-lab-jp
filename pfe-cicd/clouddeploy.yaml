@@ -2,25 +2,25 @@
 apiVersion: deploy.cloud.google.com/v1beta1
 kind: DeliveryPipeline
 metadata:
-  name: gke-dojo
-description: gke-dojo 
+  name: pfe-cicd
+description: pfe-cicd 
 serialPipeline:
   stages:
-  - targetId: staging
-  - targetId: production
+  - targetId: dev
+  - targetId: prod
 ---
 apiVersion: deploy.cloud.google.com/v1beta1
 kind: Target
 metadata:
-  name: staging
-description: Staging Environment
+  name: dev
+description: Dev Environment
 gke:
-  cluster: projects/PROJECT_ID/locations/asia-northeast1/clusters/gke-dojo-cluster
+  cluster: projects/PROJECT_ID/locations/asia-northeast1/clusters/dev-cluster
 ---
 apiVersion: deploy.cloud.google.com/v1beta1
 kind: Target
 metadata:
-  name: production
+  name: prod
 description: Production Environment
 gke:
-  cluster: projects/PROJECT_ID/locations/asia-northeast1/clusters/gke-dojo-cluster-prod
+  cluster: projects/PROJECT_ID/locations/asia-northeast1/clusters/prod-cluster

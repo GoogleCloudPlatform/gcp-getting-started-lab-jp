@@ -1,0 +1,36 @@
+steps:
+- name: 'python:3.9'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      pip install flake8
+      flake8 .
+
+- name: 'python:3.9'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      python -m unittest discover
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      sed -i "s|image: .*|image: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}|g" kubernetes-manifests/deployment.yaml
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['deploy', 'releases', 'create', 'release-${SHORT_SHA}', '--delivery-pipeline=pfe-cicd', '--region=asia-northeast1', '--source=kubernetes-manifests/', '--project=$PROJECT_ID']
+
+images:
+- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}'
