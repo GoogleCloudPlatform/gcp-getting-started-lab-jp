@@ -227,12 +227,12 @@ gcloud workstations clusters create cluster-handson \
 ## **Lab-01 GKE Enterprise によるマルチチームでの GKE の利用**
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
 その中の一つとして、入門編では、チーム管理機能を利用します。
-Platform Engineering における、Internal Developer Platform は複数のストリーンアラインドチーム(アプリ開発チーム)によって利用されることを想定しているため、このようなマルチテナントの機能を実装しておくと管理がしやすくなります。
+Platform Engineering における、Internal Developer Platform は複数のストリームアラインドチーム(アプリ開発チーム)によって利用されることを想定しているため、このようなマルチテナントの機能を実装しておくと管理がしやすくなります。
 
 
 ### **Lab-01-01.GKE Enterprise の有効化**
 
-Platform Engeering に役立つマルチチームの機能を持つ、GKE Enterprise を有効化します。
+Platform Engineering に役立つマルチチームの機能を持つ、GKE Enterprise を有効化します。
 
 ```bash
 gcloud services enable --project "$PROJECT_ID" \
@@ -348,7 +348,7 @@ Lab-01はここで完了となります。
 Platform Engineering の観点から、開発者に作成ずみの開発環境とサンプルとなるアプリケーションのテンプレートを提供します。
 また、Platform 利用者に立場に立って、アプリケーションのデプロイを試してみます。
 
-### **Lab-02-01. Artifact Resistry 作成**
+### **Lab-02-01. Artifact Registry 作成**
 Cloud Workstations イメージを保管するためにレポジトリを作成します。
 
 ```bash
@@ -385,13 +385,13 @@ gcloud builds submit lab-02/workstations/ \
 
 ### **Lab-02-03. Cloud Workstations イメージ Pull 用のサービスアカウントの設定**
 
-プライベートなカスタムイメージを利用するため、Artifact Resistry から Pull できる権限を持つサービスアカウントを作成しておきます。
+プライベートなカスタムイメージを利用するため、Artifact Registry から Pull できる権限を持つサービスアカウントを作成しておきます。
 
 ```bash
 gcloud iam service-accounts create codeoss-customized-sa \
   --display-name "Service Account for codeoss-customized config"
 ```
-サービスアカウントに権限を付与しておきます。今回は、Artifact Resistry から Pull できる権限で十分なため、`artifactregistry.reader`を付与します。
+サービスアカウントに権限を付与しておきます。今回は、Artifact Registry から Pull できる権限で十分なため、`artifactregistry.reader`を付与します。
 
 
 ```bash
@@ -436,22 +436,22 @@ Lab-02 は完了となります。
 ### **Lab-03-01. Workstations の起動**
 GUI での作業となります。
 ブラウザで新しいタブを開き、[Workstations一覧](https://console.cloud.google.com/workstations/list)を開きます。
-**My workstations** に表示される `ws-spring-dev`の START(開始) をクリックします。
+**My workstations** に表示される `ws-spring-dev`の 起動 をクリックします。
 起動には数分程度かかります。
 ステータスが、稼働中になりましたら、開始をクリックします。新しいタブで Code OSS の Welcome 画面が開きます。初回は表示に少し時間がかかります。
 
-### **Lab-03-01. サンプルアプリケーションの入手**
+### **Lab-03-02. サンプルアプリケーションの入手**
 git よりサンプルアプリケーションを取得します。
-左側の2番目のアイコンをクリック、または、Ctr + Shift +E の入力で、EXPLORER が開きます。
+左側の2番目のアイコンをクリック、または、Ctrl + Shift + E の入力で、EXPLORER が開きます。
 Clone Repository を選択します。
 
 上部に開いた URL バーに `https://github.com/ssekimoto/gs-spring-boot.git`と入力します。
 入力後、`レポジトリの URL https://github.com/ssekimoto/gs-spring-boot.git`をクリックします。
 (Github から複製を選択してしまうと、Github の認証が必要となりますのでキャンセルしてやり直してください)
-複製するフォルダーを選択してください、はそのまま OK を教えてください。
+複製するフォルダーを選択してください、はそのまま OK をクリックしてください。
 続いて 複製したレポジトリを開きますか？または現在のワークスペースに追加しますか？という選択には、`開く`を選択してください。
 
-### **Lab-03-01. サンプルアプリケーションの実行**
+### **Lab-03-03. サンプルアプリケーションの実行**
 左上の３本の線のアイコンから、Terminal > New Terminal を選択します。
 画面下にターミナルが現れますので、こちらで作業を実施します。
 
@@ -477,7 +477,7 @@ java -jar target/spring-boot-complete-0.0.1-SNAPSHOT.jar
 続いて、Open をクリックするとシンプルなアプリケーションにアクセスできます。
 完了したら、ターミナルに戻り、Ctrl-C でアプリケーションを停止しておきます。
 
-### **Lab-03-02. GKE でのアプリケーションの実行**
+### **Lab-03-04. GKE でのアプリケーションの実行**
 引き続き Cloud Workstations で作業をします。
 サンプルアプリケーションと一緒に、Dockerfile も Golden Path として git から提供されています。
 以前の手順と同様に Cloud Build でコンテナの作成を行います。
@@ -494,11 +494,11 @@ Workstations 上では Google Cloud にログインに別途ログインする�
 gcloud auth login
 ```
 
-表示される URL を Ctr+クリックで Open、もしくはコピー&ペーストで別のタブで開きます。
+表示される URL を Ctrl + クリックで Open、もしくはコピー&ペーストで別のタブで開きます。
 すると Google アカウントへのログイン画面になるため、ログインを実施します。
 最後に表示される `4/0` から始まる verification code をコピーして、Cloud Workstations の ターミナルに貼り付けます。
 正常にログインが完了すると
-`You are now loggeid in as [アカウント]`と表示されます。
+`You are now logged in as [アカウント]`と表示されます。
 
 また、Cloud Shell と同じように以下設定を行います。
 
@@ -517,7 +517,7 @@ gcloud builds submit . --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring
 ```
 
 続いて GKE へのデプロイを行います。
-左側のファイル一覧から ` complete/k8s.yaml` を開きます。
+左側のファイル一覧から `complete/k8s.yaml` を開きます。
 17行目の `asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring-app/spring-app:v1.0.0` の`${PROJECT_ID}`を実際のプロジェクトID に置き換えます。(Cloud Workstations は編集すると即時反映となるため、保存は不要です。）
 
 GKE への接続を行います
@@ -526,19 +526,19 @@ GKE への接続を行います
 gcloud container clusters get-credentials dev-cluster --region asia-northeast1 --project ${PROJECT_ID}
 ```
 
-GKE のデプロイを実施します。
+GKE へのデプロイを実施します。
 
 ```bash
 kubectl apply -f k8s.yaml 
 ```
 
-数分後以下でデプロイ後の確認を行います。
+数分後、以下でデプロイ後の確認を行います。
 
 ```bash
 kubectl get all 
 ```
 
-期待通り Running になっていれば、開発者として、 GKE への初期デプロイを完了することができました。
+期待通り Running になっていれば、開発者として、GKE への初期デプロイを完了することができました。
 
 
 
