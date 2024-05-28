@@ -193,10 +193,10 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "prod-cluster" \
 
 事前準備はこちらで完了となります。
 
-## **Lab-01 Google Cloud での CI/CD **
+## **Lab-01 Google Cloud での CI/CD**
 GKE 上のワークロードに対して CI/CD を実現するための Cloud Build や Cloud Deploy の機能を試してみます。
 
-### **Lab-01-01 アプリケーションコンテナ保管用レポジトリの作成 **
+### **Lab-01-01 アプリケーションコンテナ保管用レポジトリの作成**
 
 Artifact Registry に CI で作成する成果物であるコンテナイメージを保管するためのレポジトリを作成しておきます。
 
@@ -207,7 +207,7 @@ gcloud artifacts repositories create app-repo \
   --description="Docker repository for python app"
 ```
 
-### **Lab-01-02 Cloud Build による CI **
+### **Lab-01-02 Cloud Build による CI**
 Cloud Build を利用してサンプルアプリケーションのソースコードからコンテナイメージをビルドします。
 サンプルアプリケーションは Flask を利用した Python のアプリケーションです。
 
@@ -248,9 +248,23 @@ docker pull asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
 curl http://localhost:5000/random-pets
 ```
 
+##
+### **Lab-01-02 Cloud Deploy によるCD**
+続いて、Cloud Deploy を活用して、複数のクラスタに順番にデプロイしていきます。
+dev-cluster に対しては、トリガーと共にデプロイがされますが、
+prod-cluster に対しては、UI 上でプロモートという操作をするまではデプロイが行われません。
+
+早速そのようなパイプラインを設定していきます。
+設定は以下の `clouddeploy.yaml` に記述されています。
+
+```bash
+cat clouddeploy.yaml
+```
 
 
-## **Lab-02 GKE Enterprise による チームスコープでの Logging **
+
+
+## **Lab-02 GKE Enterprise による チームスコープでの Logging**
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
 その一つとしてチーム単位での Logging を本ハンズオンでの対象とします。
 
@@ -331,7 +345,7 @@ spec:
         'for ((i = 0; ; i++)); do echo "$i: $(date)"; sleep 1; done']
 EOF
 ```
-### **Lab-01-03 Cloud Deploy による CD **
+### **Lab-01-03 Cloud Deploy による CD**
 
 
 ### **Lab-02-07. Fleet Logging の設定**
