@@ -2,11 +2,6 @@ apiVersion: skaffold/v2beta28
 kind: Config
 metadata:
   name: pets-app
-build:
-  artifacts:
-  - image: asia-northeast1-docker.pkg.dev/${PROJECT_ID}/app-repo/pets
 deploy:
   kubectl:
-    manifests:
-      - kubernetes-manifests/deployment.yaml
-      - kubernetes-manifests/service.yaml
+    manifests: ["kubernetes-manifests/*.yaml"]

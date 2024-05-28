@@ -17,20 +17,20 @@ steps:
       python -m unittest discover
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}', '.']
+  args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2', '.']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}']
+  args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2']
 
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      sed -i "s|image: .*|image: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}|g" kubernetes-manifests/deployment.yaml
+      sed -i "s|image: .*|image: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2|g" kubernetes-manifests/deployment.yaml
 
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['deploy', 'releases', 'create', 'release-${SHORT_SHA}', '--delivery-pipeline=pfe-cicd', '--region=asia-northeast1', '--source=kubernetes-manifests/', '--project=$PROJECT_ID']
+  args: ['deploy', 'releases', 'create', 'release-v2', '--delivery-pipeline=pfe-cicd', '--region=asia-northeast1', '--source=./', '--project=$PROJECT_ID']
 
 images:
-- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:${SHORT_SHA}'
+- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2'
