@@ -225,8 +225,30 @@ cat cloudbuild.yaml
 Cloud Build で実行します。今回は Git レポジトリを用意していないため、ローカルのソースコードから手動トリガーとして実行します。
 
 ```bash
-cat cloudbuild.yaml
+gcloud builds submit --config cloudbuild.yaml .
 ```
+
+各ステップが順に行われているのが、出力をみてわかります。
+5分ほど正常に完了します。
+その後、正しくソースコードがコンテナ化されているのか、Cloud Shell 上でコンテナを動作させて確認します。
+まず、以下のコマンドで Cloud Shell に先ほど作成したイメージをダウンロードしてきます。
+
+```bash
+docker pull asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
+```
+
+続いて、以下のコマンドでCloud Shell 上でコンテナを動作させます。
+
+```bash
+ docker run -d -p 5000:5000 asia-northeast1-docker.pkg.dev/pfe-adv/app-repo/pets:v1
+```
+
+正しく動作しているか、curl アクセスして確認してみます。JSON 形式でレスポンスがあれば成功です。
+```bash
+curl http://localhost:5000/random-pets
+```
+
+
 
 ## **Lab-02 GKE Enterprise による チームスコープでの Logging **
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
@@ -309,6 +331,8 @@ spec:
         'for ((i = 0; ; i++)); do echo "$i: $(date)"; sleep 1; done']
 EOF
 ```
+### **Lab-01-03 Cloud Deploy による CD **
+
 
 ### **Lab-02-07. Fleet Logging の設定**
 以下コマンドを実行し、Fleet Logging の構成ファイルを生成します。  
