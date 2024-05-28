@@ -261,8 +261,37 @@ prod-cluster に対しては、UI 上でプロモートという操作をする�
 cat clouddeploy.yaml
 ```
 
+以下の3つのファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
 
+```bash
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" kubernetes-manifests/deployment.yaml
+```
 
+```bash
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" skaffold.yaml
+```
+
+```bash
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" clouddeploy.yaml
+```
+
+まずは、パイプラインとターゲットを Cloud Deploy に登録します。これによりアプリケーションをデプロイするための
+Cluster および、dev / prod という順序性が定義されます。
+
+```bash
+gcloud deploy apply --file clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
+```
+
+続いて、リリースを作成して、実際のデプロイを実行します。
+デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイするのに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
+
+```bash
+cat skaffold.yaml
+```
+
+```bash
+gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline=pfe-cicd --region=asia-northeast1 --source=kubernetes-manifests/ --project=$PROJECT_ID
+```
 
 ## **Lab-02 GKE Enterprise による チームスコープでの Logging**
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
