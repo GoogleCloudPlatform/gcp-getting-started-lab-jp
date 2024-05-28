@@ -240,7 +240,7 @@ docker pull asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
 続いて、以下のコマンドでCloud Shell 上でコンテナを動作させます。
 
 ```bash
- docker run -d -p 5000:5000 asia-northeast1-docker.pkg.dev/pfe-adv/app-repo/pets:v1
+ docker run -d -p 5000:5000 asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
 ```
 
 正しく動作しているか、curl アクセスして確認してみます。JSON 形式でレスポンスがあれば成功です。
@@ -283,15 +283,106 @@ gcloud deploy apply --file clouddeploy.yaml --region=asia-northeast1 --project=$
 ```
 
 続いて、リリースを作成して、実際のデプロイを実行します。
-デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイするのに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
+デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
 
 ```bash
 cat skaffold.yaml
 ```
 
+続いて以下のコマンドで実際に GKE の dev-cluster にデプロイします。
 ```bash
-gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline=pfe-cicd --region=asia-northeast1 --source=kubernetes-manifests/ --project=$PROJECT_ID
+gcloud deploy releases create \
+    release-$(date +%Y%m%d%H%M%S) \
+    --delivery-pipeline=pfe-cicd \
+    --region=asia-northeast1 \
+    --project=$PROJECT_ID \
+    --images=pets=asia-northeast1-docker.pkg.dev/$PROJECT_ID /app-repo/pets:v1
 ```
+autopilot mode のクラスターのため、初回のデプロイはノードのスケーリングに時間が数分かかります。
+デプロイ中の様子を見るため、GUI で確認していきます。
+数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
+
+[Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
+左側のメニューバーより Gateway、Service、Ingress を選択し`サービス`タブに遷移します。表示される一覧から `pets-service` という名前のサービスを見つけます。
+Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、IPアドレスの最後に`/random-pets`をつけて移動します。
+アプリケーションが期待どおりに動作していることを確認します。
+
+ステージングでテストしたので、本番環境に昇格する準備が整いました。
+[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
+デリバリーパイプラインの一覧から、`pfe-cicd` をクリックします。
+すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
+
+数分後にデプロイが完了されましたら、この手順は完了となります。
+
+## **Lab-01-03 Cloud Build から Cloud Deploy の実行**
+ここまでで、CI と CD を別々に行うことができました。
+次の手順としては、アプリケーションを更新し、ビルドを実行します。
+ビルドの最後の手順として、Cloud Deploy を実行するように設定しておき、一気通貫で CI と CD が実行されるようにします。
+
+まずはアプリケーションを更新します。今回は簡単にするために事前に用意した app.txt を app.py に置き換えることで更新を完了します。
+
+```bash
+mv app.py app.bak
+```
+
+```bash
+mv app.txt app.py
+```
+
+必要に応じて更新後のソースコードをご確認ください。
+
+続いて、`cloudbuild.yaml` についても変更を加え、ビルドステップの最後に、Cloud Deploy を実行するように編集する必要があります。
+ただし、今回は先ほどと同様に `cloudbuild-2.yaml`というファイルで更新ずみのものを用意しておりますので、こちらを利用します。
+
+```bash
+cat cloudbuild-2.yaml
+```
+確認するとステップが追加されていることがわかります。
+必要な権限を付与しておきます。
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+CLOUD_BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+COMPUTE_SA="725693812774-compute@developer.gserviceaccount.com"
+```
+
+```bash
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
+    --role="roles/clouddeploy.admin"
+```
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding $COMPUTE_SA \
+    --member="serviceAccount:${CLOUD_BUILD_SA}" \
+    --role="roles/iam.serviceAccountUser" \
+    --project=$PROJECT_ID
+```
+それでは実行します。
+
+```bash
+gcloud builds submit --config cloudbuild-2.yaml .
+```
+
+しばらくすると先ほどの CI のステップが順に行われた後、デリバリーパイプラインでデプロイが開始されるのが確認できます。
+
+autopilot mode のクラスターのため、初回のデプロイはノードのスケーリングに時間が数分かかります。
+デプロイ中の様子を見るため、GUI で確認していきます。
+数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
+
+[Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
+左側のメニューバーより Gateway、Service、Ingress を選択し`サービス`タブに遷移します。表示される一覧から `pets-service` という名前のサービスを見つけます。
+Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、IPアドレスの最後に`/random-pets`をつけて移動します。
+アプリケーションが期待どおりに動作していることを確認します。
+
+ステージングでテストしたので、本番環境に昇格する準備が整いました。
+[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
+デリバリーパイプラインの一覧から、`pfe-cicd` をクリックします。
+すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
+
+数分後にデプロイが完了されましたら、この手順は完了となります。
+
+こちらで Lab-01 は完了となります。
 
 ## **Lab-02 GKE Enterprise による チームスコープでの Logging**
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
