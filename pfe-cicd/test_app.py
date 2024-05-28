@@ -1,6 +1,7 @@
 import unittest
 from app import app
 
+
 class FlaskTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -11,6 +12,7 @@ class FlaskTestCase(unittest.TestCase):
         response = self.app.get('/random-pets')
         self.assertEqual(response.status_code, 200)
         self.assertIn('breed', response.json)
+
 
 if __name__ == '__main__':
     unittest.main()

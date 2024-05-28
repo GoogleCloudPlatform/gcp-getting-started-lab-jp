@@ -222,6 +222,11 @@ cat app.py
 cat cloudbuild.yaml
 ```
 
+Cloud Build で実行します。今回は Git レポジトリを用意していないため、ローカルのソースコードから手動トリガーとして実行します。
+
+```bash
+cat cloudbuild.yaml
+```
 
 ## **Lab-02 GKE Enterprise による チームスコープでの Logging **
 GKE Enterprise を有効化すると様々な高度な機能が GKE 上で利用できるようになります。
