@@ -357,7 +357,8 @@ gcloud iam service-accounts add-iam-policy-binding $COMPUTE_SA \
 ```bash
 gcloud builds submit --config cloudbuild-2.yaml .
 ```
-
+もし、エラーが出てしまいましたら、`app.py`の最終行にある空白行を削除もしくは、改行を行いもう一度、上のコマンドを試してください。
+これは PEP8 による構文解析で、空行の有無を判定しているためです。
 しばらくすると先ほどの CI のステップが順に行われた後、デリバリーパイプラインでデプロイが開始されるのが確認できます。
 
 デプロイ中の様子を見るため、GUI で確認していきます。
