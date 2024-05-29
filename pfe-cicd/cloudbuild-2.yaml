@@ -30,7 +30,11 @@ steps:
       sed -i "s|image: .*|image: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2|g" kubernetes-manifests/deployment.yaml
 
 - name: 'gcr.io/cloud-builders/gcloud'
-  args: ['deploy', 'releases', 'create', 'release-v2', '--delivery-pipeline=pfe-cicd', '--region=asia-northeast1', '--source=./', '--project=$PROJECT_ID']
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline=pfe-cicd --region=asia-northeast1 --source=./ --project=$PROJECT_ID
 
 images:
 - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2'
