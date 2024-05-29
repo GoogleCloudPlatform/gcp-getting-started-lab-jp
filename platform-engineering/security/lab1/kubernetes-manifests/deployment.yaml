@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pets-deployment
+  labels:
+    app: pets
+    role: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pets
+      role: backend
+  template:
+    metadata:
+      labels:
+        app: pets
+        role: backend
+    spec:
+      containers:
+      - name: pets
+        image: asia-northeast1-docker.pkg.dev/PROJECT_ID/app-repo/pets:v1.0
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: production

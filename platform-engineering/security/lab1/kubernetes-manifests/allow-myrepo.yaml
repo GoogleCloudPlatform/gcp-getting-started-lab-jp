@@ -1,0 +1,16 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRepos
+metadata:
+  name: allow-my-app-repo
+spec:
+  match:
+    kinds:
+    - apiGroups:
+      - ""
+      kinds:
+      - Pod
+    namespaces:
+    - default
+  parameters:
+    repos:
+    - asia-northeast1-docker.pkg.dev/PROJECT_ID/app-repo/

@@ -1,0 +1,70 @@
+steps:
+- id: 'flake8'
+  name: 'python:3.12-alpine'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      pip install flake8
+      flake8 .
+
+- id: 'unittest'
+  name: 'python:3.12-alpine'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      python -m unittest discover
+
+- id: 'dockerfile-scan'
+  name: 'aquasec/trivy'
+  entrypoint: '/bin/sh'
+  args:
+    - '-c'
+    - | 
+      trivy config ./Dockerfile-alpine --severity HIGH
+
+- id: 'build'
+  name: 'gcr.io/cloud-builders/docker'
+  args: 
+    - 'build'
+    - '-t'
+    - '${_REPO_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_TAG}'
+    - '-f'
+    - './Dockerfile-alpine'
+    - '.'
+
+- id: 'image-scan'
+  name: 'aquasec/trivy'
+  entrypoint: '/bin/sh'
+  args:
+    - '-c'
+    - | 
+      trivy image --severity CRITICAL ${_REPO_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_TAG} --exit-code 1
+
+- id: 'push'
+  name: 'gcr.io/cloud-builders/docker'
+  args: 
+    - 'push'
+    - '${_REPO_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_TAG}'
+
+- id: 'deploy'
+  name: 'gcr.io/cloud-builders/kubectl'
+  args:
+  - 'apply'
+  - '-f'
+  - 'kubernetes-manifests/deployment-alpine.yaml'
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_CLUSTER_LOCATION}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+  - 'CLOUDSDK_CORE_PROJECT=${PROJECT_ID}'
+
+substitutions:
+  _CLUSTER_NAME: gke-cluster
+  _CLUSTER_LOCATION: asia-northeast1-c
+  _REPO_REGION: asia-northeast1
+  _REPO_NAME: app-repo
+  _IMAGE_NAME: pets
+  _TAG: v1.0-alpine

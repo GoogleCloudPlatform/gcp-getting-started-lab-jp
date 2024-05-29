@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: bad-pod-curl
+  name: bad-pod-curl
+spec:
+  containers:
+  - name: bad-pod-curl
+    image: curlimages/curl
+    command: ["/bin/sh", "-ec", "sleep 3600"]
+    securityContext:
+      privileged: true

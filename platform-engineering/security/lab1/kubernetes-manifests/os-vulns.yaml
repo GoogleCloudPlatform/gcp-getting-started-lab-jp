@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: os-vulns
+spec:
+  containers:
+  - name: php-redis
+    image: us-docker.pkg.dev/google-samples/containers/gke/gb-frontend@sha256:dc8de8e0d569d2f828b187528c9317bd6b605c273ac5a282aebe471f630420fc
+    env:
+    - name: GET_HOSTS_FROM
+      value: "dns"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    ports:
+    - containerPort: 80
