@@ -1,5 +1,5 @@
 steps:
-- name: 'python:3.9'
+- name: 'python:3.12-alpine'
   entrypoint: 'sh'
   args:
     - '-c'
@@ -8,7 +8,7 @@ steps:
       pip install flake8
       flake8 .
 
-- name: 'python:3.9'
+- name: 'python:3.12-alpine'
   entrypoint: 'sh'
   args:
     - '-c'
