@@ -261,11 +261,7 @@ prod-cluster に対しては、UI 上でプロモートという操作をする�
 cat clouddeploy.yaml
 ```
 
-以下の3つのファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
-
-```bash
-sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" kubernetes-manifests/deployment.yaml
-```
+以下のファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
 
 ```bash
 sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" clouddeploy.yaml
@@ -286,14 +282,16 @@ cat skaffold.yaml
 ```
 
 続いて以下のコマンドで実際に GKE の dev-cluster にデプロイします。
+
 ```bash
 gcloud deploy releases create \
     release-$(date +%Y%m%d%H%M%S) \
     --delivery-pipeline=pfe-cicd \
     --region=asia-northeast1 \
     --project=$PROJECT_ID \
-    --images=pets=asia-northeast1-docker.pkg.dev/$PROJECT_ID /app-repo/pets:v1
+    --images=pets=asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
 ```
+
 autopilot mode のクラスターのため、初回のデプロイはノードのスケーリングに時間が数分かかります。
 デプロイ中の様子を見るため、GUI で確認していきます。
 数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
@@ -339,7 +337,7 @@ Cloud Build から Cloud Deploy を利用するにあたっていくつか権限
 ```bash
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 CLOUD_BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
-COMPUTE_SA="725693812774-compute@developer.gserviceaccount.com"
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 ```
 
 ```bash
