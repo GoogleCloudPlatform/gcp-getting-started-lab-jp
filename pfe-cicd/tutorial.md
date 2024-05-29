@@ -268,10 +268,6 @@ sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" kubernetes-manifests/deployment.yaml
 ```
 
 ```bash
-sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" skaffold.yaml
-```
-
-```bash
 sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" clouddeploy.yaml
 ```
 
@@ -338,7 +334,7 @@ mv app.txt app.py
 cat cloudbuild-2.yaml
 ```
 確認するとステップが追加されていることがわかります。
-必要な権限を付与しておきます。
+Cloud Build から Cloud Deploy を利用するにあたっていくつか権限が必要になるため、サービスアカウントに付与します。
 
 ```bash
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
@@ -366,14 +362,13 @@ gcloud builds submit --config cloudbuild-2.yaml .
 
 しばらくすると先ほどの CI のステップが順に行われた後、デリバリーパイプラインでデプロイが開始されるのが確認できます。
 
-autopilot mode のクラスターのため、初回のデプロイはノードのスケーリングに時間が数分かかります。
 デプロイ中の様子を見るため、GUI で確認していきます。
-数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
+数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に今回のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
 
 [Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
 左側のメニューバーより Gateway、Service、Ingress を選択し`サービス`タブに遷移します。表示される一覧から `pets-service` という名前のサービスを見つけます。
 Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、IPアドレスの最後に`/random-pets`をつけて移動します。
-アプリケーションが期待どおりに動作していることを確認します。
+再びアプリケーションが期待どおりに動作していることを確認します。今回は先ほどとは異なる出力となるのが確認できるようになっています。
 
 ステージングでテストしたので、本番環境に昇格する準備が整いました。
 [Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
