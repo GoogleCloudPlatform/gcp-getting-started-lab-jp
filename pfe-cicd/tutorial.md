@@ -443,7 +443,8 @@ gcloud container clusters get-credentials dev-cluster --region asia-northeast1 -
 ```
 
 以下のコマンドを実行し、サンプルアプリケーションをデプロイします。
-```bash
+**こちらはコピーアンドペーストで実行ください**
+```text
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
@@ -458,13 +459,12 @@ spec:
         'for ((i = 0; ; i++)); do echo "$i: $(date)"; sleep 1; done']
 EOF
 ```
-### **Lab-01-03 Cloud Deploy による CD**
-
 
 ### **Lab-02-07. Fleet Logging の設定**
 以下コマンドを実行し、Fleet Logging の構成ファイルを生成します。  
+**こちらはコピーアンドペーストで実行ください**
 
-```bash
+```text
 cat << EOF > fleet-logging.json
 {
   "loggingConfig": {
@@ -535,102 +535,6 @@ spec:
 チーム管理画面の`モニタリング`タブを選択し、チームスコープ単位でメトリクス情報が閲覧可能であることを確認します。
 
 Lab-02 はこちらで完了になります。
-
-
-### **1. 対象のアプリケーション確認**
-
-ローカルにある python アプリケーションを出力して確認してください。
-こちらはテキストを出力するシンプルな Flask アプリケーションです。
-
-```bash
-cat lab-ex01/main.py
-```
-
-### **2. レポジトリ作成**
-
-以下のコマンドで Flask アプリケーションのコンテナイメージを配置するための Artifact Registry のレポジトリを作成します。
-```bash
-gcloud artifacts repositories create gke-dojo --repository-format=docker --location=asia-northeast1
-```
-
-### **3. Cloud Build によるコンテナイメージの作成**
-
-Cloud Build を利用して、クラウド上でコンテナイメージのビルドを行います。
-Cloud Build に含まれている Buildpacks により Dockerfile を書かなくとも、アプリケーションの構成を認識して適切なコンテナイメージを作成することができます。
-
-以下のコマンドで、ディレクトリを移動します。
-
-```bash
-cd lab-ex01
-```
-移動後、ビルドを実行します。
-
-```bash
-gcloud builds submit --config cloudbuild.yaml
-```
-最終的に`STATUS: SUCCESS`と表示されましたら、ビルド成功です。
-
-カレントディレクトリを戻しておきます。
-
-```bash
-cd ..
-```
-
-### **4. Cloud Deploy による デプロイ**
-
-前の手順で用意した Flask アプリケーションを Kubernetes マニフェストを確認します。
-
-```bash
-cat lab-ex01/k8s/deployment.yaml
-```
-
-```bash
-cat lab-ex01/k8s/service.yaml
-```
-
-続いて Cloud Deploy にてターゲットとなる GKE クラスタにデプロイするための定義ファイルを確認します。
-```bash
-cat lab-ex01/clouddeploy.yaml
-```
-
-以下のコマンドで `clouddeploy.yaml` 内の`PROJECT_ID`を実際の環境変数(プロジェクトID)へ置き換えます。
-```
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex01/clouddeploy.yaml
-```
-
-このファイルを利用して、アプリケーションをデプロイするためのパイプラインを用意します。
-```bash
-gcloud deploy apply --file=lab-ex01/clouddeploy.yaml --region asia-northeast1 --project=$PROJECT_ID
-```
-
-Cloud Deploy ではテンプレートとなる Kubernetes のマニフェストを環境に合わせてレンダリングするために、Skaffold を利用します。
-ここでは、コンテナイメージを今回のアプリケーションに書き換えるのみのため、シンプルなコンフィグを作成しています。
-
-```bash
-cat lab-ex01/skaffold.yaml
-```
-それでは、デプロイを開始します。以下のコマンドでリリースを作成します。
-
-```bash
-cd lab-ex01/
-gcloud deploy releases create release01 \
-    --delivery-pipeline=gke-dojo \
-    --region=asia-northeast1 \
-    --skaffold-file=skaffold.yaml \
-    --source=./ \
-    --images=gke-dojo="asia-northeast1-docker.pkg.dev/$PROJECT_ID/gke-dojo/gke-dojo-app:v1"
-```
-数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
-
-[Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
-左側のメニューバーより Services & Ingress を選択し、gke-dojo-service という名前のサービスを見つけます。
-Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、アプリケーションが期待どおりに動作していることを確認します。
-
-ステージングでテストしたので、本番環境に昇格する準備が整いました。
-[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
-デリバリーパイプラインの一覧から、`gke-dojo` をクリックします。
-すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
-
 
 
 ## **Configurations!**
