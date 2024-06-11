@@ -30,6 +30,7 @@ const NewFolderForm = ({
 
   const handleClickCancel = () => {
     setFolderName("");
+    closeDialog();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

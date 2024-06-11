@@ -10,7 +10,7 @@ type SearchItemProps = {
 
 const SearchItemTable = async ({ queryText }: SearchItemProps) => {
   const headersList = headers();
-  const owner = getOwner(headersList);
+  const owner = await getOwner(headersList);
 
   const items = await searchItemsByQueryAndOwner(queryText, owner);
 

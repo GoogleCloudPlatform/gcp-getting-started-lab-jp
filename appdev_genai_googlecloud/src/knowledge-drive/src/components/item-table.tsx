@@ -19,8 +19,8 @@ type ItemTableProps = {
 const ItemTable = async ({ parent }: ItemTableProps) => {
   const action = "showItemTable";
   const headersList = headers();
-  const sourceIP = getSourceIP(headersList);
-  const owner = getOwner(headersList);
+  const sourceIP = await getSourceIP(headersList);
+  const owner = await getOwner(headersList);
 
   const folderExist = await isFolderExist(parent, owner);
   if (!folderExist) {
