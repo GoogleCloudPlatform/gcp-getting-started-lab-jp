@@ -14,7 +14,8 @@
 
 **Vertex AI**
 
-- 生成 AI の API (Palm2 API)
+- 生成 AI の API (Gemini 1.5 Flash)
+- テキストをエンべディング化する API (Text Embeddings API)
 - モデルの作成
 - モデルのチューニング
 
@@ -157,12 +158,12 @@ gcloud sql databases create knowledge_drive \
 ```bash
 gcloud sql users create knowledge_drive_user \
   --instance=appdev-ai \
-  --password=handson01
+  --password=pass-kd
 ```
 
 ## **Cloud SQL データベースの設定**
 
-### \*_1. データベースに接続_。入力しているパスワードは画面に表示されないのでご注意下さい。
+### **1. データベースに接続\_。入力しているパスワードは画面に表示されないのでご注意下さい。**
 
 ```bash
 gcloud sql connect appdev-ai \
@@ -170,7 +171,7 @@ gcloud sql connect appdev-ai \
   --database=knowledge_drive
 ```
 
-パスワードを聞かれますので `handson01` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
+パスワードを聞かれますので `pass-kd` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -277,7 +278,7 @@ gcloud run deploy knowledge-drive \
   --allow-unauthenticated \
   --region asia-northeast1 \
   --set-env-vars DB_USER=knowledge_drive_user \
-  --set-env-vars DB_PASSWORD=handson01 \
+  --set-env-vars DB_PASSWORD=pass-kd \
   --set-env-vars DB_NAME=knowledge_drive \
   --set-env-vars BUCKET_NAME=$GOOGLE_CLOUD_PROJECT-knowledge-drive \
   --set-env-vars INSTANCE_CONNECTION_NAME=$GOOGLE_CLOUD_PROJECT:asia-northeast1:appdev-ai
@@ -350,7 +351,7 @@ gcloud sql databases create docs \
 ```bash
 gcloud sql users create docs-admin \
   --instance=appdev-ai \
-  --password=handson
+  --password=pass-docs
 ```
 
 ### **3. データベースに接続**
@@ -361,7 +362,7 @@ gcloud sql connect appdev-ai \
   --database=docs
 ```
 
-パスワードを聞かれますので `handson` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
+パスワードを聞かれますので `pass-docs` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -406,7 +407,7 @@ gcloud sql connect appdev-ai \
   --database=knowledge_drive
 ```
 
-パスワードを聞かれますので `handson01` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
+パスワードを聞かれますので `pass-kd` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -567,7 +568,7 @@ GENAI_APP_URL=$(gcloud run services describe genai-app --region asia-northeast1 
 gcloud run services update knowledge-drive \
   --region asia-northeast1 \
   --set-env-vars DB_USER=knowledge_drive_user \
-  --set-env-vars DB_PASSWORD=handson01 \
+  --set-env-vars DB_PASSWORD=pass-kd \
   --set-env-vars DB_NAME=knowledge_drive \
   --set-env-vars BUCKET_NAME=$GOOGLE_CLOUD_PROJECT-knowledge-drive \
   --set-env-vars INSTANCE_CONNECTION_NAME=$GOOGLE_CLOUD_PROJECT:asia-northeast1:appdev-ai \
