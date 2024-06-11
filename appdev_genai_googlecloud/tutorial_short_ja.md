@@ -2,7 +2,7 @@
 
 ## **ハンズオン概要**
 
-本ハンズオンでは、[Cloud Run](https://cloud.google.com/run), [Vertex AI](https://cloud.google.com/vertex-ai)、[BigQuery](https://cloud.google.com/bigquery) , [Identity-Aware Proxy](https://cloud.google.com/security/products/iap) といった Google Cloud イチ押しのマネージドなサービスをフル活用し、クラウドネイティブなアプリケーション開発を体験します。そしてそのアプリケーションに生成 AI を使ったインテリジェントな機能を追加することで、実際のサービスと生成 AI の組み合わせの事例を学んでいただけます。
+本ハンズオンでは、[Cloud Run](https://cloud.google.com/run), [Vertex AI](https://cloud.google.com/vertex-ai), [Identity-Aware Proxy](https://cloud.google.com/security/products/iap) といった Google Cloud イチ押しのマネージドなサービスをフル活用し、クラウドネイティブなアプリケーション開発を体験します。そしてそのアプリケーションに生成 AI を使ったインテリジェントな機能を追加することで、実際のサービスと生成 AI の組み合わせの事例を学んでいただけます。
 
 以下が今回のハンズオンで利用する主要なサービスです。
 
@@ -18,12 +18,6 @@
 - テキストをエンべディング化する API (Text Embeddings API)
 - モデルの作成
 - モデルのチューニング
-
-**BigQuery (Log Analytics)**
-
-- Log Analytics の有効化
-- ログバケット、ログルータの設定
-- アプリケーションログの分析
 
 **Cloud SQL (PostgreSQL のマネージドデータベース)**
 
@@ -66,20 +60,10 @@ cd ~/gcp-getting-started-lab-jp/appdev_genai_googlecloud
 ### **2. チュートリアルを開く**
 
 ```bash
-teachme tutorial_ja.md
+teachme tutorial_short_ja.md
 ```
 
 途中まで進めていたチュートリアルのページまで `Next` ボタンを押し、進めてください。
-
-## **環境準備**
-
-<walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
-
-最初に、ハンズオンを進めるための環境準備を行います。
-
-下記の設定を進めていきます。
-
-- Google Cloud 機能（API）有効化設定
 
 ## **Google Cloud 環境設定**
 
@@ -105,29 +89,7 @@ gcloud services enable \
 
 **GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library)
 
-<walkthrough-footnote>必要な機能が使えるようになりました。次に BigQuery (Log Analytics) の設定方法を学びます。</walkthrough-footnote>
-
-## **BigQuery (Log Analytics) の設定 (ログバケット)**
-
-後ほど Log Analytics を利用して、ログを分析します。できる限り多くのログを集めておくために、ここで Cloud Run のログを送るためのバケットを作成します。
-
-### **1. ログバケットの作成**
-
-```bash
-gcloud logging buckets create run-analytics-bucket \
-  --location asia-northeast1 \
-  --enable-analytics
-```
-
-**注**: 最大 3 分程度時間がかかります。
-
-### **2. ログシンクの作成**
-
-```bash
-gcloud logging sinks create run-analytics-sink \
-  logging.googleapis.com/projects/$GOOGLE_CLOUD_PROJECT/locations/asia-northeast1/buckets/run-analytics-bucket \
-  --log-filter 'logName:"run.googleapis.com"'
-```
+<walkthrough-footnote>必要な機能が使えるようになりました。次に Cloud SQL の設定方法を学びます。</walkthrough-footnote>
 
 ## **Cloud SQL データベースの作成**
 
@@ -163,7 +125,9 @@ gcloud sql users create knowledge_drive_user \
 
 ## **Cloud SQL データベースの設定**
 
-### **1. データベースに接続\_。入力しているパスワードは画面に表示されないのでご注意下さい。**
+### **1. データベースに接続**
+
+入力しているパスワードは画面に表示されないのでご注意下さい。
 
 ```bash
 gcloud sql connect appdev-ai \
@@ -171,7 +135,7 @@ gcloud sql connect appdev-ai \
   --database=knowledge_drive
 ```
 
-パスワードを聞かれますので `pass-kd` と入力してください。入力しているパスワードは画面に表示されないのでご注意下さい。
+パスワードを聞かれますので `pass-kd` と入力してください。入力しているパスワードは**画面に表示されない**のでご注意下さい。
 
 データベースに接続するとプロンプトの表示が変わります。
 
@@ -304,32 +268,14 @@ gcloud run deploy knowledge-drive \
 
 **注**: URL を知っている方は誰でもアクセス可能です。機密情報を含んだファイルはアップロードしないようにご注意ください。
 
-## **チャレンジ問題: Knowledge Drive の更新**
+## **生成 AI を活用しアップロード済みファイルをベースにした回答生成、ファイルの要約、説明文生成機能 (GenAI App) の追加**
 
-本チャレンジ問題では Cloud Run のデプロイ機能を利用して、Knowledge Drive のソースコードを修正し、以下の手順でアプリケーションを更新してみましょう。
+Knowledge Drive に、生成 AI を活用し以下の機能を追加します。
 
-- 更新内容: アプリケーションのヘッダ左上の `ドライブ` を任意の別の単語に変更する
+- アップロードされた PDF に基づき、質問への回答を返す
+- アップロードされた PDF の要約、画像ファイルの説明文を生成する
 
-### **修正手順**
-
-1. Cloud Shell Editor から対象のファイルを開き、単語を書き換える
-
-   ```bash
-   cloudshell edit ./src/knowledge-drive/src/components/app-name.tsx
-   ```
-
-   `ターミナルを開く` ボタンから Cloud Shell に戻れます。
-
-1. ソースコードを修正したため、コンテナイメージを再ビルドする
-1. [タグ付きリビジョン](https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration?hl=ja#deploy-with-tags) を参考にタグを付けたリビジョンでサービスをデプロイする
-1. タグ付きリビジョンのアプリケーションにアクセスし、更新が問題なく行われていることを確認する
-1. [トラフィックを最新のリビジョンに送信する](https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration?hl=ja#send-to-latest) を参考にタグ付きリビジョンにアクセスを割り振る
-
-更新が上手くいくと、以降 Knowledge Drive のヘッダ左上の単語は更新された単語のままになります。
-
-## **生成 AI を活用しアップロード済みファイルをベースにした回答生成機能 (GenAI App) の追加**
-
-Knowledge Drive に、生成 AI を活用し質問文への回答を返す機能である GenAI App を追加します。
+この機能は Knowledge Drive に機能を追加するのではなく GenAI App という別のサービスとして開発、デプロイします。
 
 今回は、GenAI App も個別の Cloud Run サービスでデプロイし、2 つのサービスを連携させるようにします。
 
@@ -416,7 +362,12 @@ gcloud sql connect appdev-ai \
 **注**: 以下のコマンドはコピー&ペーストで実行してください。
 
 ```shell
-GRANT SELECT,UPDATE on items to "docs-admin";
+GRANT
+  SELECT,UPDATE
+ON
+  items
+TO
+  "docs-admin";
 ```
 
 ### **3. データベースから切断**
@@ -459,7 +410,7 @@ gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
   --role=roles/eventarc.eventReceiver
 ```
 
-### **3 GenAI App のビルド、デプロイ**
+### **3. GenAI App のビルド、デプロイ**
 
 ```bash
 gcloud builds submit ./src/genai-app \
@@ -492,20 +443,15 @@ gcloud run services add-iam-policy-binding genai-app \
 ### **2. Eventarc トリガーの作成**
 
 ```bash
-gcloud eventarc triggers create genai-app \
+while true; do gcloud eventarc triggers create genai-app \
   --destination-run-service=genai-app \
   --destination-run-region=asia-northeast1 \
   --location=asia-northeast1 \
   --event-filters="type=google.cloud.storage.object.v1.finalized" \
   --event-filters="bucket=$GOOGLE_CLOUD_PROJECT-knowledge-drive" \
   --service-account=genai-app@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-  --destination-run-path=/register_doc
-```
-
-以下のようなエラーが出た場合は、数分待ってから再度コマンドを実行してください。
-
-```
-ERROR: (gcloud.eventarc.triggers.create) FAILED_PRECONDITION: Invalid resource state for "": Permission denied while using the Eventarc Service Agent.
+  --destination-run-path=/register_doc \
+&& break; sleep 10; clear; done
 ```
 
 ## **非同期連携の設定**
@@ -575,30 +521,52 @@ gcloud run services update knowledge-drive \
   --set-env-vars SEARCH_HOST=$GENAI_APP_URL
 ```
 
-## **連携機能の確認**
+## **連携機能の確認 (PDF の要約、画像の説明文生成)**
 
 ### **1. ファイルのアップロード**
 
-GenAI App は PDF ファイルを読み取り、処理します。
+GenAI App は PDF, 画像ファイルを読み取り、処理します。
 
-以下の中から学習させてみたい PDF をローカル PC にダウンロードし、Knowledge Drive からアップロードしてください。
+以下の中から要約の作成、説明文を生成してみたいファイルをローカル PC にダウンロードし、Knowledge Drive からアップロードしてください。
 
-- [Cloud Run](https://storage.googleapis.com/genai-handson-20230929/CloudRun.pdf)
-- [Cloud SQL](https://storage.googleapis.com/genai-handson-20230929/CloudSQL.pdf)
-- [Cloud Storage for Firebase](https://storage.googleapis.com/genai-handson-20230929/CloudStorageforFirebase.pdf)
-- [Firebase Authentication](https://storage.googleapis.com/genai-handson-20230929/FirebaseAuthentication.pdf)
-- [Firestore](https://storage.googleapis.com/genai-handson-20230929/Firestore.pdf)
-- [Palm API と LangChain の連携](https://storage.googleapis.com/genai-handson-20230929/PalmAPIAndLangChain.pdf)
+**PDF**
 
-### **2. GenAI App への質問**
+- [Cloud Run](https://storage.googleapis.com/appdev-genai-assets/CloudRun.pdf)
+- [Cloud SQL](https://storage.googleapis.com/appdev-genai-assets/CloudSQL.pdf)
+- [Vertex AI](https://storage.googleapis.com/appdev-genai-assets/VertexAI.pdf)
+- [Identity-Aware Proxy](https://storage.googleapis.com/appdev-genai-assets/IdentityAwareProxy.pdf)
 
-上部検索バー上の右の方のアイコンをクリックすると、ファイル/フォルダ名検索と GenAI App への質問機能を切り替えられるようになっています。
+**画像**
+
+- [寿司](https://storage.googleapis.com/appdev-genai-assets/sushi.jpg)
+- [夜の風景](https://storage.googleapis.com/appdev-genai-assets/view_in_tokyo.jpg)
+- [富士山](https://storage.googleapis.com/appdev-genai-assets/Mt.Fuji.jpg)
+- [グランドキャニオン](https://storage.googleapis.com/appdev-genai-assets/grand_canyon.jpg)
+
+### **2. 要約、説明文の確認**
+
+ファイルをアップロードしてから少し待つと、ファイルのアイコン右上に緑色のチェックマークが付きます。そのマークが、要約、説明文が作成されたことを示します。
+
+マークが付いたアイコンに、マウスカーソルを合わせてみてください。そうすると要約、説明文が表示されます。
+
+## **連携機能の確認 (PDF の内容に基づいた質問への回答生成)**
+
+### **1. GenAI App への質問**
+
+上部検索バー上の右の方のアイコンをクリックすると、ファイル/フォルダ名検索と GenAI App への質問機能 (背景が薄紫色に変わります) を切り替えられるようになっています。
 
 GenAI App への質問に切り替え、先程アップロードしたファイルの情報に関連する質問を投げてみましょう。
 
+**質問の例**
+
+- Cloud Run とはなんですか？
+- Vertex AI でモデルの評価とイテレーションはどのように行いますか？
+- Cloud SQL の更新で考えるべきことはなんですか？
+- IAP を使うとなにができますか？
+
 無事、回答が返ってくれば成功です。
 
-## **チャレンジ問題: 様々な PDF を利用した生成 AI 機能の確認**
+### **(任意) 2. 追加の PDF ファイルのアップロード、質問への回答生成**
 
 インターネットからダウンロード可能な PDF をアップロードし、生成 AI 機能が正しく動くかを確認しましょう。
 
@@ -621,123 +589,36 @@ GenAI App への質問に切り替え、先程アップロードしたファイ�
 - アップロードしたファイルがユーザーごとに保存される
 - 生成 AI を用いた回答もユーザーごとのファイルから回答が生成される
 
-## **外部アプリケーション ロードバランサの作成 (1/3)**
+## **外部アプリケーション ロードバランサの作成**
 
-Identity-Aware Proxy を利用するには、まずロードバランサを作成する必要があります。
+Cloud Run と Identity-Aware Proxy を組み合わせて利用するには、まずロードバランサを作成する必要があります。
 
-ロードバランサの作成は複数のコマンドが必要になるため、3 ステップに分けて実行します。
-
-### **1. IP アドレスの取得**
+ロードバランサの作成は複数の手順が必要なため、ここではスクリプトにまとめて実行します。
 
 ```bash
-gcloud compute addresses create knowledge-drive-ip \
-  --network-tier=PREMIUM \
-  --ip-version=IPV4 \
-  --global
+bash ./assets/lb.sh
 ```
 
-### **2. 作成した IP アドレスの確認**
-
-```bash
-export KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
-```
-
-### **3. 証明書の作成**
-
-```bash
-gcloud compute ssl-certificates create knowledge-drive-cert \
-  --domains=kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io \
-  --global
-```
-
-## **外部アプリケーション ロードバランサの作成 (2/3)**
-
-### **1. ネットワーク エンドポイント グループの作成**
-
-```bash
-gcloud compute network-endpoint-groups create knowledge-drive-neg \
-  --region=asia-northeast1 \
-  --network-endpoint-type=serverless  \
-  --cloud-run-service=knowledge-drive
-```
-
-### **2. バックエンドサービスの作成**
-
-```bash
-gcloud compute backend-services create knowledge-drive-bs \
-  --load-balancing-scheme=EXTERNAL_MANAGED \
-  --global
-```
-
-### **3. バックエンドサービスとネットワーク エンドポイント グループの紐づけ**
-
-```bash
-gcloud compute backend-services add-backend knowledge-drive-bs \
-  --global \
-  --network-endpoint-group=knowledge-drive-neg \
-  --network-endpoint-group-region=asia-northeast1
-```
-
-## **外部アプリケーション ロードバランサの作成 (3/3)**
-
-### **1. URL マップの作成**
-
-```bash
-gcloud compute url-maps create knowledge-drive-urlmap \
-  --default-service knowledge-drive-bs
-```
-
-### **2. ターゲット HTTPS プロキシの作成**
-
-```bash
-gcloud compute target-https-proxies create knowledge-drive-proxy \
-  --ssl-certificates=knowledge-drive-cert \
-  --url-map=knowledge-drive-urlmap
-```
-
-### **3. 転送ルールの作成**
-
-```bash
-gcloud compute forwarding-rules create knowledge-drive-forwardingrule \
-  --load-balancing-scheme=EXTERNAL_MANAGED \
-  --network-tier=PREMIUM \
-  --address=knowledge-drive-ip \
-  --target-https-proxy=knowledge-drive-proxy \
-  --global \
-  --ports=443
-```
-
-## **ロードバランサ経由でのアクセス確認**
-
-以下のコマンドの出力をクリックし、ロードバランサ経由で Knowledge Drive にアクセスできることを確認します。
-
-```bash
-KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
-echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
-```
-
-**注**: アクセスできるようになるまでに、最大 10 分程度の時間がかかります。
+**注**: アクセスできるようになるまでに、最大 10 分程度の時間がかかります。作成完了後、すぐアクセスできない場合は何度かアクセスを試してみてください。
 
 ## **Identity-Aware Proxy の設定**
 
-### **1. 管理画面に遷移**
+### **1. OAuth 同意画面の設定**
 
-<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> セキュリティ -> Identity-Aware Proxy の順に進みます。
-
-### **2. OAuth 同意画面の設定**
-
-1. `同意画面を作成`　ボタンをクリック
-1. `外部` のチェックボックスをチェックし、`作成` ボタンをクリック
+1. [OAuth 同意画面](https://console.cloud.google.com/apis/credentials/consent?cloudshell=false) をクリックし、OAuth 同意画面に遷移
+1. `External` のラジオボタンをチェックし、`作成` ボタンをクリック
 1. `アプリ名` に `knowledge-drive` と入力
 1. `ユーザーサポートメール` をクリックし、表示されたメールアドレスを選択
 1. `デベロッパーの連絡先情報` にご自身のメールアドレスを入力し、`保存して次へ` ボタンをクリック
 1. `スコープ` 画面では何も変更せずに `保存して次へ` ボタンをクリック
 1. `テストユーザー` 画面では何も変更せずに `保存して次へ` ボタンをクリック
-1. `概要` 画面では最下部まで移動し、`ダッシュボードに戻る` ボタンをクリック
+1. `Summary` 画面では最下部まで移動し、`BACK TO DASHBOARD` ボタンをクリック
 1. 上の手順 #1 に従い、管理画面に戻る
 
 ### **3. Identity-Aware Proxy の有効化**
 
+1. [Identity-Aware Proxy 管理画面](https://console.cloud.google.com/security/iap?cloudshell=false) をクリックし、遷移
+1. プロジェクト ID の選択を促された場合は、利用している Qwiklabs のプロジェクトを選択
 1. `knowledge-drive-bs` の右の IAP スライダーをクリックする
 1. 有効化の確認画面で、構成要件の確認チェックボックスをチェックする
 1. `有効にする` をクリックする
@@ -758,13 +639,13 @@ KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --form
 echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 ```
 
-正しく設定ができていると、Google サインイン画面に遷移します。有効化に少し時間がかかるため、アクセスできてしまっている方は少し待ってみてください。
+正しく設定ができていると、Google サインイン画面に遷移します。有効化に少し時間がかかるため、アクセスができてしまっている方は少し待ってみてください。
 
-ご自身の Google アカウントを選択し、アクセスが拒否されることを確認します。
+Qwiklabs で利用している Google アカウントを選択し、アクセスが拒否されることを確認します。
 
 ### **2. OAuth 同意画面からテストユーザーを追加**
 
-1. [OAuth 同意画面](https://console.cloud.google.com/apis/credentials/consent) をクリックし、OAuth 同意画面に遷移
+1. [OAuth 同意画面](https://console.cloud.google.com/apis/credentials/consent?cloudshell=false) をクリックし、OAuth 同意画面に遷移
 1. `テストユーザー` の `+ ADD USERS` ボタンをクリックし、 Qwiklabs アカウントのメールアドレスを入力し、`保存` ボタンをクリックする
 1. `テストユーザー` のリストに、入力したメールアドレスが追加されたことを確認する
 
@@ -825,90 +706,18 @@ gcloud run services update knowledge-drive \
   --ingress internal-and-cloud-load-balancing
 ```
 
-出力された URL をクリックし、アクセスができないこと (Error: Page not Found) が表示されることを確認します。
+コマンドの実行後、手順 1 で出力されている URL をクリックし、アクセスができなくなったこと (Error: Page not Found が表示されること) を確認します。
 
 ### **3. ロードバランサ経由でのアクセス確認**
 
-ロードバランサ経由の URL にアクセスし、問題なくアクセスできることを確認します。
+以下のコマンドで出力されたロードバランサ経由の URL にアクセスし、問題なくアクセスできることを確認します。
 
 ```bash
 KNOWLEDGE_DRIVE_IP=$(gcloud compute addresses describe knowledge-drive-ip --format="get(address)" --global)
 echo https://kd-${KNOWLEDGE_DRIVE_IP//./-}.nip.io
 ```
 
-## **Log Analytics (BigQuery) を使ったログ分析**
-
-### **1. Log Analytics 画面に遷移**
-
-<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> ロギング -> ログ分析 の順に進みます。
-
-### **2. データが取得されているかを確認**
-
-以下のコマンドの出力結果をクエリ入力画面に貼り付け、`クエリを実行` ボタンをクリックし実行してみてください。
-
-```shell
-cat << EOF
-
-SELECT
-  timestamp, severity, resource.type, log_name, text_payload, proto_payload, json_payload
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-LIMIT 50
-
-EOF
-```
-
-うまくログが取れていた場合、いくつかのログがテーブル形式で表示されます。
-
-### **3. 様々なクエリを試してみる**
-
-1. リクエスト数が多い順に URL へのアクセス数を調べる
-
-```shell
-cat << EOF
-
-SELECT
-  http_request.request_url, COUNT(http_request.request_url) AS request_count
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-WHERE
-  http_request IS NOT NULL AND
-  http_request.request_url IS NOT NULL
-GROUP BY
-  http_request.request_url
-ORDER BY
-  COUNT(http_request.request_url) DESC
-LIMIT 50
-
-EOF
-```
-
-2. リクエストに関係ない、アプリケーションログ情報
-
-```shell
-cat << EOF
-
-SELECT
-  text_payload, count(text_payload) as payload_count
-FROM
-  \`$GOOGLE_CLOUD_PROJECT.asia-northeast1.run-analytics-bucket._AllLogs\`
-WHERE
-  text_payload IS NOT NULL AND
-  log_id != "run.googleapis.com/requests"
-GROUP BY
-  text_payload
-ORDER BY
-  count(text_payload) DESC
-LIMIT 50
-
-EOF
-```
-
-様々な条件でログをクエリすることが可能です。
-
-[サンプル SQL クエリ](https://cloud.google.com/logging/docs/analyze/examples?hl=ja) を参考に色々試してみてください。
-
-## **Congraturations!**
+## **Congratulations!**
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 

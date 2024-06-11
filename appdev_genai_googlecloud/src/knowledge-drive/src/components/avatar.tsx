@@ -1,13 +1,13 @@
 import { getOwner } from "@/lib/actions";
 import { getAvatarColor } from "@/lib/color";
-import { DEFAULT_OWNER, MY_DRIVE_URL } from "@/lib/constants";
+import { DEFAULT_OWNER } from "@/lib/constants";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { FaUser } from "react-icons/fa6";
 
-const Avatar = () => {
+const Avatar = async () => {
   const headersList = headers();
-  const owner = getOwner(headersList);
+  const owner = await getOwner(headersList);
   const color = getAvatarColor(owner);
   const bgColor = `bg-${color}`;
 

@@ -10,8 +10,8 @@ export default async function PerItemPage({
 }) {
   const action = "showItemDetails";
   const headersList = headers();
-  const owner = getOwner(headersList);
-  const sourceIP = getSourceIP(headersList);
+  const owner = await getOwner(headersList);
+  const sourceIP = await getSourceIP(headersList);
   const { slug: id } = params;
 
   const res = await getDownloadURL(id);

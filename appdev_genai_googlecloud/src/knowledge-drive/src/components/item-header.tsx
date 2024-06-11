@@ -5,7 +5,7 @@ const ItemHeader = () => {
       <p className="mr-auto min-w-[216px]">名前</p>
       <p className="w-32 min-w-32">オーナー</p>
       <p className="w-28 min-w-28">作成日時</p>
-      <p className="w-24 min-w-32">ファイルサイズ</p>
+      <p className="w-32 min-w-32">ファイルサイズ</p>
       <BsThreeDotsVertical />
     </div>
   );

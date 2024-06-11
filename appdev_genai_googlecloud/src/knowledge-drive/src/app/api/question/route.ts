@@ -20,8 +20,8 @@ const isValidSearchResponse = (res: any) =>
 export async function POST(request: Request) {
   const action = "question";
   const headersList = headers();
-  const owner = getOwner(headersList);
-  const sourceIP = getSourceIP(headersList);
+  const owner = await getOwner(headersList);
+  const sourceIP = await getSourceIP(headersList);
   const { question } = await request.json();
 
   if (!process.env.SEARCH_HOST) {
