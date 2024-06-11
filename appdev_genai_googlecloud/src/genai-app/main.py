@@ -176,56 +176,6 @@ async def register_doc():
     else:
         return ("This is not pdf or image file", 200)
 
-    # # download pdf form gcs
-    # download_from_gcs(bucket_name, name)
-    # user_id, name = name.split("/")[-2:]
-
-    # # The naming convention of the file is "[ID:21chars].[Original Filename]"
-    # # So getting substring of 21 characters here.
-    # file_id = name[:21]
-    
-    # # Generate summary of the pdf
-    # loader = PyPDFLoader(name)
-    # document = loader.load()
-    # llm = VertexAI(
-    #     model_name=text_model_name,
-    #     max_output_tokens=256,
-    #     temperature=0.1,
-    #     top_p=0.8,
-    #     top_k=40,
-    #     verbose=True,
-    # )
-
-    # qa_chain = load_qa_chain(llm, chain_type="map_reduce")
-    # qa_document_chain = AnalyzeDocumentChain(combine_docs_chain=qa_chain)
-    # description = qa_document_chain.invoke(input={"input_document": document[0].page_content[:5000],
-    #     "question": "何についての文書ですか？日本語で2文にまとめて答えてください。"})
-
-    # await store_description(user_id, file_id, description["output_text"])
-
-    # # Load pdf for generate embeddings
-    # loader = PyPDFLoader(name)
-    # text_splitter = RecursiveCharacterTextSplitter(
-    #     separators=["\n", "。"],
-    #     chunk_size=500,
-    #     chunk_overlap=0,
-    #     length_function=len,
-    # )
-    # pages = loader.load_and_split(text_splitter=text_splitter)
-    
-    # # Create embeddings and inser data to Cloud SQL
-    # embeddings = VertexAIEmbeddings(model_name=embedding_model_name)
-    # for c, page in enumerate(pages[:100]): # Limit the nubmer of pages to avoid timeout.
-    #     embeddings_data = embeddings.embed_query(page.page_content)
-    #     # Filtering data
-    #     filtered_data = page.page_content.encode("utf-8").replace(b'\x00', b'').decode("utf-8")
-    #     await insert_doc(name, filtered_data, page.metadata, user_id, embeddings_data)
-    #     print("{}: processed chunk {} of {}".format(name, c, min([len(pages)-1, 99])))
-    #     time.sleep(0.5)
-        
-    # print("Successfully registered: {}".format(name))
-    # return ("Registered a doc in Cloud SQL", 200)
-
 
 @app.post("/search")
 async def search():
