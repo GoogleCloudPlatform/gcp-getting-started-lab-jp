@@ -5,7 +5,7 @@ pypdf==4.2.0
 google-cloud-aiplatform==1.49.0
 vertexai==1.49.0
 langchain==0.2.3
-langchain-community==0.2.4
+langchain-community==0.2.5
 langchain-google-vertexai==1.0.5
 pgvector==0.2.5
 asyncio==3.4.3
