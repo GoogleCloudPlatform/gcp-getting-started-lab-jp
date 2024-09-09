@@ -1,12 +1,12 @@
 <walkthrough-metadata>
   <meta name="title" content="PFE Basic" />
-  <meta name="description" content="Hands-on Platform Engineering Basic" />
+  <meta name="description" content="Hands-on Platform Engineering Basic 2024-09" />
   <meta name="component_id" content="110" />
 </walkthrough-metadata>
 
 <walkthrough-disable-features toc></walkthrough-disable-features>
 
-# Platform Engineering Handson 入門編
+# 入門編: Google Cloud で始める Platform Engineering
 
 ## Google Cloud プロジェクトの設定、確認
 
@@ -19,16 +19,6 @@ export PROJECT_ID=[PROJECT_ID]
 ```
 
 `プロジェクト ID` は [ダッシュボード](https://console.cloud.google.com/home/dashboard) に進み、左上の **プロジェクト情報** から確認します。
-
-### **2. プロジェクトの課金が有効化されていることを確認する**
-
-```bash
-gcloud beta billing projects describe ${PROJECT_ID} | grep billingEnabled
-```
-
-**Cloud Shell の承認** という確認メッセージが出た場合は **承認** をクリックします。
-
-出力結果の `billingEnabled` が **true** になっていることを確認してください。**false** の場合は、こちらのプロジェクトではハンズオンが進められません。別途、課金を有効化したプロジェクトを用意し、本ページの #1 の手順からやり直してください。
 
 ## **環境準備**
 
@@ -64,7 +54,6 @@ gcloud コマンドでは操作の対象とするプロジェクトの設定が�
 ```bash
 gcloud config set project ${PROJECT_ID}
 ```
-
 承認するかどうかを聞かれるメッセージがでた場合は、`承認` ボタンをクリックします。
 
 ### **3. ハンズオンで利用する Google Cloud の API を有効化する**
@@ -166,15 +155,18 @@ gcloud compute routers nats create ws-nat \
 
 ### **Lab-00-05. GKE クラスタ の作成**
 
-以下のコマンドを実行し、GKE Autopilot クラスタを作成します。
+以下のコマンドを実行し、GKE クラスタを作成します。
 
 ```bash
-gcloud container --project "$PROJECT_ID" clusters create-auto "dev-cluster" \
+gcloud container --project "$PROJECT_ID" clusters create "dev-cluster" \
   --region "asia-northeast1" \
   --release-channel "regular" \
   --network "ws-network" \
   --subnetwork "ws-subnet" \
   --enable-private-nodes \
+  --enable-ip-alias \
+  --disk-type pd-standard \
+  --num-nodes 2 \
   --no-enable-master-authorized-networks --async
 ```
 
@@ -182,15 +174,17 @@ gcloud container --project "$PROJECT_ID" clusters create-auto "dev-cluster" \
 同様に Production 用のクラスタも作っておきます。
 
 ```bash
-gcloud container --project "$PROJECT_ID" clusters create-auto "prod-cluster" \
+gcloud container --project "$PROJECT_ID" clusters create "prod-cluster" \
   --region "asia-northeast1" \
   --release-channel "regular" \
   --network "ws-network" \
   --subnetwork "ws-subnet" \
   --enable-private-nodes \
+  --enable-ip-alias \
+  --disk-type pd-standard \
+  --num-nodes 2 \
   --no-enable-master-authorized-networks --async
 ```
-
 ### **Lab-00-06. WS クラスタ の作成**
 
 後半の Lab02 で使う Cloud Workstations 用のクラスタを用意しておきます。
@@ -203,24 +197,6 @@ gcloud workstations clusters create cluster-handson \
   --region asia-northeast1 \
   --async
 ```
-
-### **割り当ての拡張**
-
-本ラボではデフォルトでの割り当て(クオータ)が不足する可能性があります。そのため事前に不足が予想される項目を拡張を申請します。
-[割り当てとシステム制限](https://console.cloud.google.com/iam-admin/quotas)に移動します。
-
-中央のフィルタに、`Compute Engine API` と入力します。リストから、名前が`Persistent Disk SSD (GB)`、項目(ロケーションなど)が`region : asia-northeast1` となっているものを見つけます。
-該当するものにチェックを入れて、上部の`割り当てを編集`をクリックします。
-
-`新しい値`に 1000 を入力します。
-
-リクエストの説明に、`Platform Engineering Hands-on で利用するため`と入力し、`次へ`をクリックします。
-
-`リクエストを送信`をクリックします。
-
-通常、数分後に承認され、登録しているアカウントのメールアドレスに結果が送信されています。
-その後、5分程度経過すると、割り当てが拡張されます。
-
 
 以上で事前準備は完了です。
 
@@ -328,21 +304,104 @@ watch -d kubectl get pods,nodes,svc -n  ec-site
 kubectl get svc -n ec-site | grep LoadBalancer | awk '{print "http://"$4}'
 ```
 
-### **Lab-01-07. ダッシュボードの確認**
+### **Lab-01-07. Fleet Logging の設定**
+チームスコープ単位でログを有効化します。この機能により、開発チームごとにログバケットを用意し、各チームに関連するログのみを表示できます。
+以下コマンドを実行し、Fleet Logging の構成ファイルを生成します。  
+**こちらはコピー&ペーストで実行ください**
 
-再び、GUI(ブラウザ上のコンソール)で作業します。ブラウザ上の別のタブを開き（または同タブにURLを入力して）[チーム](https://console.cloud.google.com/kubernetes/teams)へ移動します。
-チームのページより、チーム名 `app-a-team` がリンクになっているためクリックします。
+```text
+cat << EOF > fleet-logging.json
+{
+  "loggingConfig": {
+      "defaultConfig": {
+          "mode": "COPY"
+      },
+      "fleetScopeLogsConfig": {
+          "mode": "MOVE"
+      }
+  }
+}
+EOF
+```
+
+生成した構成ファイルを指定して、Fleet Logging を有効化します。  
+```bash
+gcloud container fleet fleetobservability update \
+        --logging-config=fleet-logging.json
+```
+
+以下コマンドを実行し、Fleet Logging が構成されていることを確認します。
+```bash
+gcloud container fleet fleetobservability describe
+```
+
+出力例のように、 spec.fleetobservability 配下に設定内容が入力されていることを確認します。  
+```text
+createTime: '2022-09-30T16:05:02.222568564Z'
+membershipStates:
+  projects/123456/locations/us-central1/memberships/cluster-1:
+    state:
+      code: OK
+      description: Fleet monitoring enabled.
+      updateTime: '2023-04-03T20:22:51.436047872Z'
+name:
+projects/123456/locations/global/features/fleetobservability
+resourceState:
+  state: ACTIVE
+spec:
+  fleetobservability:
+    loggingConfig:
+      defaultConfig:
+        mode: COPY
+      fleetScopeLogsConfig:
+        mode: MOVE
+```
+
+### **Lab-01-08. Advanced Vulnerability Insights の有効化**
+
+GKE Enterprise の一つの機能である高度な脆弱性検査を有効にします。
+クラスタ運用者は、Secutiry Posture ダッシュボードで複数のクラスタ常に存在するコンテナに対しての脆弱性を俯瞰的にみることができ、
+対策を講じることが可能です。
+
+```bash
+gcloud container clusters update dev-cluster \
+    --location=asia-northeast1 \
+    --workload-vulnerability-scanning=enterprise --async
+```
+```bash
+gcloud container clusters update prod-cluster \
+    --location=asia-northeast1 \
+    --workload-vulnerability-scanning=enterprise --async
+```
+
+
+### **Lab-01-09. チームスコープログの確認**
+
+再度 GUI で操作します。
+ブラウザ上の別のタブを開き（または同タブにURLを入力して）[チーム](https://console.cloud.google.com/kubernetes/teams)へ移動します。  表示されない場合は、ブラウザのリロードをお試しください。
+チームのページより、チーム名 `app-a-team` がリンクになっているためクリックします。  
+`ログ`タブを選択し、先ほどデプロイしたアプリケーションからログが出力されていることを確認します。  
+**有効から 2,30 分程度、場合によってはそれ以上の時間がかかる場合があるため、先に後続の手順を進め、後ほど確認してみてください**
+これで、チームスコープ単位でのログが確認できました。
+
+また、[ログストレージ](https://console.cloud.google.com/logs/storage)に移動して、チームごとにバケットが作られているのを確認します。
+
+
+### **Lab-01-10. ダッシュボードの確認**
+
 画面上部の`モニタリング`タブより、チームに関する情報が確認できます。
 どのような情報が確認できるかみてみましょう。
 (エラーがカウントされますが、アプリケーションの仕様によるもので問題ございません)
 
-また、時間に余裕がある場合、以下も確認してみましょう。
-本日の説明範囲を超えますが、セキュリティに関するダッシュボードを確認することが可能です。
-[セキュリティ](https://console.cloud.google.com/kubernetes/security/dashboard)
+### **Lab-01-11. セキュリティダッシュボードの確認**
 
+また、時間に余裕がある場合、以下も確認してみましょう。
+先ほど有効化した脆弱性の結果を含むセキュリティに関するダッシュボードを確認することが可能です。
+表示されない場合は、ブラウザのリロードをお試しください。
+[セキュリティ](https://console.cloud.google.com/kubernetes/security/dashboard)
+**最大でAdvanced Vulnerability Insights の有効化から 15 分程度かかる場合があるため見れない場合は先に後続の手順を進め、後ほど確認してみてください**
 
 Lab-01はここで完了となります。
-
 
 ## **Lab-02. Cloud Workstations による Golden Path の提供**
 Platform Engineering の観点から、開発者に作成ずみの開発環境とサンプルとなるアプリケーションのテンプレートを提供します。
@@ -356,15 +415,6 @@ gcloud artifacts repositories create ws-repo \
   --repository-format docker \
   --location asia-northeast1 \
   --description="Docker repository for Cloud workstations"
-```
-
-ここで、Lab-03 で使うアプリケーション用の レポジトリも作成しておきます。
-
-```bash
-gcloud artifacts repositories create spring-app \
-  --repository-format docker \
-  --location asia-northeast1 \
-  --description="Docker repository for spring-app"
 ```
 
 ### **Lab-02-02. Cloud Workstations コンテナイメージの作成**
@@ -408,6 +458,8 @@ gcloud artifacts repositories add-iam-policy-binding ws-repo \
 ```bash
 gcloud workstations configs create codeoss-spring \
   --machine-type e2-standard-4 \
+  --pd-disk-size 200 \
+  --pd-disk-type pd-standard \
   --region asia-northeast1 \
   --cluster cluster-handson \
   --disable-public-ip-addresses \
@@ -428,19 +480,85 @@ gcloud workstations create ws-spring-dev \
   --cluster cluster-handson \
   --config codeoss-spring
 ```
+### **Lab-02-06. CI/CD パイプラインの準備**
 
-Lab-02 は完了となります。
+Platform Engineering の要素の一つとして、デプロイの自動化があります。
+プラットフォームの管理者として開発者が簡単にデプロイできるように Cloud Build/Cloud Deploy を使ってパイプラインを構築しておきます。
+今回はハンズオンのために準備したファイルを活用してパイプラインを準備します。
+各ファイルの中身を確認しておきます。Cloud Build のファイルについては、実際は開発者が Workstation で使うため、ここでは確認のみです。同じファイルが開発者側のレポジトリにも保存されています。
 
-## **Lab-03. 開発者として Platform を利用する**
+```bash
+cat lab-02/cloudbuild.yaml
+```
 
-### **Lab-03-01. Workstations の起動**
+```bash
+cat lab-02/clouddeploy.yaml
+```
+
+このファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
+
+```bash
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" lab-02/clouddeploy.yaml
+```
+
+正しく反映されているか確認します。
+```bash
+cat lab-02/clouddeploy.yaml
+```
+
+まずは、パイプラインとターゲットを Cloud Deploy に登録します。これによりアプリケーションをデプロイするための
+Cluster および、dev / prod という順序性が定義されます。
+
+```bash
+gcloud deploy apply --file lab-02/clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
+```
+
+デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
+
+```bash
+cat lab-02/skaffold.yaml
+```
+
+Artifact Registry に CI で作成する成果物であるコンテナイメージを保管するためのレポジトリを作成しておきます。
+
+```bash
+gcloud artifacts repositories create app-repo \
+  --repository-format docker \
+  --location asia-northeast1 \
+  --description="Docker repository for Platform users"
+```
+Cloud Build から Cloud Deploy を利用するにあたっていくつか権限が必要になるため、サービスアカウントに付与します。
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+CLOUD_BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+```
+```bash
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
+    --role="roles/clouddeploy.admin"
+```
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding $COMPUTE_SA \
+    --member="serviceAccount:${CLOUD_BUILD_SA}" \
+    --role="roles/iam.serviceAccountUser" \
+    --project=$PROJECT_ID
+```
+
+以上で、プラットフォーム管理者としての作業は終わりました。
+続いて実際にプラットフォームを利用する開発者としての体験をしてみます。
+
+### **Lab-02-07. Workstations の起動**
+開発者はまず、自分の Workstations を起動することになります。
 GUI での作業となります。
 ブラウザで新しいタブを開き、[Workstations一覧](https://console.cloud.google.com/workstations/list)を開きます。
 **My workstations** に表示される `ws-spring-dev`の 起動 をクリックします。
 起動には数分程度かかります。
 ステータスが、稼働中になりましたら、開始をクリックします。新しいタブで Code OSS の Welcome 画面が開きます。初回は表示に少し時間がかかります。
 
-### **Lab-03-02. サンプルアプリケーションの入手**
+### **Lab-02-08. サンプルアプリケーションの入手**
 git よりサンプルアプリケーションを取得します。
 左側の2番目のアイコンをクリック、または、Ctrl + Shift + E の入力で、EXPLORER が開きます。
 Clone Repository を選択します。
@@ -449,9 +567,10 @@ Clone Repository を選択します。
 入力後、`レポジトリの URL https://github.com/ssekimoto/gs-spring-boot.git`をクリックします。
 (Github から複製を選択してしまうと、Github の認証が必要となりますのでキャンセルしてやり直してください)
 複製するフォルダーを選択してください、はそのまま OK をクリックしてください。
-続いて 複製したレポジトリを開きますか？または現在のワークスペースに追加しますか？という選択には、`開く`を選択してください。
+続いて 複製したレポジトリを開きますか？または現在のワークスペースに追加しますか？という選択には、`開く(Open)`を選択してください。
 
-### **Lab-03-03. サンプルアプリケーションの実行**
+### **Lab-02-09. サンプルアプリケーションの実行**
+まずは、手元のローカル（Cloud Workstations 自体の中）でアプリケーションをテスト実行してみます。
 左上の３本の線のアイコンから、Terminal > New Terminal を選択します。
 画面下にターミナルが現れますので、こちらで作業を実施します。
 
@@ -464,7 +583,7 @@ cd complete
 アプリケーションをビルドします。
 
 ```bash
-mvn clean install
+mvn clean install -DskipTests
 ```
 
 ビルドしたアプリケーションをまずは Workstations 上で実行します。
@@ -477,12 +596,11 @@ java -jar target/spring-boot-complete-0.0.1-SNAPSHOT.jar
 続いて、Open をクリックするとシンプルなアプリケーションにアクセスできます。
 完了したら、ターミナルに戻り、Ctrl-C でアプリケーションを停止しておきます。
 
-### **Lab-03-04. GKE でのアプリケーションの実行**
+### **Lab-02-10. GKE でのアプリケーションの実行**
 引き続き Cloud Workstations で作業をします。
-サンプルアプリケーションと一緒に、Dockerfile も Golden Path として git から提供されています。
-以前の手順と同様に Cloud Build でコンテナの作成を行います。
-
-Workstations 上のターミナルで実行します。ディレクトリを移動しておきます。
+サンプルアプリケーションと一緒に、Dockerfile と先ほどの CI/CD パイプライン用のファイル も Golden Path として git から提供されています。
+ここでは、プラットフォーム管理者が作成したパイプラインを利用して、アプリケーションのコンテナ化から、GKE へのデプロイまでを自動化する体験をします。
+Workstations 上のターミナルで実行します。もしディレクトリを移動している場合、`complete` へ移動しておきます。
 
 ```bash
 cd /home/user/gs-spring-boot/complete
@@ -496,6 +614,7 @@ gcloud auth login
 
 表示される URL を Ctrl + クリックで Open、もしくはコピー&ペーストで別のタブで開きます。
 すると Google アカウントへのログイン画面になるため、ログインを実施します。
+ログインするアカウントは lab 向けに払い出されている student- から始まるものであることに注意してください。
 最後に表示される `4/0` から始まる verification code をコピーして、Cloud Workstations の ターミナルに貼り付けます。
 正常にログインが完了すると
 `You are now logged in as [アカウント]`と表示されます。
@@ -510,59 +629,30 @@ export PROJECT_ID=[PROJECT_ID(自身のIDに置き換えます[]は不要です)
 gcloud config set project ${PROJECT_ID}
 ```
 
-提供されている Dockerfile を利用して、コンテナ化を行います。
+CI/CD パイプラインを利用して、コンテナのビルドおよび GKE の dev-cluster へのデプロイを実施します。
 
 ```bash
-gcloud builds submit . --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring-app/spring-app:v1.0.0
+gcloud builds submit --config cloudbuild.yaml .
 ```
 
-続いて GKE へのデプロイを行います。
-左側のファイル一覧から `complete/k8s.yaml` を開きます。
-17行目の `asia-northeast1-docker.pkg.dev/${PROJECT_ID}/spring-app/spring-app:v1.0.0` の`${PROJECT_ID}`を実際のプロジェクトID に置き換えます。(Cloud Workstations は編集すると即時反映となるため、保存は不要です。）
+### **Lab-02-11. Cloud Deploy での実行確認と本番環境へのプロモート**
 
-GKE への接続を行います
+デプロイ中の様子を見るため、GUI で確認していきます。
+数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
 
-```bash
-gcloud container clusters get-credentials dev-cluster --region asia-northeast1 --project ${PROJECT_ID}
-```
+[Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
+左側のメニューバーより Gateway、Service、Ingress を選択し`サービス`タブに遷移します。表示される一覧から `spring-app-service` という名前のサービスを見つけます。
+Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして移動します。
+アプリケーションが期待どおりに動作していることを確認します。
 
-GKE へのデプロイを実施します。
+ステージングでテストしたので、本番環境に昇格する準備が整いました。
+[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
+デリバリーパイプラインの一覧から、`pfe-pipeline` をクリックします。
+すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
 
-```bash
-kubectl apply -f k8s.yaml 
-```
+数分後にデプロイが完了されましたら、この手順は完了となります。
 
-数分後、以下でデプロイ後の確認を行います。
-
-```bash
-kubectl get all 
-```
-
-期待通り Running になっていれば、開発者として、GKE への初期デプロイを完了することができました。
-
-
+## **Lab-03. Platform 管理者のためのオブザーバビリティ**
 
 ## **Configurations!**
-これで、入門編のハンズオンは完了となります。引き続き実践編、セキュリティガードレール編もお楽しみ下さい。
-
-## **クリーンアップ（プロジェクトを削除）**
-
-ハンズオン用に利用したプロジェクトを削除し、コストがかからないようにします。
-
-### **1. Google Cloud のデフォルトプロジェクト設定の削除**
-
-```bash
-gcloud config unset project
-```
-
-### **2. プロジェクトの削除**
-
-```bash
-gcloud projects delete ${PROJECT_ID}
-```
-
-### **3. ハンズオン資材の削除**
-
-```bash
-cd $HOME && rm -rf gcp-getting-started-lab-jp gopath
-```
+これで、入門編のハンズオンは完了となります。引き続き実践編もお楽しみ下さい。
