@@ -505,40 +505,12 @@ gcloud workstations create ws-spring-dev \
 ### **Lab-02-06. CI/CD パイプラインの準備**
 
 Platform Engineering の要素の一つとして、デプロイの自動化があります。
-プラットフォームの管理者として開発者が簡単にデプロイできるように Cloud Build/Cloud Deploy を使ってパイプラインを構築しておきます。
+プラットフォームの管理者として開発者が簡単にデプロイできるように Cloud Build を使ってパイプラインを構築しておきます。
 今回はハンズオンのために準備したファイルを活用してパイプラインを準備します。
-各ファイルの中身を確認しておきます。Cloud Build のファイルについては、実際は開発者が Workstation で使うため、ここでは確認のみです。同じファイルが開発者側のレポジトリにも保存されています。
+ファイルの中身を確認しておきます。実際は開発者が Workstation で使うため、ここでは確認のみです。同じファイルが開発者側のレポジトリにも保存されています。
 
 ```bash
 cat lab-02/cloudbuild.yaml
-```
-
-```bash
-cat lab-02/clouddeploy.yaml
-```
-
-このファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
-
-```bash
-sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" lab-02/clouddeploy.yaml
-```
-
-正しく反映されているか確認します。
-```bash
-cat lab-02/clouddeploy.yaml
-```
-
-まずは、パイプラインとターゲットを Cloud Deploy に登録します。これによりアプリケーションをデプロイするための
-Cluster および、dev / prod という順序性が定義されます。
-
-```bash
-gcloud deploy apply --file lab-02/clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
-```
-
-デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
-
-```bash
-cat lab-02/skaffold.yaml
 ```
 
 Artifact Registry に CI で作成する成果物であるコンテナイメージを保管するためのレポジトリを作成しておきます。
@@ -549,24 +521,16 @@ gcloud artifacts repositories create app-repo \
   --location asia-northeast1 \
   --description="Docker repository for Platform users"
 ```
-Cloud Build から Cloud Deploy を利用するにあたっていくつか権限が必要になるため、サービスアカウントに付与します。
+開発者がパイプラインを通じてアプリケーションをデプロイするために Cloud Build に権限が必要になるため、サービスアカウントに付与します。
 
 ```bash
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-CLOUD_BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
-COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-```
-```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
-    --role="roles/clouddeploy.admin"
-```
-
-```bash
-gcloud iam service-accounts add-iam-policy-binding $COMPUTE_SA \
-    --member="serviceAccount:${CLOUD_BUILD_SA}" \
-    --role="roles/iam.serviceAccountUser" \
-    --project=$PROJECT_ID
+    --role="roles/container.developer"
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/container.developer"
 ```
 
 以上で、プラットフォーム管理者としての作業は終わりました。
@@ -620,7 +584,7 @@ java -jar target/spring-boot-complete-0.0.1-SNAPSHOT.jar
 
 ### **Lab-02-10. GKE でのアプリケーションの実行**
 引き続き Cloud Workstations で作業をします。
-サンプルアプリケーションと一緒に、Dockerfile と先ほどの CI/CD パイプライン用のファイル も Golden Path として git から提供されています。
+サンプルアプリケーションと一緒に、Dockerfile と CI/CD パイプライン用のファイル も Golden Path として git から提供されています。
 ここでは、プラットフォーム管理者が作成したパイプラインを利用して、アプリケーションのコンテナ化から、GKE へのデプロイまでを自動化する体験をします。
 Workstations 上のターミナルで実行します。もしディレクトリを移動している場合、`complete` へ移動しておきます。
 
@@ -636,7 +600,7 @@ gcloud auth login
 
 表示される URL を Ctrl + クリックで Open、もしくはコピー&ペーストで別のタブで開きます。
 すると Google アカウントへのログイン画面になるため、ログインを実施します。
-ログインするアカウントは lab 向けに払い出されている student- から始まるものであることに注意してください。
+**ログインするアカウントは lab 向けに払い出されている student- から始まるものであることに注意してください。**
 最後に表示される `4/0` から始まる verification code をコピーして、Cloud Workstations の ターミナルに貼り付けます。
 正常にログインが完了すると
 `You are now logged in as [アカウント]`と表示されます。
@@ -657,22 +621,14 @@ CI/CD パイプラインを利用して、コンテナのビルドおよび GKE 
 gcloud builds submit --config cloudbuild.yaml .
 ```
 
-### **Lab-02-11. Cloud Deploy での実行確認と本番環境へのプロモート**
-
-デプロイ中の様子を見るため、GUI で確認していきます。
-数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
+### **Lab-02-11. アプリケーションの実行確認**
 
 [Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
 左側のメニューバーより Gateway、Service、Ingress を選択し`サービス`タブに遷移します。表示される一覧から `spring-app-service` という名前のサービスを見つけます。
 Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして移動します。
-アプリケーションが期待どおりに動作していることを確認します。
-
-ステージングでテストしたので、本番環境に昇格する準備が整いました。
-[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
-デリバリーパイプラインの一覧から、`pfe-pipeline` をクリックします。
-すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
-
-数分後にデプロイが完了されましたら、この手順は完了となります。
+アプリケーションが期待どおりに動作していることを確認できましたら、Lab-02 は完了です。
+入門編では、Cloud Build でビルド＆リリースを行いましたが、
+実践編では、Cloud Deploy を利用したより高度なリリースについてのハンズオンを用意しております。
 
 ## **Lab-03. Platform 管理者のためのオブザーバビリティ**
 
