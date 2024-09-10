@@ -83,7 +83,7 @@ gcloud config set compute/region asia-northeast1 && gcloud config set compute/zo
 ### **01. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gcp-getting-started-lab-jp/pfe-basic
+cd ~/gcp-getting-started-lab-jp/pfe-basic-sep
 ```
 
 ### **02. チュートリアルを開く**
@@ -399,7 +399,7 @@ gcloud container clusters update prod-cluster \
 先ほど有効化した脆弱性の結果を含むセキュリティに関するダッシュボードを確認することが可能です。
 表示されない場合は、ブラウザのリロードをお試しください。
 [セキュリティ](https://console.cloud.google.com/kubernetes/security/dashboard)
-**最大でAdvanced Vulnerability Insights の有効化から 15 分程度かかる場合があるため見れない場合は先に後続の手順を進め、後ほど確認してみてください**
+**最大でAdvanced Vulnerability Insights の有効化から 15 分程度かかる場合があります。見れない場合は先に後続の手順を進め、後ほど確認してみてください**
 
 Lab-01はここで完了となります。
 
@@ -425,12 +425,34 @@ gcloud artifacts repositories create ws-repo \
 ```bash
 cat lab-02/workstations/Dockerfile
 ```
+Cloud Build のサービスアカウントへ権限を付与します。
+
+```bash
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member=serviceAccount:${PROJECT_NUMBER=}-compute@developer.gserviceaccount.com \
+  --condition=None \
+  --role=roles/cloudbuild.builds.builder
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member=serviceAccount:${PROJECT_NUMBER=}-compute@developer.gserviceaccount.com \
+  --condition=None \
+  --role=roles/logging.logWriter
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member=serviceAccount:${PROJECT_NUMBER=}-compute@developer.gserviceaccount.com \
+  --condition=None \
+  --role=roles/iam.serviceAccountUser
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member=serviceAccount:${PROJECT_NUMBER=}-compute@developer.gserviceaccount.com \
+  --condition=None \
+  --role=roles/storage.objectUser
+```
+
 Cloud Build を利用して、Cloud Workstations コンテナイメージをビルドします。
 (赤字でメッセージが出ることがありますが、問題ございません。)
 
 ```bash
-gcloud builds submit lab-02/workstations/ \
-  --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-spring:v1.0.0
+gcloud builds submit \
+lab-02/workstations/  --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/ws-repo/codeoss-spring:v1.0.0
 ```
 
 ### **Lab-02-03. Cloud Workstations イメージ Pull 用のサービスアカウントの設定**
