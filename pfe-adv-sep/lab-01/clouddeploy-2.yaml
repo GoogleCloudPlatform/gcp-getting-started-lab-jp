@@ -27,7 +27,7 @@ gke:
 apiVersion: deploy.cloud.google.com/v1
 kind: Automation
 metadata:
-  name: dev/promote
+  name: pfe-cicd/promote
 description: promotes a release
 suspended: false
 serviceAccount: ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com

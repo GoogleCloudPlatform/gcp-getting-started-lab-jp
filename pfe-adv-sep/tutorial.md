@@ -263,7 +263,6 @@ docker pull asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v1
 curl http://localhost:5000/random-pets
 ```
 
-##
 ### **Lab-01-02 Cloud Deploy によるCD**
 続いて、Cloud Deploy を活用して、複数のクラスタに順番にデプロイしていきます。
 dev-cluster に対しては、トリガーと共にデプロイがされますが、
@@ -333,40 +332,46 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 ビルドの最後の手順として、Cloud Deploy を実行するように設定しておき、一気通貫で CI と CD が実行されるようにします。
 
 まずはアプリケーションを更新します。今回は簡単にするために事前に用意した app.txt を app.py に置き換えることで更新を完了します。
+(接続切れなどでカレントディレクトリが変更されている場合、`lab-01` にします)
 
 ```bash
-mv lab-01/app.py lab-01/app.bak
+cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-01
 ```
 
 ```bash
-mv lab-01/app.txt lab-01/app.py
+mv app.py app.bak
+```
+
+```bash
+mv app.txt app.py
 ```
 
 必要に応じて更新後のソースコードをご確認ください。
 
-続いて、`lab-01/cloudbuild.yaml` についても変更を加え、ビルドステップの最後に、Cloud Deploy を実行するように編集する必要があります。
-ただし、今回は先ほどと同様に `lab-01/cloudbuild-2.yaml`というファイルで更新ずみのものを用意しておりますので、こちらを利用します。
+続いて、`cloudbuild.yaml` についても変更を加え、ビルドステップの最後に、Cloud Deploy を実行するように編集する必要があります。
+ただし、今回は先ほどと同様に `cloudbuild-2.yaml`というファイルで更新ずみのものを用意しておりますので、こちらを利用します。
 
 ```bash
-cat lab-01/cloudbuild-2.yaml
+cat cloudbuild-2.yaml
 ```
 確認するとステップが追加されていることがわかります。
 同様に Cloud Deploy 側にも変更を加えています。今回は、プロモートのボタンを押さずに一気に prod-cluster にデプロイするため、
 デプロイの自動化機能を有効化しています。
 
 ```bash
-cat lab-01/clouddeploy-2.yaml
+cat clouddeploy-2.yaml
 ```
 
 先ほど同様に`PROJECT_ID`および`PROJECT_NUMBER`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
 
 ```bash
-sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" lab-01/clouddeploy-2.yaml
-sed -i "s/serviceAccount: ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com/serviceAccount: ${PROJECT_ID}-compute@developer.gserviceaccount.com/g" lab-01/clouddeploy-2.yaml
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" clouddeploy-2.yaml
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+sed -i "s|\${PROJECT_NUMBER}|$PROJECT_NUMBER|g" clouddeploy-2.yaml
 ```
 
 ```bash
-gcloud deploy apply --file lab-01/clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
+gcloud deploy apply --file clouddeploy-2.yaml --region=asia-northeast1 --project=$PROJECT_ID
 ```
 
 Cloud Build から Cloud Deploy を利用するにあたっていくつか権限が必要になるため、サービスアカウントに付与します。
@@ -392,7 +397,7 @@ gcloud iam service-accounts add-iam-policy-binding $COMPUTE_SA \
 それでは実行します。
 
 ```bash
-gcloud builds submit --config lab-01/cloudbuild-2.yaml .
+gcloud builds submit --config cloudbuild-2.yaml .
 ```
 もし、エラーが出てしまいましたら、`app.py`の最終行にある空白行を削除もしくは、改行を行いもう一度、上のコマンドを試してください。
 これは PEP8 による構文解析で、空行の有無を判定しているためです。
@@ -406,10 +411,8 @@ gcloud builds submit --config lab-01/cloudbuild-2.yaml .
 Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、IPアドレスの最後に`/random-pets`をつけて移動します。
 再びアプリケーションが期待どおりに動作していることを確認します。今回は先ほどとは異なる出力となるのが確認できるようになっています。
 
-ステージングでテストしたので、本番環境に昇格する準備が整いました。
-[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
-デリバリーパイプラインの一覧から、`pfe-cicd` をクリックします。
-すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
+今回は、dev-cluster へのデプロイの1分経過後に自動的に本番環境(prod-cluster)までリリースされるように動作が変更されています。
+これは[デプロイの自動化](https://cloud.google.com/deploy/docs/deploy-app-automation?hl=ja)という機能を利用しています。
 
 数分後にデプロイが完了されましたら、この手順は完了となります。
 
