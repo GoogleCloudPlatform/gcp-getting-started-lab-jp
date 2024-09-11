@@ -646,8 +646,8 @@ gcloud container clusters get-credentials dev-cluster --region asia-northeast1 -
 以下のコマンドを実行し、サンプルアプリケーションをデプロイします。  
 
 ```bash
-kubectl apply -f lab-03/
-```
+ kubectl apply -f lab-03/ -n ec-site
+ ```
 
 今回は以下 2 種類の Deployment をデプロイしています。
 * CrashLoopBackOff をし続ける Deployment
@@ -669,7 +669,7 @@ GKE クラスタの[オブザーバビリティ](https://console.cloud.google.co
 
 クラッシュしている Pod の原因を調査するためにインタラクティブ ダッシュボードを利用します。インタラクティブ ダッシュボードは、特定の問題に対して GKE が自動収集しているメトリクスやログの情報をもとにインタラクティブにトラブルシューティングを行うためのツールです。  
 以下のリンクにアクセスします。   
-https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/crashloop
+[ダッシュボード](https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/crashloop)
 
 まずダッシュボード上部の「ワークロード別のコンテナ再起動回数」で `currencyservice` が再起動を繰り返していることを確認します。表示されていない場合は画面上部のクラスタ選択で `dev-cluster` が正しく選択されているか、また右上の対象時間が「直近30分」など正しい範囲に設定されているかご確認ください。  
 
@@ -683,7 +683,7 @@ https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/crash
 ### **Lab-03-04. スケジュール不可の Pod の原因調査**
 
 続いて、以下のダッシュボードにアクセスしスケジュール不可の Pod の原因調査を行います。  
-https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/unschedulable
+[ダッシュボード](https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/unschedulable)
 
 ダッシュボード上部「Pod のスケジューリング失敗のイベント」に `unschedulable-hello` が表示されていることを確認します。表示されていない場合は画面上部のクラスタ選択で `dev-cluster` が正しく選択されているか、また右上の対象時間が「直近30分」など正しい範囲に設定されているかご確認ください。
 
