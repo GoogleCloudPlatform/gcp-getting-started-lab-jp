@@ -326,7 +326,7 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 
 数分後にデプロイが完了されましたら、この手順は完了となります。
 
-## **Lab-01-03 Cloud Build から Cloud Deploy の実行**
+### **Lab-01-03 Cloud Build から Cloud Deploy の実行**
 ここまでで、CI と CD を別々に行うことができました。
 次の手順としては、アプリケーションを更新し、ビルドを実行します。
 ビルドの最後の手順として、Cloud Deploy を実行するように設定しておき、一気通貫で CI と CD が実行されるようにします。
@@ -501,7 +501,7 @@ Cloud Shell での操作に戻り、デプロイした Pod は一度クラスタ
 kubectl delete -f kubernetes-manifests/maven-vulns.yaml
 ```
 
-### **1-5. 利用可能なリポジトリを制限する**
+### **Lab-02-04 レポジトリを制限する**
 
 インターネット上で公開されているコンテナイメージには、脆弱性やマルウェアが含まれているものも存在するため無闇にプロダクション環境等にデプロイしてしまうのは危険です。  
 対策としては、スキャンが実装されたセキュアな CI/CD パイプラインを通したコンテナイメージのみデプロイを許可する方法や、実行可能なコンテナリポジトリを制限する方法などがあります。  
@@ -511,14 +511,14 @@ kubectl delete -f kubernetes-manifests/maven-vulns.yaml
 以下のコマンドを実行し、GKE クラスタに Policy Controller をインストールします。  
 ```bash
 gcloud container fleet policycontroller enable \
-    --memberships=${CLUSTER_NAME}
+    --memberships=dev-cluster
 ```
 
 数分後、以下のコマンドを実行してコンポーネントのインストール状況を確認します。  
 `Policy Controller is not enabled for membership ~` と表示された場合は数分おいて再度実行してください。  
 
 ```bash
-gcloud container fleet policycontroller describe --memberships=${CLUSTER_NAME}
+gcloud container fleet policycontroller describe --memberships=dev-cluster
 ```
 
 以下の例のように `admission`, `audit`, `templateLibraryState` が `ACTIVE` となるまで待機します。  
@@ -591,7 +591,7 @@ spec:
 kubectl apply -f kubernetes-manifests/allow-myrepo.yaml
 ```
 
-その後、手順 1-4 でデプロイした Pod を再度デプロイしてみます(以前デプロイしたものが残っている場合は事前に当該 Pod を削除しておいてください)。  
+前項番 Lab-02-03 でデプロイした Pod を再度デプロイしてみます(以前デプロイしたものが残っている場合は事前に当該 Pod を削除しておいてください)。  
 
 ```bash
 kubectl apply -f kubernetes-manifests/maven-vulns.yaml
