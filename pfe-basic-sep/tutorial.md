@@ -659,6 +659,12 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 ### **Lab-03-01. サンプルアプリケーションのデプロイ**
 
 以降は Cloud Shell 上で操作します。  
+以下のコマンドを実行し、dev-cluster への接続情報を取得します。  
+
+```bash
+gcloud container clusters get-credentials dev-cluster --region asia-northeast1 --project "$PROJECT_ID"
+```
+
 以下のコマンドを実行し、サンプルアプリケーションをデプロイします。  
 
 ```bash
@@ -666,7 +672,7 @@ kubectl apply -f lab-03/
 ```
 
 今回は以下 2 種類の Deployment をデプロイしています。
-* CrashLoopBackOffをし続ける Deployment
+* CrashLoopBackOff をし続ける Deployment
 * ノードにデプロイされず Pending となったままの Deployment
 
 これらの不健全なワークロードを特定するために、GKE 組み込みのメトリクスやダッシュボードを活用します。  
@@ -675,11 +681,11 @@ kubectl apply -f lab-03/
 
 GKE クラスタの[オブザーバビリティ](https://console.cloud.google.com/kubernetes/clusters/details/asia-northeast1/dev-cluster/observability)タブに移動し、左側ペインから「ワークロードの状態」を選択します。  
 
-このダッシュボードでは GKE クラスタ上のワークロードの健全状態を確認することができます。GKE では Kube state メトリクスがデフォルトで収集され Managed Prometheus 上に保管されています。このダッシュボードでは Kube state メトリクスをベースにしたダッシュボードを組み込みで提供しています。  
+このダッシュボードでは GKE クラスタ上のワークロードの健全状態を確認することができます。GKE では [Kube state メトリクス](https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/kube_state_metrics?hl=ja)がデフォルトで収集され Managed Service for Prometheus (GMP) 上に保管されています。このダッシュボードでは Kube state メトリクスをベースにした指標を組み込みで提供しています。  
 
-まずダッシュボード上部を確認し、「スケジュール不可の Pod」や「CrashLoopBackOff コンテナ」、「準備状況チェックに失敗したコンテナ」に 1 と表示されていることを確認します。（数字が表示されていない場合は数分後に再度ご確認ください）
+まずダッシュボード上部を確認し、「スケジュール不可の Pod」や「CrashLoopBackOff コンテナ」、「準備状況チェックに失敗したコンテナ」に 1 と表示されていることを確認します。（数字が表示されていない場合は数分後に再度ご確認ください）  
 
-また、ダッシュボードの中央にある「保留中 / 失敗した Pod とコンテナの表」を開くと、`unschedulable-hello` という Pod がノードにスケジュールできていないこと、また `currencyservice` が準備状況チェックに失敗しクラッシュしていることなどがわかります。  
+また、ダッシュボードの中央にある「保留中 / 失敗した Pod とコンテナの表」を展開し、`unschedulable-hello` という Pod がノードにスケジュールできていないこと、また `currencyservice` が準備状況チェックに失敗しクラッシュしていることを特定します。  
 
 ### **Lab-03-03. クラッシュしている Pod の原因調査**
 
@@ -698,7 +704,7 @@ https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/crash
 
 ### **Lab-03-04. スケジュール不可の Pod の原因調査**
 
-続いて、以下のダッシュボードにアクセスしスケジュール不可の Pod の原因調査を行います。 
+続いて、以下のダッシュボードにアクセスしスケジュール不可の Pod の原因調査を行います。  
 https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/unschedulable
 
 ダッシュボード上部「Pod のスケジューリング失敗のイベント」に `unschedulable-hello` が表示されていることを確認します。表示されていない場合は画面上部のクラスタ選択で `dev-cluster` が正しく選択されているか、また右上の対象時間が「直近30分」など正しい範囲に設定されているかご確認ください。
