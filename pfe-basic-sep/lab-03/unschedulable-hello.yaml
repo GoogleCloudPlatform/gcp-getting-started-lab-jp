@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unschedulable-hello
+  labels:
+    app: hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: unschedulable-hello
+        image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 5000m
+            memory: 16Gi
+          limits:
+            cpu: 5000m
+            memory: 16Gi
