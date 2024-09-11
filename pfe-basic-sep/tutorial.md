@@ -666,8 +666,8 @@ kubectl apply -f lab-03/
 ```
 
 今回は以下 2 種類の Deployment をデプロイしています。
-* ノードにデプロイされず Pending となったままの Deployment
 * CrashLoopBackOffをし続ける Deployment
+* ノードにデプロイされず Pending となったままの Deployment
 
 これらの不健全なワークロードを特定するために、GKE 組み込みのメトリクスやダッシュボードを活用します。  
 
