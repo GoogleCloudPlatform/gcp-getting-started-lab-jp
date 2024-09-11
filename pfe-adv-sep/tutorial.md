@@ -91,7 +91,7 @@ gcloud config set compute/region asia-northeast1 && gcloud config set compute/zo
 ### **01. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gcp-getting-started-lab-jp/pfe-basic-sep
+cd ~/gcp-getting-started-lab-jp/pfe-adv-sep
 ```
 
 ### **02. チュートリアルを開く**
