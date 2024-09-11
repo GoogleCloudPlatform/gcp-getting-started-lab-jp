@@ -1,0 +1,9 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+
+images:
+  - name: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets
+    newName: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets
+    newTag: ${SHORT_SHA}
+    
