@@ -224,22 +224,26 @@ gcloud artifacts repositories create app-repo \
 ### **Lab-01-02 Cloud Build による CI**
 Cloud Build を利用してサンプルアプリケーションのソースコードからコンテナイメージをビルドします。
 サンプルアプリケーションは Flask を利用した Python のアプリケーションです。
+カレントディレクトリを、`lab-01` に移動します。
 
 ```bash
-cat lab-01/app.py
+cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-01
+```
+
+```bash
+cat app.py
 ```
 
 リクエストを受けると、ランダムに犬の品種を JSON 形式で返す API を提供しています。
 また、ビルド中のステップとして、静的解析(PEP8)と簡単なユニットテストを実装しています。
 
 ```bash
-cat lab-01/cloudbuild.yaml
+cat cloudbuild.yaml
 ```
 
 Cloud Build で実行します。今回は Git レポジトリを用意していないため、ローカルのソースコードから手動トリガーとして実行します。
 
 ```bash
-cd lab-01
 gcloud builds submit --config cloudbuild.yaml .
 ```
 
@@ -269,7 +273,7 @@ dev-cluster に対しては、トリガーと共にデプロイがされます�
 prod-cluster に対しては、UI 上でプロモートという操作をするまではデプロイが行われません。
 
 早速そのようなパイプラインを設定していきます。
-設定は `lab-01/clouddeploy.yaml` に記述されています。
+設定は `clouddeploy.yaml` に記述されています。
 (接続切れなどでカレントディレクトリが変更されている場合、`lab-01` にします)
 
 ```bash
@@ -603,11 +607,160 @@ kubectl apply -f kubernetes-manifests/maven-vulns.yaml
 Error from server (Forbidden): error when creating "kubernetes-manifests/maven-vulns.yaml": admission webhook "validation.gatekeeper.sh" denied the request: [repo-is-openpolicyagent] container <maven-vulns-app> has an invalid image repo <us-docker.pkg.dev/google-samples/containers/gke/security/maven-vulns>, allowed repos are ["asia-northeast1-docker.pkg.dev/kkuchima-2405282/app-repo/"]
 ```
 
-以上で Lab1 は終了です。  
+以上で Lab-02 は終了です。  
+
 以下のコマンドを実行し、後続の Lab に影響しないように不要なリソースは削除しておきます。  
 ```bash
 kubectl delete -f kubernetes-manifests/allow-myrepo.yaml
 ```
+## **Lab-03 セキュリティ ポリシー**
+### **Lab-03-01. 不適切な設定の Pod のデプロイ**
+
+カレントディレクトリを、`lab-03` に移動します。
+
+```bash
+cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-03
+```
+GKE クラスタに以下の不適切な設定の Pod をデプロイします。  
+一見して普通の Pod のようにみえますが、hostpath を使ってホストのルートディレクトリをマウントしようとしています。  
+
+```yaml
+# bad-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: bad-pod
+  name: bad-pod
+spec:
+  volumes:
+  - name: host-fs
+    hostPath:
+      path: /
+  containers:
+  - image: ubuntu
+    imagePullPolicy: Always
+    name: bad-pod
+    command: ["/bin/sh", "-c", "sleep infinity"]
+    volumeMounts:
+      - name: host-fs
+        mountPath: /root
+  restartPolicy: Never
+```
+
+では実際にデプロイしてみます。  
+
+```bash
+kubectl apply -f bad-pod.yaml
+```
+
+以下コマンドを実行し `bad-pod` に入ってみます。  
+```bash
+kubectl exec bad-pod -it -- bash
+```
+
+ホストの `/` にルートディレクトリを変更します。  
+```bash
+chroot /root /bin/bash
+```
+
+bad-pod から以下コマンドを実行します。  
+```bash
+id
+ls
+```
+
+以下のようにホストの領域に root ユーザーとして入れていることが分かります。  
+```
+bad-pod / # id
+uid=0(root) gid=0(root) groups=0(root)
+bad-pod / # ls
+bin  boot  dev  etc  home  lib  lib64  lost+found  mnt  opt  postinst  proc  root  run  sbin  sys  tmp  usr  var
+```
+
+実行されているプロセスの情報から Node 上の kubelet が利用している kubeconfig も確認できます。  
+```bash
+ps -ef | grep kubelet
+```
+
+実際に kubeconfig を使って GKE 環境の情報取得も可能です。  
+```bash
+kubectl --kubeconfig=/var/lib/kubelet/kubeconfig get pods
+```
+
+ホストの領域から抜けるため以下を実行します。  
+```bash
+exit
+```
+
+bad-pod コンテナから抜けるため以下を実行します。  
+```bash
+exit
+```
+hostpath をマウントした Pod から簡単にホストへエスケープすることができました。  
+
+### **Lab-03-02 不適切な設定の Pod の検知**
+
+ここから GUI での操作に切り替えます。  
+まず [GKE Security Posture](https://console.cloud.google.com/kubernetes/security/dashboard) に移動し、 画面中部左側の`ワークロードの構成`に`ホストのファイルまたはディレクトリをマウントする Pod` という構成の懸念事項が出力されていることを確認します。  
+出力されていない場合は数分待機します。  
+出力されている場合は`ホストのファイルまたはディレクトリをマウントする Pod` リンクをクリックし、脅威の内容を確認します。  
+また、`影響を受けるワークロード` タブからこの懸念事項を持っている Pod を特定することもできます。今回利用した `bad-pod` が表示されています。  
+
+確認を終えたら Cloud Shell 画面に戻ります。　　
+
+一度 `bad-pod` はクラスタから削除しておきます。  
+
+```bash
+kubectl delete -f bad-pod.yaml
+```
+
+### **Lab-03-03 不適切な設定の Pod の防止**
+
+先ほどデプロイした `bad-pod` のような Pod を検知はできましたが、そもそもデプロイさせないためにはどうしたら良いでしょうか。  
+1つの方法として、Lab1 でも利用した Policy Controller が活用できます。  
+
+今回は以下のように`K8sPSPHostFilesystem` という制約テンプレートを利用し、HostPath を `/var/log` のみ Read-Only でマウントできる制約を用意します。  
+
+```yaml
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPHostFilesystem
+metadata:
+  name: allow-hostpath
+spec:
+  match:
+    kinds:
+    - apiGroups:
+      - ""
+      kinds:
+      - Pod
+  parameters:
+    allowedHostPaths:
+    - pathPrefix: /var/log
+      readOnly: true
+```
+
+この制約を適用します。  
+
+```bash
+kubectl apply -f allow-hostpath.yaml
+```
+
+では、`bad-pod` をデプロイしてみましょう。  
+
+```bash
+kubectl apply -f bad-pod.yaml
+```
+
+うまくいけば以下のように Policy Controller の制約により、デプロイが阻止されていることが分かります。  
+
+```
+Error from server (Forbidden): error when creating "kubernetes-manifests/bad-pod.yaml": admission webhook "validation.gatekeeper.sh" denied the request: [allow-hostpath] HostPath volume {"hostPath": {"path": "/", "type": ""}, "name": "host-fs"} is not allowed, pod: bad-pod. Allowed path: [{"pathPrefix": "/var/log", "readOnly": true}]
+```
+
+Policy Controller ではこれら以外にも特権コンテナのデプロイを禁止したり、root ユーザーで実行可能にすることを防ぐための制約テンプレートなどが最初から用意されています。  
+セキュリティリスクのある構成を禁止するだけでなく、いわゆる Kubernetes のベストプラクティスを強制させるための制約テンプレートもあるため、興味があれば他にも試してみてください。  
+制約テンプレートの一覧は[こちらのドキュメント](https://cloud.google.com/kubernetes-engine/enterprise/policy-controller/docs/latest/reference/constraint-template-library)から確認できます。  
 
 ## **Configurations!**
 おめでとうございます。実践編のハンズオンは完了となります。
