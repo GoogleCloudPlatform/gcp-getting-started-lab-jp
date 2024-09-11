@@ -468,6 +468,146 @@ sed -i 's/python:3.12/python:3.12-alpine/g' Dockerfile
 gcloud builds submit --config cloudbuild.yaml .
 ```
 
+### **Lab-02-03 GKE 上でのセキュリティ対策**
+
+せっかくセキュアな CI/CD パイプラインを用意しても、OSS をデプロイする場合や直接 Kubectl でデプロイされてしまう場合など、CI/CD 上の脆弱性スキャンがバイパスされてしまう可能性があります。  
+また、あまり頻繁にデプロイしないようなアプリケーションでは、CI 実行時には発見されなかった脆弱性が後から発見される可能性もあります。  
+そのようなケースでは、GKE Security Posture の機能の一つである、継続的脆弱性スキャンが有効です。  
+この機能により、GKE 上で動いているワークロードに対して継続的に脆弱性スキャンを実行することができるため、CI/CD パイプラインや Artifact Registry を通っていないようなワークロードの脆弱性の検知が可能となります。  
+
+本機能を試すために CI/CD を通さずに直接 kubectl を使って Maven の脆弱性が含まれた Pod をデプロイしてみます。  
+カレントディレクトリを、`lab-02` にします。
+```bash
+cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-02
+```
+
+dev-cluster へ接続します。
+```bash
+gcloud container clusters get-credentials dev-cluster --region asia-northeast1 --project $PROJECT_ID
+```
+マニフェストよりデプロイします。
+```bash
+kubectl apply -f kubernetes-manifests/maven-vulns.yaml
+```
+
+ここから GUI での操作に切り替えます。  
+[GKE Security Posture](https://console.cloud.google.com/kubernetes/security/dashboard) に移動し、画面下部の `高度な脆弱性` にクリティカルな脆弱性が表示されていることを確認します。(初回は表示されるまで十数分程度時間がかかる可能性があります)  
+表示された脆弱性をクリックし、脆弱性の詳細や影響を受けるワークロードを確認します。  
+
+以上より、GKE 上での動いているワークロードに対しても継続的スキャンを実行することにより、脆弱性を検知することができました。  
+Cloud Shell での操作に戻り、デプロイした Pod は一度クラスタから削除します。  
+
+```bash
+kubectl delete -f kubernetes-manifests/maven-vulns.yaml
+```
+
+### **1-5. 利用可能なリポジトリを制限する**
+
+インターネット上で公開されているコンテナイメージには、脆弱性やマルウェアが含まれているものも存在するため無闇にプロダクション環境等にデプロイしてしまうのは危険です。  
+対策としては、スキャンが実装されたセキュアな CI/CD パイプラインを通したコンテナイメージのみデプロイを許可する方法や、実行可能なコンテナリポジトリを制限する方法などがあります。  
+
+今回は、Policy Controller の制約を活用し、自分のプロジェクト配下の特定リポジトリのコンテナイメージのみ GKE 上で実行可能としてみます。  
+
+以下のコマンドを実行し、GKE クラスタに Policy Controller をインストールします。  
+```bash
+gcloud container fleet policycontroller enable \
+    --memberships=${CLUSTER_NAME}
+```
+
+数分後、以下のコマンドを実行してコンポーネントのインストール状況を確認します。  
+`Policy Controller is not enabled for membership ~` と表示された場合は数分おいて再度実行してください。  
+
+```bash
+gcloud container fleet policycontroller describe --memberships=${CLUSTER_NAME}
+```
+
+以下の例のように `admission`, `audit`, `templateLibraryState` が `ACTIVE` となるまで待機します。  
+
+```
+membershipStates:
+  projects/924402902969/locations/asia-northeast1/memberships/prod-cluster:
+    policycontroller:
+      componentStates:
+        admission:
+          details: 1.18.1
+          state: ACTIVE
+        audit:
+          details: 1.18.1
+          state: ACTIVE
+~~~
+        templateLibraryState:
+          state: ACTIVE
+      state: ACTIVE
+    state:
+      code: OK
+```
+
+以下のコマンドを実行し、制約テンプレートが利用可能になっていることを確認します。  
+制約テンプレートは各種制約のロジックを定義するリソースです。  
+
+```bash
+kubectl get constrainttemplates
+```
+
+以下の例のように、多くの制約テンプレートが GKE クラスタ内にインストールされているはずです。  
+
+```text
+NAME                                        AGE
+allowedserviceportname                      9m35s
+~~~
+noupdateserviceaccount                      9m57s
+policystrictonly                            9m44s
+restrictnetworkexclusions                   9m51s
+sourcenotallauthz                           9m47s
+verifydeprecatedapi                         9m48s
+```
+
+今回利用する制約テンプレートは `K8sAllowedRepos` という、GKE から Pull 可能なリポジトリを allowlist 方式で定義する制約です。  
+以下のように制約テンプレートを Kind に指定した制約リソースを作成し、自分のプロジェクトの `app-repo` からのみコンテナイメージを Pull できるようにします。  
+制約リソースでは制約の適用対象や内容を定義します。  
+
+```yaml
+# allow-myrepo.yaml
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRepos
+metadata:
+  name: allow-my-app-repo
+spec:
+  match:
+    kinds:
+    - apiGroups:
+      - ""
+      kinds:
+      - Pod
+    namespaces:
+    - default
+  parameters:
+    repos:
+    - asia-northeast1-docker.pkg.dev/PROJECT_ID/app-repo/
+```
+
+では実際に制約を適用します。
+```bash
+kubectl apply -f kubernetes-manifests/allow-myrepo.yaml
+```
+
+その後、手順 1-4 でデプロイした Pod を再度デプロイしてみます(以前デプロイしたものが残っている場合は事前に当該 Pod を削除しておいてください)。  
+
+```bash
+kubectl apply -f kubernetes-manifests/maven-vulns.yaml
+```
+
+そうすると以下のように Policy Controller の制約違反によりデプロイが拒否されます。  
+理由としてはデプロイしようとした `maven-vulns-app` という Pod のコンテナイメージは `us-docker.pkg.dev/google-samples/containers/gke/security/maven-vulns` という別プロジェクト上のリポジトリに保管されており、今回の制約ではこのリポジトリを許可していないためです。  
+```
+Error from server (Forbidden): error when creating "kubernetes-manifests/maven-vulns.yaml": admission webhook "validation.gatekeeper.sh" denied the request: [repo-is-openpolicyagent] container <maven-vulns-app> has an invalid image repo <us-docker.pkg.dev/google-samples/containers/gke/security/maven-vulns>, allowed repos are ["asia-northeast1-docker.pkg.dev/kkuchima-2405282/app-repo/"]
+```
+
+以上で Lab1 は終了です。  
+以下のコマンドを実行し、後続の Lab に影響しないように不要なリソースは削除しておきます。  
+```bash
+kubectl delete -f kubernetes-manifests/allow-myrepo.yaml
+```
 
 ## **Configurations!**
 おめでとうございます。実践編のハンズオンは完了となります。

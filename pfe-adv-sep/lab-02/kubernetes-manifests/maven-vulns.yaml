@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: maven-vulns
+spec:
+  containers:
+  - name: maven-vulns-app
+    image: us-docker.pkg.dev/google-samples/containers/gke/security/maven-vulns
+    # This app listens on port 8080 for web traffic by default.
+    ports:
+    - containerPort: 8080
+    env:
+      - name: PORT
+        value: "8080"
