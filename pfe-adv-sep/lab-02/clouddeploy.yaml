@@ -1,0 +1,41 @@
+apiVersion: deploy.cloud.google.com/v1beta1
+kind: DeliveryPipeline
+metadata:
+  name: pfe-cicd
+description: pfe-cicd 
+serialPipeline:
+  stages:
+  - targetId: dev
+  - targetId: prod
+---
+apiVersion: deploy.cloud.google.com/v1beta1
+kind: Target
+metadata:
+  name: dev
+description: Dev Environment
+gke:
+  cluster: projects/${PROJECT_ID}/locations/asia-northeast1/clusters/dev-cluster
+---
+apiVersion: deploy.cloud.google.com/v1beta1
+kind: Target
+metadata:
+  name: prod
+description: Production Environment
+gke:
+  cluster: projects/${PROJECT_ID}/locations/asia-northeast1/clusters/prod-cluster
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Automation
+metadata:
+  name: pfe-cicd/promote
+description: promotes a release
+suspended: false
+serviceAccount: ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com
+selector:
+  targets:
+  - id: dev
+rules:
+- promoteReleaseRule:
+    name: "promote-release"
+    wait: 1m
+    toTargetId: "@next"

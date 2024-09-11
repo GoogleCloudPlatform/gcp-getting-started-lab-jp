@@ -1,0 +1,64 @@
+steps:
+- name: 'python:3.12-alpine'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      pip install flake8
+      flake8 .
+
+- name: 'python:3.12-alpine'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      pip install -r requirements.txt
+      python -m unittest discover
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2', '.']
+
+- id: 'dockerfile-scan'
+  name: 'aquasec/trivy'
+  entrypoint: '/bin/sh'
+  args:
+    - '-c'
+    - | 
+      trivy config ./Dockerfile --severity HIGH
+
+- id: 'image-scan'
+  name: 'aquasec/trivy'
+  entrypoint: '/bin/sh'
+  args:
+    - '-c'
+    - | 
+      trivy image --severity CRITICAL ${_REPO_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_TAG} --exit-code 1
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      sed -i "s|image: .*|image: asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2|g" kubernetes-manifests/deployment.yaml
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline=pfe-cicd --region=asia-northeast1 --source=./ --project=$PROJECT_ID
+
+images:
+- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2'
+
+substitutions:
+  _CLUSTER_NAME: dev-cluster
+  _CLUSTER_LOCATION: asia-northeast1
+  _REPO_REGION: asia-northeast1
+  _REPO_NAME: app-repo
+  _IMAGE_NAME: pets
+  _TAG: v1.0
