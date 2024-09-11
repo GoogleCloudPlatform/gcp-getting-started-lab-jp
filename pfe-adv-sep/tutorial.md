@@ -239,7 +239,8 @@ cat lab-01/cloudbuild.yaml
 Cloud Build で実行します。今回は Git レポジトリを用意していないため、ローカルのソースコードから手動トリガーとして実行します。
 
 ```bash
-gcloud builds submit --config lab-01/cloudbuild.yaml .
+cd lab-01
+gcloud builds submit --config cloudbuild.yaml .
 ```
 
 各ステップが順に行われているのが、出力をみてわかります。
@@ -269,30 +270,35 @@ dev-cluster に対しては、トリガーと共にデプロイがされます�
 prod-cluster に対しては、UI 上でプロモートという操作をするまではデプロイが行われません。
 
 早速そのようなパイプラインを設定していきます。
-設定は以下の `lab-01/clouddeploy.yaml` に記述されています。
+設定は `lab-01/clouddeploy.yaml` に記述されています。
+(接続切れなどでカレントディレクトリが変更されている場合、`lab-01` にします)
 
 ```bash
-cat lab-01/clouddeploy.yaml
+cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-01
+```
+
+```bash
+cat clouddeploy.yaml
 ```
 
 以下のファイルは`PROJECT_ID`がプレースホルダーになっていますので、各自の環境に合わせて置換します。
 
 ```bash
-sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" lab-01/clouddeploy.yaml
+sed -i "s|\${PROJECT_ID}|$PROJECT_ID|g" clouddeploy.yaml
 ```
 
 まずは、パイプラインとターゲットを Cloud Deploy に登録します。これによりアプリケーションをデプロイするための
 Cluster および、dev / prod という順序性が定義されます。
 
 ```bash
-gcloud deploy apply --file lab-01/clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
+gcloud deploy apply --file clouddeploy.yaml --region=asia-northeast1 --project=$PROJECT_ID
 ```
 
 続いて、リリースを作成して、実際のデプロイを実行します。
 デプロイ方法は、`skaffold.yaml`に定義されています。ここには、デプロイに利用するマニフェスト、およびデプロイに対応する成果物が定義されています。
 
 ```bash
-cat lab-01/skaffold.yaml
+cat skaffold.yaml
 ```
 
 続いて以下のコマンドで実際に GKE の dev-cluster にデプロイします。
