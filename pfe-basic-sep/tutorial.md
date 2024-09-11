@@ -654,5 +654,64 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 
 ## **Lab-03. Platform 管理者のためのオブザーバビリティ**
 
+本ラボでは、GKE 組み込みのメトリクス・ログ収集機能やモニタリング ダッシュボードを活用し、アプリケーションやプラットフォームの問題を発見し解消する方法について学びます。　　
+
+### **Lab-03-01. サンプルアプリケーションのデプロイ**
+
+以降は Cloud Shell 上で操作します。  
+以下のコマンドを実行し、サンプルアプリケーションをデプロイします。  
+
+```bash
+kubectl apply -f lab-03/
+```
+
+今回は以下 2 種類の Deployment をデプロイしています。
+* ノードにデプロイされず Pending となったままの Deployment
+* CrashLoopBackOffをし続ける Deployment
+
+これらの不健全なワークロードを特定するために、GKE 組み込みのメトリクスやダッシュボードを活用します。  
+
+### **Lab-03-02. 問題と対象 Pod の特定**
+
+GKE クラスタの[オブザーバビリティ](https://console.cloud.google.com/kubernetes/clusters/details/asia-northeast1/dev-cluster/observability)タブに移動し、左側ペインから「ワークロードの状態」を選択します。  
+
+このダッシュボードでは GKE クラスタ上のワークロードの健全状態を確認することができます。GKE では Kube state メトリクスがデフォルトで収集され Managed Prometheus 上に保管されています。このダッシュボードでは Kube state メトリクスをベースにしたダッシュボードを組み込みで提供しています。  
+
+まずダッシュボード上部を確認し、「スケジュール不可の Pod」や「CrashLoopBackOff コンテナ」、「準備状況チェックに失敗したコンテナ」に 1 と表示されていることを確認します。（数字が表示されていない場合は数分後に再度ご確認ください）
+
+また、ダッシュボードの中央にある「保留中 / 失敗した Pod とコンテナの表」を開くと、`unschedulable-hello` という Pod がノードにスケジュールできていないこと、また `currencyservice` が準備状況チェックに失敗しクラッシュしていることなどがわかります。  
+
+### **Lab-03-03. クラッシュしている Pod の原因調査**
+
+クラッシュしている Pod の原因を調査するためにインタラクティブ ダッシュボードを利用します。インタラクティブ ダッシュボードは、特定の問題に対して GKE が自動収集しているメトリクスやログの情報をもとにインタラクティブにトラブルシューティングを行うためのツールです。  
+以下のリンクにアクセスします。   
+https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/crashloop
+
+まずダッシュボード上部の「ワークロード別のコンテナ再起動回数」で `currencyservice` が再起動を繰り返していることを確認します。表示されていない場合は画面上部のクラスタ選択で `dev-cluster` が正しく選択されているか、また右上の対象時間が「直近30分」など正しい範囲に設定されているかご確認ください。  
+
+この再起動の原因を調査するため、「次のステップ」もしくはダッシュボード右側からログやメトリクスをみて様々な観点から深掘りをしていきます。今回は「livenessProbe 失敗の調査」のリンクをクリックし、livenessProbe の状況を確認をしてみます。  
+
+「Liveness Probe での問題」で　`Liveness probe failed: timeout: failed to connect service "10.168.0.10:7001" within 1s: context deadline exceeded` というログが出力されていることが分かります。  
+これにより、`currencyservice` での再起動は Liveness Probe の失敗により発生していたことが分かりました。対処方法としては、Liveness Probe が正しく構成されているかを確認すること等が考えられます。  
+
+時間があればダッシュボード内の「次のステップ」の内容や他の項目も確認してみてください。  
+
+### **Lab-03-04. スケジュール不可の Pod の原因調査**
+
+続いて、以下のダッシュボードにアクセスしスケジュール不可の Pod の原因調査を行います。 
+https://console.cloud.google.com/monitoring/dashboards/gke-troubleshooting/unschedulable
+
+ダッシュボード上部「Pod のスケジューリング失敗のイベント」に `unschedulable-hello` が表示されていることを確認します。表示されていない場合は画面上部のクラスタ選択で `dev-cluster` が正しく選択されているか、また右上の対象時間が「直近30分」など正しい範囲に設定されているかご確認ください。
+
+ページをスクロールダウンし「Pod のスケジューリング失敗のイベント」で Pod のスケジュール失敗理由を確認することができます。  
+今回は `0/6 nodes are available: 6 Insufficient cpu, 6 Insufficient memory. preemption: 0/6 nodes are available: 6 No preemption victims found for incoming pod.` と表示されているため、デプロイしようとした Pod が要求するリソースを既存のノードでは提供できていないということが分かります。  
+
+問題を解消するためには、`unschedulable-hello` が要求するリソースを供給できるノードをあらかじめデプロイしておくか、`unschedulable-hello` の要求リソースを下げること等が考えられます。  
+その他、Cluster Autoscaler / Node Auto Provisioning という機能を有効化するかもしくは GKE Autopilot を利用することでも解消可能です。自動的にワークロードが必要とするスペックのノードをプロビジョニングできるようにすることで、ノードの運用負荷なども削減することが期待できます。 　
+
+時間があればダッシュボード内の「次のステップ」の内容や他の項目も確認してみてください。  
+
+以上で Lab03 は終了です。  
+
 ## **Configurations!**
 これで、入門編のハンズオンは完了となります。引き続き実践編もお楽しみ下さい。
