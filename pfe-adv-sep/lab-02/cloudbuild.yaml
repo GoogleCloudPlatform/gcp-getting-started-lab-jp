@@ -56,9 +56,7 @@ images:
 - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/app-repo/pets:v2'
 
 substitutions:
-  _CLUSTER_NAME: dev-cluster
-  _CLUSTER_LOCATION: asia-northeast1
   _REPO_REGION: asia-northeast1
   _REPO_NAME: app-repo
   _IMAGE_NAME: pets
-  _TAG: v1.0
+  _TAG: v2

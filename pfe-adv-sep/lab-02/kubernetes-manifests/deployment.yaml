@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pets-deployment
+  labels:
+    app: pets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pets
+  template:
+    metadata:
+      labels:
+        app: pets
+    spec:
+      containers:
+      - name: pets
+        image: pets
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: production

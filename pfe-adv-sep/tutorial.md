@@ -432,6 +432,41 @@ cd $HOME/gcp-getting-started-lab-jp/pfe-adv-sep/lab-02
 ```
 
 lab02 の資材では Dockerfile が一部変更が加えられておりベースイメージが脆弱性を持つ `python:3.12` となっています。
+Cloud Build パイプラインを実行します。 
+
+```bash
+gcloud builds submit --config cloudbuild.yaml .
+```
+
+実行した CI/CD パイプラインが異常終了します。これはサンプルアプリケーションで利用しているベースイメージ `python:3.12` には重大な脆弱性が含まれており、Trivy の脆弱性スキャンで検知することができたためです。  
+本来であればこの脆弱性の対処を行うべきですが、 Artifact Registry の脆弱性スキャンでも同様に脆弱性を検知できるか確認するため、今度は CI/CD パイプラインを通さずに Artifact Registry に直接コンテナイメージを Push します。  
+
+```bash
+gcloud builds submit --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/app-repo/pets:v2
+```
+
+ここから GUI 操作に切り替えます。  
+Artifact Registry の脆弱性スキャン結果を確認するため、以下コマンドの実行結果として出力された URL をクリックします。  
+
+```bash
+echo https://console.cloud.google.com/artifacts/docker/${PROJECT_ID}/asia-northeast1/app-repo/pets
+```
+コンソール上に先ほど直接 Push したコンテナイメージ `v2` で590程度の脆弱性が検知されていることがわかります。  
+これにより、CI/CD パイプラインとコンテナリポジトリの２箇所で脆弱性スキャンが動くことが確認できました。Artifact Registry での脆弱性スキャンは Push 後 30 日間は継続的にスキャンが行われるため、CI 実行時は発見されていない脆弱性を拾うことも期待できます。  
+
+### **Lab-02-02 軽量なベースイメージの利用**
+Cloud Shell での操作に戻ります。  
+続いてコンテナのベースイメージを alpine の軽量なベースイメージに変更して同じパイプラインを流してみましょう。  
+以下でベースイメージを変更します。
+```bash
+sed -i 's/python:3.12/python:3.12-alpine/g' Dockerfile
+```
+
+さてもう一度、CI/CD パイプラインを流してみます。
+今度は問題なく、スキャンを通過し、GKE へのデプロイまで行われます。
+```bash
+gcloud builds submit --config cloudbuild.yaml .
+```
 
 
 ## **Configurations!**
