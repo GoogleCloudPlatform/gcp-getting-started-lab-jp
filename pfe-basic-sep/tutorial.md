@@ -12,10 +12,10 @@
 
 ### **1. 対象の Google Cloud プロジェクトを設定**
 
-ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID を環境変数に設定し、以降の手順で利用できるようにします。 **(右辺の [PROJECT_ID] を手動で置き換えてコマンドを実行します)**
+ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID を環境変数に設定し、以降の手順で利用できるようにします。
 
 ```bash
-export PROJECT_ID=[PROJECT_ID]
+export PROJECT_ID=$(gcloud config get-value project)
 ```
 
 `プロジェクト ID` は [ダッシュボード](https://console.cloud.google.com/home/dashboard) に進み、左上の **プロジェクト情報** から確認します。
