@@ -450,7 +450,7 @@ echo https://console.cloud.google.com/artifacts/docker/${PROJECT_ID}/asia-northe
 ```
 Push されたあとスキャンが数分のうちに実行されます。
 結果として、コンソール上に先ほど直接 Push したコンテナイメージタグ `v2` で800以上の脆弱性が検知されていることがわかります。  
-これにより、CI/CD パイプラインとコンテナリポジトリの２箇所で脆弱性スキャンが動くことが確認できました。Artifact Registry での脆弱性スキャンは Push 後 30 日間は継続的にスキャンが行われるため、CI 実行時は発見されていない脆弱性を拾うことも期待できます。  
+Artifact Registry での脆弱性スキャンは Push 後 30 日間は継続的にスキャンが行われるため、CI 実行時に発見されていない脆弱性を拾うことも期待できます。  
 
 ### **Lab-02-02 GKE 上でのセキュリティ対策**
 
@@ -492,40 +492,28 @@ kubectl delete -f kubernetes-manifests/maven-vulns.yaml
 
 今回は、Policy Controller の制約を活用し、自分のプロジェクト配下の特定リポジトリのコンテナイメージのみ GKE 上で実行可能としてみます。  
 
-以下のコマンドを実行し、GKE クラスタに Policy Controller をインストールします。  
-```bash
-gcloud container fleet policycontroller enable \
-    --memberships=dev-cluster
-```
+ここから GUI 操作に切り替えます。 
+[ポリシー](hhttps://console.cloud.google.com/kubernetes/policy_controller)へ移動します。
+一度目のアクセスでは、うまく構成メニューが表示されないため、画面全体を一度更新します。
 
-数分後、以下のコマンドを実行してコンポーネントのインストール状況を確認します。  
-`Policy Controller is not enabled for membership ~` と表示された場合は数分おいて再度実行してください。  
+そうすると`Policy Controller の概要`が表示されます。
+青いボタンの `POLICY CONTROLLER を構成`をクリックしてください。
+画面下までスクロールし、青いボタンの `構成`をクリックしてください。
 
-```bash
-gcloud container fleet policycontroller describe --memberships=dev-cluster
-```
+ポリシー のフリートレベルの設定を定義します。次の API は、現在無効になっている場合、プロジェクトで有効になります:
+- anthospolicycontroller.googleapis.com
+フリートに登録した新しいクラスタには、このフリート設定が継承されます。この設定はいつでも変更できます。フリート内の既存のクラスタとそのホスト プロジェクトは変わりませんが、後でフリートの設定と同期できます。この操作はオプションです。
+この操作には数分かかることがあります。
 
-以下の例のように `admission`, `audit`, `templateLibraryState` が `ACTIVE` となるまで待機します。  
+と表示されますので、`確認`をクリックしてください。
 
-```
-membershipStates:
-  projects/924402902969/locations/asia-northeast1/memberships/prod-cluster:
-    policycontroller:
-      componentStates:
-        admission:
-          details: 1.18.1
-          state: ACTIVE
-        audit:
-          details: 1.18.1
-          state: ACTIVE
-~~~
-        templateLibraryState:
-          state: ACTIVE
-      state: ACTIVE
-    state:
-      code: OK
-```
 
+その後、画面が切り替わりますので、`フリートの設定と同期`をクリックしてください。
+両方のクラスターにチェックをいれ、青いボタンの`フリートの設定に同期`をクリックし、`確認`をクリックします。
+
+15分程度すると 機能ステータスが`有効`になります。
+
+ここからは Cloud Shell での操作に戻ります。
 以下のコマンドを実行し、制約テンプレートが利用可能になっていることを確認します。  
 制約テンプレートは各種制約のロジックを定義するリソースです。  
 
