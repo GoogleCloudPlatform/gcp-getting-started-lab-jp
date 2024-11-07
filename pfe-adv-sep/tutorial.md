@@ -455,7 +455,7 @@ Artifact Registry の脆弱性スキャン結果を確認するため、以下�
 ```bash
 echo https://console.cloud.google.com/artifacts/docker/${PROJECT_ID}/asia-northeast1/app-repo/pets
 ```
-コンソール上に先ほど直接 Push したコンテナイメージ `v2` で590程度の脆弱性が検知されていることがわかります。  
+コンソール上に先ほど直接 Push したコンテナイメージ `v2` で800以上の脆弱性が検知されていることがわかります。  
 これにより、CI/CD パイプラインとコンテナリポジトリの２箇所で脆弱性スキャンが動くことが確認できました。Artifact Registry での脆弱性スキャンは Push 後 30 日間は継続的にスキャンが行われるため、CI 実行時は発見されていない脆弱性を拾うことも期待できます。  
 
 ### **Lab-02-02 軽量なベースイメージの利用**
