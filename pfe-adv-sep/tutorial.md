@@ -476,7 +476,9 @@ kubectl apply -f kubernetes-manifests/maven-vulns.yaml
 
 ここから GUI での操作に切り替えます。  
 [GKE Security Posture](https://console.cloud.google.com/kubernetes/security/dashboard) に移動し、画面下部の `高度な脆弱性` にクリティカルな脆弱性が表示されていることを確認します。(初回は表示されるまで十数分程度時間がかかる可能性があります)  
-表示された脆弱性をクリックし、`脆弱性の詳細`や`影響を受けるリソース`を確認します。  
+※上記リンクのクリックで新しくタブが開かない場合、右クリックで新しいタブで開いてください。
+表示された脆弱性をクリックし、`脆弱性の詳細`や`影響を受けるリソース`を確認します。
+
 
 以上より、GKE 上での動いているワークロードに対しても継続的スキャンを実行することにより、脆弱性を検知することができました。  
 Cloud Shell での操作に戻り、デプロイした Pod は一度クラスタから削除します。  
@@ -494,9 +496,10 @@ kubectl delete -f kubernetes-manifests/maven-vulns.yaml
 
 ここから GUI 操作に切り替えます。 
 [ポリシー](https://console.cloud.google.com/kubernetes/policy_controller)へ移動します。
-一度目のアクセスでは、うまく構成メニューが表示されないため、画面全体を一度更新します。
+※上記リンクのクリックで新しくタブが開かない場合、右クリックで新しいタブで開いてください。
+また、一度目のアクセスでは、うまく構成メニューが表示されないことがあるため、その場合ブラウザのリロードをお試しください。
 
-そうすると`Policy Controller の概要`が表示されます。
+`Policy Controller の概要`が表示されます。
 青いボタンの `POLICY CONTROLLER を構成`をクリックしてください。
 画面下までスクロールし、青いボタンの `構成`をクリックしてください。
 
