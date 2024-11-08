@@ -476,7 +476,7 @@ kubectl apply -f kubernetes-manifests/maven-vulns.yaml
 
 ここから GUI での操作に切り替えます。  
 [GKE Security Posture](https://console.cloud.google.com/kubernetes/security/dashboard) に移動し、画面下部の `高度な脆弱性` にクリティカルな脆弱性が表示されていることを確認します。(初回は表示されるまで十数分程度時間がかかる可能性があります)  
-表示された脆弱性をクリックし、脆弱性の詳細や影響を受けるワークロードを確認します。  
+表示された脆弱性をクリックし、`脆弱性の詳細`や`影響を受けるリソース`を確認します。  
 
 以上より、GKE 上での動いているワークロードに対しても継続的スキャンを実行することにより、脆弱性を検知することができました。  
 Cloud Shell での操作に戻り、デプロイした Pod は一度クラスタから削除します。  
