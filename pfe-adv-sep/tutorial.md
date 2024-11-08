@@ -493,7 +493,7 @@ kubectl delete -f kubernetes-manifests/maven-vulns.yaml
 今回は、Policy Controller の制約を活用し、自分のプロジェクト配下の特定リポジトリのコンテナイメージのみ GKE 上で実行可能としてみます。  
 
 ここから GUI 操作に切り替えます。 
-[ポリシー](hhttps://console.cloud.google.com/kubernetes/policy_controller)へ移動します。
+[ポリシー](https://console.cloud.google.com/kubernetes/policy_controller)へ移動します。
 一度目のアクセスでは、うまく構成メニューが表示されないため、画面全体を一度更新します。
 
 そうすると`Policy Controller の概要`が表示されます。
