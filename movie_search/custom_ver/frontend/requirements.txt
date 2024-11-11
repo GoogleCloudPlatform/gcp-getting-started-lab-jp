@@ -1,0 +1,4 @@
+streamlit==1.40.0
+requests==2.32.3
+google-auth==2.36.0
+
