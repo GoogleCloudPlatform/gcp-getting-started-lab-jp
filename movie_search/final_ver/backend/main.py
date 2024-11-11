@@ -9,9 +9,8 @@ from .search_document import search_documents_by_query
 from .scene_search import search_scene
 from .utils import generate_download_signed_url_v4
 
-# __init__.py から共通定数をインポート
-from . import PROJECT_ID 
-
+from google import auth
+credentials, project_id = auth.default()
 
 # --- FastAPI アプリケーション ---
 app = FastAPI()

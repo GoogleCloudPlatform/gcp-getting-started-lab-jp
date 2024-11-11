@@ -2,11 +2,9 @@ import datetime
 from google.cloud import storage
 from google import auth
 
-
-# from google.oauth2 import service_account
-# credentials = service_account.Credentials.from_service_account_file('service_account_key.json')
 credentials, project_id = auth.default()
-credentials.refresh(auth.transport.requests.Request())
+# Cloud Run デプロイ時には以下をコメントを外す
+# credentials.refresh(auth.transport.requests.Request())
 
 def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
     """Cloud Storage の Blob の v4 signed URL を生成する

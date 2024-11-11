@@ -15,7 +15,6 @@ from .prompt_content_search import PROMPT_CONTENT_SEARCH
 from google import auth
 
 credentials, project_id = auth.default()
-credentials.refresh(auth.transport.requests.Request())
 
 # --- グローバル変数 ---
 vertexai.init(project=PROJECT_ID, location='us-central1')

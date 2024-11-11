@@ -1,8 +1,0 @@
-google-cloud-discoveryengine==0.12.3 # memo: 基本的には指定しておいた方がよい(最新版を反映すると動かないリスク, 定期的に手動で更新がベター )
-google-cloud-aiplatform==1.70.0
-google-cloud-storage
-google-auth==2.35.0
-fastapi[standard]
-uvicorn
-requests
-gunicorn
