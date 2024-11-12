@@ -6,13 +6,11 @@ import vertexai
 import vertexai.preview.generative_models as generative_models
 from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
 from google.cloud import storage
-
-from . import PROJECT_ID, DATASTORE_ID, LOCATION
-from .search_document import search_documents_by_query
-from .utils import generate_download_signed_url_v4
-from .prompt_content_search import PROMPT_CONTENT_SEARCH
-
 from google import auth
+
+from utils import PROJECT_ID, generate_download_signed_url_v4, metadata_url_to_movie_blob_name
+from search_document import search_documents_by_query
+from prompt_content_search import PROMPT_CONTENT_SEARCH
 
 credentials, project_id = auth.default()
 
@@ -88,7 +86,7 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
         検索結果のリスト
     """
     response = search_documents_by_query(query, show_summary=False)
-    storage_client = storage.Client(credentials=credentials)
+    storage_client = storage.Client(project=project_id, credentials=credentials)
     results = []
 
     for doc_id in range(min(top_n, len(response.results))):
@@ -99,11 +97,12 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
 
         # URI からバケット名と blob 名を取得
         bucket_name = meta_uri.split("//")[1].split("/", 1)[0]
-        blob_name = meta_uri.replace(f'gs://{bucket_name}/', '')
+        metadata_blob_name = meta_uri.split("//")[1].split("/", 1)[1]
+        movie_blob_name = metadata_url_to_movie_blob_name(meta_uri)
         
         # Cloud Storage からメタデータを取得
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+        blob = bucket.blob(metadata_blob_name)
 
         # download_to_filename を使わずに、blob から直接テキストデータを読み込む
         metatext = blob.download_as_text()
@@ -113,7 +112,6 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
         result = None
         while temperature < 1.0:
             try:
-                movie_blob_name = meta_uri.replace('gs://minitap-genai-app-dev-handson/metadata/', 'mp4/s_').replace('.txt', '.mp4')
                 print(f'movie_blob_name: {movie_blob_name}')
                 signed_url = generate_download_signed_url_v4(bucket_name, movie_blob_name)
 
@@ -135,3 +133,7 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
             print('\n=====')
             
     return results
+
+# テスト用
+# result = search_scene('AI')
+# print(result)
