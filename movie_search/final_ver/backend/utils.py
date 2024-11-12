@@ -29,7 +29,7 @@ def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
     Returns:
         署名付きURL
     """
-    storage_client = storage.Client()#credentials=credentials)
+    storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 

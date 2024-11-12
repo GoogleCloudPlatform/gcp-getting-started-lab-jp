@@ -116,7 +116,7 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
         result = None
         while temperature < 1.0:
             try:
-                movie_blob_name = meta_uri.replace('gs://minitap-genai-app-dev-handson/metadata/', 'mp4/s_').replace('.txt', '.mp4')
+                movie_blob_name = meta_uri.replace(f'gs://{bucket_name}/metadata/', 'mp4/s_').replace('.txt', '.mp4')
                 print(f'movie_blob_name: {movie_blob_name}')
                 signed_url = generate_download_signed_url_v4(bucket_name, movie_blob_name)
 
