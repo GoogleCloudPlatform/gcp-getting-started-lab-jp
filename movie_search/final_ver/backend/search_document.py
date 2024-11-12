@@ -1,15 +1,12 @@
+import os
 from google.cloud import discoveryengine_v1alpha as discoveryengine
 from google.api_core.client_options import ClientOptions
-
-from . import PROJECT_ID, DATASTORE_ID, LOCATION 
-# PROJECT_ID = 'minitap-genai-app-dev-handson'
-# DATASTORE_ID = 'movie-search-datastore_1729086247497'
-# LOCATION = 'global'
-
 from google import auth
 
 credentials, project_id = auth.default()
-
+PROJECT_ID = os.environ.get("PROJECT_ID", project_id)
+DATASTORE_ID = os.environ.get("DATASTORE_ID", "")
+LOCATION = os.environ.get("LOCATION", "global")
 
 def search_documents_by_query(query: str, show_summary: bool = True) -> discoveryengine.SearchResponse:
     """Discovery Engine でドキュメントを検索する
@@ -52,5 +49,5 @@ def search_documents_by_query(query: str, show_summary: bool = True) -> discover
     return response
 
 # テスト用
-# result = search_documents_by_query('AI')
-# print(result)
+result = search_documents_by_query('AI')
+print(result)
