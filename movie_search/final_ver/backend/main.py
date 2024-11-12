@@ -5,9 +5,9 @@ from typing import List
 from fastapi import FastAPI, Query
 import uvicorn
 
-from .search_document import search_documents_by_query
-from .scene_search import search_scene
-from .utils import generate_download_signed_url_v4
+from search_document import search_documents_by_query
+from scene_search import search_scene
+from utils import generate_download_signed_url_v4
 
 from google import auth
 credentials, project_id = auth.default()
@@ -41,7 +41,7 @@ async def api_file_search(
         for c, item in enumerate(response.results):
             url = item.document.derived_struct_data["link"]
             bucket_name = url.split("//")[1].split("/", 1)[0]
-            blob_name = url.replace('gs://minitap-genai-app-dev-handson/metadata/', 'mp4/s_').replace('.txt', '.mp4')
+            blob_name = url.replace(f'gs://{bucket_name}/metadata/', 'mp4/s_').replace('.txt', '.mp4')
             signed_url = generate_download_signed_url_v4(bucket_name, blob_name)
 
             title = item.document.derived_struct_data["title"]
