@@ -5,9 +5,9 @@ from typing import List
 from fastapi import FastAPI, Query
 import uvicorn
 
-from .search_document import search_documents_by_query
-from .scene_search import search_scene
-from .utils import generate_download_signed_url_v4
+from search_document import search_documents_by_query
+from scene_search import search_scene
+from utils import generate_download_signed_url_v4
 
 from google import auth
 credentials, project_id = auth.default()

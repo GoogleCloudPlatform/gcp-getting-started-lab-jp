@@ -1,5 +1,6 @@
 # backend/scene_search.py
 import json
+import os
 from typing import List
 
 import vertexai
@@ -7,14 +8,16 @@ import vertexai.preview.generative_models as generative_models
 from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
 from google.cloud import storage
 
-from . import PROJECT_ID, DATASTORE_ID, LOCATION
-from .search_document import search_documents_by_query
-from .utils import generate_download_signed_url_v4
-from .prompt_content_search import PROMPT_CONTENT_SEARCH
+from search_document import search_documents_by_query
+from utils import generate_download_signed_url_v4
+from prompt_content_search import PROMPT_CONTENT_SEARCH
 
 from google import auth
 
 credentials, project_id = auth.default()
+PROJECT_ID = os.environ.get("PROJECT_ID", project_id)
+DATASTORE_ID = os.environ.get("DATASTORE_ID", "")
+LOCATION = os.environ.get("LOCATION", "global")
 
 # --- グローバル変数 ---
 vertexai.init(project=PROJECT_ID, location='us-central1')

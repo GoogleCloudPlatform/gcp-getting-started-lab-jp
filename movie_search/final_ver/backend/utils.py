@@ -1,10 +1,23 @@
 import datetime
 from google.cloud import storage
 from google import auth
+from google.auth import impersonated_credentials
 
-credentials, project_id = auth.default()
-# Cloud Run デプロイ時には以下をコメントを外す
-# credentials.refresh(auth.transport.requests.Request())
+
+def get_impersonated_credentials():
+    scopes=['https://www.googleapis.com/auth/cloud-platform']
+    credentials, project = auth.default(scopes=scopes)
+    if credentials.token is None:
+        credentials.refresh(auth.transport.requests.Request())
+    signing_credentials = impersonated_credentials.Credentials(
+        source_credentials=credentials,
+        target_principal=credentials.service_account_email,
+        target_scopes=scopes,
+        lifetime=datetime.timedelta(seconds=3600),
+        delegates=[credentials.service_account_email]
+    )
+    return signing_credentials
+
 
 def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
     """Cloud Storage の Blob の v4 signed URL を生成する
@@ -16,7 +29,7 @@ def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
     Returns:
         署名付きURL
     """
-    storage_client = storage.Client(credentials=credentials)
+    storage_client = storage.Client()#credentials=credentials)
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
 
@@ -24,8 +37,7 @@ def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
         version="v4",
         expiration=datetime.timedelta(minutes=15),
         method="GET",
-        access_token=credentials.token,
-        service_account_email=credentials.service_account_email,
+        credentials=get_impersonated_credentials()
     )
 
     return url
