@@ -11,7 +11,7 @@ git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git
 cd gcp-getting-started-lab-jp/movie_search_metadata/demo_app
 ```
 
-### Vertex AI Search の検索アプリを構成
+### Vertex AI Search の検索エンジンを構成
 
 ```
 ./vais_setup.sh
