@@ -13,7 +13,7 @@ from utils import get_bucket_and_blobnames
 from utils import generate_download_signed_url_v4
 
 # global variables
-from utils import PROJECT_ID, credentials
+from utils import PROJECT_ID
 
 vertexai.init(project=PROJECT_ID, location='us-central1')
 model_flash = GenerativeModel('gemini-1.5-flash')
@@ -63,7 +63,7 @@ def generate_text(prompt: str, model: GenerativeModel = model_flash,
 
 def search_scenes(query: str, top_n: int = 1,
                   model: GenerativeModel = model_flash) -> List[dict]:
-    storage_client = storage.Client(credentials=credentials)
+    storage_client = storage.Client()
     response = search_documents_by_query(query, show_summary=False)
     results = []
 
