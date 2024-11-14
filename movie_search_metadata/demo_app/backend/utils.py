@@ -13,9 +13,9 @@ LOCATION = os.getenv('LOCATION', 'global')
 
 
 def get_bucket_and_blobnames(metadata_uri: str) -> tuple[str, str, str]:
-  bucket, blob_metadata = re.findall(r'gs://([^/]+)/(.+)', metadata_uri)[0]
-  blob_mp4 = 'mp4/s_' + blob_metadata.lstrip('metadata/').rstrip('.txt') + '.mp4'
-  return bucket, blob_metadata, blob_mp4
+    bucket, blob_metadata = re.findall(r'gs://([^/]+)/(.+)', metadata_uri)[0]
+    blob_mp4 = 'mp4/s_' + blob_metadata.lstrip('metadata/').rstrip('.txt') + '.mp4'
+    return bucket, blob_metadata, blob_mp4
 
 
 def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
