@@ -39,6 +39,7 @@ async def api_scene_search(
     try:
         results = search_scenes(query, top_n=top_n)
         return {'results': results}
+
     except Exception as e:
         traceback.print_exc()
         return {'error': str(e)}, 500
