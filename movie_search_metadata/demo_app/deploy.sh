@@ -4,8 +4,8 @@
 DATASTORE_ID=movie-search-datastore_xxxxx
 ##
 
-PROJECT_ID=$(gcloud config list --format 'value(core.project)')
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+PROJECT_ID=$(gcloud config list --format "value(core.project)")
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 SERVICE_ACCOUNT=${PROJECT_NUMBER}-compute@developer.gserviceaccount.com
 REGION=asia-northeast1
 REPO_NAME=cloud-run-source-deploy
@@ -14,7 +14,13 @@ REPO=${REGION}-docker.pkg.dev/$PROJECT_ID/$REPO_NAME
 DEPLOY_BACKEND=true
 DEPLOY_FRONTEND=true
 
+if [[ $DATASTORE_ID == "movie-search-datastore_xxxxx" ]]; then
+    DATASTORE_ID=movie-search-datastore
+fi
 
+echo "## Datastore ID: $DATASTORE_ID"
+
+echo ""
 echo "## Enabling APIs..."
 
 services=(
