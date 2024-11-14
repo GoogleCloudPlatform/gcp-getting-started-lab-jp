@@ -31,6 +31,12 @@ cd gcp-getting-started-lab-jp/movie_search_metadata/demo_app
 Application URL: https://movie-search-app-xxxxxxxxxx-an.a.run.app
 ```
 
+この URL をブラウザで開くと、次の 2 種類の機能が利用できます。検索対象の動画は、事前に用意された 3 種類の動画のみになります。
+
+- File search：クエリに関連する動画ファイルを検索します。
+- Scene search：クエリに関連するシーン（動画ファイル＋タイムスタンプ）を検索します。
+
+
 **注意**
 
 アプリの URL を知っているユーザーは誰でもアクセス可能な状態になります。
