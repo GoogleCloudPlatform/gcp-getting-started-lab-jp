@@ -1,4 +1,5 @@
 import os
+import time
 from google.api_core.client_options import ClientOptions
 from google.cloud import discoveryengine
 
@@ -120,8 +121,11 @@ if __name__ == '__main__':
         create_datastore(PROJECT_ID, LOCATION, DATASTORE_ID)
     except Exception as e:
         print(e)
+    time.sleep(10)
+
     print('\n## Importing documents...')
     import_documents(PROJECT_ID, LOCATION, DATASTORE_ID, BUCKET)
+
     print('\n## Creating search engine...')
     try:
         create_engine(PROJECT_ID, LOCATION, DATASTORE_ID, ENGINE_ID)
