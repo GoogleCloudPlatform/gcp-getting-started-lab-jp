@@ -5,11 +5,12 @@ from google.auth.transport.requests import Request
 from google.oauth2.id_token import fetch_id_token
 
 
-BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8080')
+BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8080')
 
 
 def get_start_end_seconds(timestamp):
-    """04:57-05:58 のような形式のタイムスタンプを受け取り、
+    """
+    04:57-05:58 のような形式のタイムスタンプを受け取り、
     開始秒と終了秒をタプルで返す
     """
     start, end = timestamp.split('-')
@@ -32,7 +33,7 @@ def make_request(endpoint: str, params: dict = None):
 
 
 def file_search():
-    st.write("# File Search")
+    st.write('# File Search')
     file_search_query = st.text_input('Search Query', key='file_search')
     if st.button('Search', key='file_search_button'):
         st.write(f'Searching for: {file_search_query}')
