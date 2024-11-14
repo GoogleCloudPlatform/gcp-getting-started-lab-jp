@@ -71,8 +71,8 @@ def import_documents(project_id, location, datastore_id, bucket):
 
     operation = client.import_documents(request=request)
     print(f'Waiting for operation to complete: {operation.operation.name}')
-    print('This may take around 20 mins...')
-    response = operation.result(timeout=1800)
+    print('This may take around 30 mins...')
+    response = operation.result(timeout=3600)
 
     return response
 
