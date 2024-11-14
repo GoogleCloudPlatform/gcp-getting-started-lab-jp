@@ -11,6 +11,10 @@ REGION=asia-northeast1
 REPO_NAME=cloud-run-source-deploy
 REPO=${REGION}-docker.pkg.dev/$PROJECT_ID/$REPO_NAME
 
+DEPLOY_BACKEND=true
+DEPLOY_FRONTEND=true
+
+
 echo "## Enabling APIs..."
 
 services=(
@@ -30,11 +34,12 @@ if [[ $enabled != ${#services[@]} ]]; then
   sleep 10
 fi
 
+
 echo ""
 echo "## Creating the image repository..."
 
 gcloud artifacts repositories describe \
-  --location $REGION $REPO_NAME 2>/dev/null
+  --location $REGION $REPO_NAME 1>/dev/null 2>&1
 rc=$?
 if [[ $rc != 0 ]]; then
   gcloud artifacts repositories create $REPO_NAME \
@@ -44,35 +49,41 @@ if [[ $rc != 0 ]]; then
   sleep 60
 fi  
 
-echo ""
-echo "## Deploying backend..."
 
-gcloud iam service-accounts add-iam-policy-binding \
-  --role=roles/iam.serviceAccountTokenCreator  \
-  --member=serviceAccount:$SERVICE_ACCOUNT \
-  $SERVICE_ACCOUNT
+if $DEPLOY_BACKEND; then
+  echo ""
+  echo "## Deploying backend..."
 
-pushd backend
-gcloud run deploy movie-search-backend --source . \
-  --region $REGION \
-  --no-allow-unauthenticated \
-  --service-account $SERVICE_ACCOUNT \
-  --set-env-vars DATASTORE_ID=$DATASTORE_ID
-popd
+  gcloud iam service-accounts add-iam-policy-binding \
+    --role=roles/iam.serviceAccountTokenCreator  \
+    --member=serviceAccount:$SERVICE_ACCOUNT \
+    $SERVICE_ACCOUNT
+
+  pushd backend
+  gcloud run deploy movie-search-backend --source . \
+    --region $REGION \
+    --no-allow-unauthenticated \
+    --service-account $SERVICE_ACCOUNT \
+    --set-env-vars DATASTORE_ID=$DATASTORE_ID
+  popd
+fi
 
 BACKEND_URL=$(gcloud run services list --format json | \
   jq .[].status.url | grep -E "movie-search-backend-.*\.run\.app" | sed s/\"//g)
 
-echo ""
-echo "## Deploying frontend..."
 
-pushd frontend
-gcloud run deploy movie-search-app --source . \
-  --region $REGION \
-  --allow-unauthenticated \
-  --service-account $SERVICE_ACCOUNT \
-  --set-env-vars BACKEND_URL=$BACKEND_URL
-popd
+if $DEPLOY_FRONTEND; then
+  echo ""
+  echo "## Deploying frontend..."
+
+  pushd frontend
+  gcloud run deploy movie-search-app --source . \
+    --region $REGION \
+    --allow-unauthenticated \
+    --service-account $SERVICE_ACCOUNT \
+    --set-env-vars BACKEND_URL=$BACKEND_URL
+  popd
+fi
 
 APP_URL=$(gcloud run services list --format json | \
   jq .[].status.url | grep -E "movie-search-app-.*\.run\.app" | sed s/\"//g)

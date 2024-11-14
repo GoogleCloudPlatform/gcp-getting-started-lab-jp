@@ -3,21 +3,11 @@ from google.cloud import discoveryengine_v1alpha as discoveryengine
 from google.api_core.client_options import ClientOptions
 from google import auth
 
-credentials, project_id = auth.default()
-PROJECT_ID = os.environ.get('PROJECT_ID', project_id)
-DATASTORE_ID = os.environ.get('DATASTORE_ID')
-LOCATION = os.environ.get('LOCATION', 'global')
+# global variables
+from utils import PROJECT_ID, DATASTORE_ID, LOCATION, credentials
+
 
 def search_documents_by_query(query: str, show_summary: bool = True) -> discoveryengine.SearchResponse:
-    """Discovery Engine でドキュメントを検索する
-
-    Args:
-        query: 検索クエリ
-        show_summary: サマリーを表示するかどうか
-
-    Returns:
-        Discovery Engine の検索レスポンス
-    """
     client = discoveryengine.SearchServiceClient(
         client_options=ClientOptions(api_endpoint=f'{LOCATION}-discoveryengine.googleapis.com'),
         credentials=credentials
@@ -42,4 +32,5 @@ def search_documents_by_query(query: str, show_summary: bool = True) -> discover
         query=query,
     )
     response = client.search(request)
+
     return response

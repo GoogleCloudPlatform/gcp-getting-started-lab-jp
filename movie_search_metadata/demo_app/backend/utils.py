@@ -1,21 +1,24 @@
 import datetime
+import os
+import re
 from google.cloud import storage
 from google import auth
 
 
 credentials, project_id = auth.default()
 
+PROJECT_ID = os.getenv('PROJECT_ID', project_id)
+DATASTORE_ID = os.getenv('DATASTORE_ID')
+LOCATION = os.getenv('LOCATION', 'global')
+
+
+def get_bucket_and_blobnames(metadata_uri: str) -> tuple[str, str, str]:
+  bucket, blob_metadata = re.findall(r'gs://([^/]+)/(.+)', metadata_uri)[0]
+  blob_mp4 = 'mp4/s_' + blob_metadata.lstrip('metadata/').rstrip('.txt') + '.mp4'
+  return bucket, blob_metadata, blob_mp4
+
+
 def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
-    """Cloud Storage の Blob の v4 signed URL を生成する
-
-    Args:
-        bucket_name: バケット名
-        blob_name: Blob 名
-
-    Returns:
-        署名付きURL
-    """
-
     if not credentials.valid:
         credentials.refresh(auth.transport.requests.Request())
 

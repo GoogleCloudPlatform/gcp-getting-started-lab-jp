@@ -8,7 +8,7 @@ Given the following information of a movie:
 - The [transcription] section contains speech transcription with timestamps.
 - The [text] section contains text information with timestamps.
 
-Find one to three scenes that matches the user query with timestamps.
+Find one to three scenes that matche the user query with timestamps.
 
 [format instruction]
 Output in Japanese. Output is a JSON list with "scene dict".

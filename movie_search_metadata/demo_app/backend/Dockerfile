@@ -1,11 +1,9 @@
-FROM python:3.9
+FROM python:3.9-slim
 
-WORKDIR /code
+WORKDIR /app
 
-COPY ./requirements.txt /code/requirements.txt
+COPY . /app
 
-RUN pip install -r /code/requirements.txt
-
-COPY . /code
+RUN pip3 install -r requirements.txt
 
 CMD ["fastapi", "run", "main.py", "--port", "8080"]
