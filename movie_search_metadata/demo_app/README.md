@@ -1,5 +1,9 @@
 # Movie search demo app
 
+[GIF 動画](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/movie_search_metadata/demo_app/docs/images/movie_search_demo.gif)
+
+![](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/movie_search_metadata/demo_app/docs/images/movie_search_demo.gif)
+
 ## 利用手順
 
 新規プロジェクトを作成したら、Owner 権限のユーザーで Cloud Shell を開いて以下のコマンドを実行します。
