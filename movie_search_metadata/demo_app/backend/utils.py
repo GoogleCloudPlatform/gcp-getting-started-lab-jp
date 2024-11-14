@@ -27,9 +27,9 @@ def generate_download_signed_url_v4(bucket_name: str, blob_name: str) -> str:
     blob = bucket.blob(blob_name)
 
     url = blob.generate_signed_url(
-        version="v4",
+        version='v4',
         expiration=datetime.timedelta(minutes=15),
-        method="GET",
+        method='GET',
         access_token=credentials.token,
         service_account_email=credentials.service_account_email
     )
