@@ -8,7 +8,7 @@ from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
 from google.cloud import storage
 from google import auth
 
-from utils import PROJECT_ID, generate_download_signed_url_v4, metadata_url_to_movie_blob_name
+from utils import PROJECT_ID, generate_download_signed_url_v4, metadata_url_to_movie_blob_name, running_on_cloudrun
 from search_document import search_documents_by_query
 from prompt_content_search import PROMPT_CONTENT_SEARCH
 
@@ -85,6 +85,10 @@ def search_scene(query: str, top_n: int = 1, model: GenerativeModel = model_flas
     Returns:
         検索結果のリスト
     """
+    # TODO: Find a way to refresh credencials with ADC and impersonate service account
+    if running_on_cloudrun() and not credentials.valid:
+        credentials.refresh(auth.transport.requests.Request())
+
     response = search_documents_by_query(query, show_summary=False)
     storage_client = storage.Client(project=project_id, credentials=credentials)
     results = []
