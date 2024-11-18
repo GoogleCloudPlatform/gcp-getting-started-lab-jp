@@ -4,13 +4,12 @@ from google.api_core.client_options import ClientOptions
 from google import auth
 
 # global variables
-from utils import PROJECT_ID, DATASTORE_ID, LOCATION, credentials
+from utils import PROJECT_ID, DATASTORE_ID, LOCATION
 
 
 def search_documents_by_query(query: str, show_summary: bool = True) -> discoveryengine.SearchResponse:
     client = discoveryengine.SearchServiceClient(
-        client_options=ClientOptions(api_endpoint=f'{LOCATION}-discoveryengine.googleapis.com'),
-        credentials=credentials
+        client_options=ClientOptions(api_endpoint=f'{LOCATION}-discoveryengine.googleapis.com')
     )
     request = discoveryengine.SearchRequest(
         serving_config=client.serving_config_path(
