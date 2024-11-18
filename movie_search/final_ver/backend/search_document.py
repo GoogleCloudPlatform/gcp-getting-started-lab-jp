@@ -2,7 +2,7 @@ from google.cloud import discoveryengine_v1alpha as discoveryengine
 from google.api_core.client_options import ClientOptions
 from google import auth
 
-from utils import PROJECT_ID, DATASTORE_ID, LOCATION
+from utils import PROJECT_ID, DATASTORE_ID, LOCATION, running_on_cloudrun
 
 credentials, project_id = auth.default()
 
@@ -16,6 +16,10 @@ def search_documents_by_query(query: str, show_summary: bool = True) -> discover
     Returns:
         Discovery Engine の検索レスポンス
     """
+    # TODO: Find a way to refresh credencials with ADC and impersonate service account
+    if running_on_cloudrun() and not credentials.valid:
+        credentials.refresh(auth.transport.requests.Request())
+
     client = discoveryengine.SearchServiceClient(
         client_options=ClientOptions(api_endpoint=f'{LOCATION}-discoveryengine.googleapis.com'),
         credentials=credentials

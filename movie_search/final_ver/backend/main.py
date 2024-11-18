@@ -9,10 +9,6 @@ from search_document import search_documents_by_query
 from scene_search import search_scene
 from utils import generate_download_signed_url_v4, metadata_url_to_movie_blob_name
 
-from google import auth
-
-credentials, project_id = auth.default()
-
 # --- FastAPI アプリケーション ---
 app = FastAPI()
 
