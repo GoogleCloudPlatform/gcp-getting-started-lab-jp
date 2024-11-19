@@ -35,10 +35,12 @@ cd gcp-getting-started-lab-jp/movie_search_metadata/demo_app
 Application URL: https://movie-search-app-xxxxxxxxxx-an.a.run.app
 ```
 
-この URL をブラウザで開くと、次の 2 種類の機能が利用できます。検索対象の動画は、事前に用意された 3 種類の動画のみになります。
+この URL をブラウザで開くと、次の 2 種類の機能が利用できます。
 
 - File search：クエリに関連する動画ファイルを検索します。
 - Scene search：クエリに関連するシーン（動画ファイル＋タイムスタンプ）を検索します。
+
+検索対象の動画は、事前に用意された 3 種類の動画のみになります。また、Vertex AI Search の構成直後は、インデックス作成が不完全なため正しい検索結果が得られない場合があります。そのような場合は、数時間後にあらためて試してください。
 
 
 **注意**
