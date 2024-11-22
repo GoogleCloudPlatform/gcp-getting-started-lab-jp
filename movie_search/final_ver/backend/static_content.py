@@ -8,8 +8,8 @@ ROOT_PAGE = """
         <h2>File Search</h2>
         <ul>
             <li>
-                <a href="/file_search?q=AI" target="_blank" rel="noopener noreferrer">
-                    AI
+                <a href="/file_search?q=AIに関する動画" target="_blank" rel="noopener noreferrer">
+                    AI に関する動画
                 </a>
             </li>
             <li>
