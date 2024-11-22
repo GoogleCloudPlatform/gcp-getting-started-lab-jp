@@ -3,19 +3,21 @@ import os
 from typing import List
 
 from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 import uvicorn
 
 from search_document import search_documents_by_query
 from scene_search import search_scene
 from utils import generate_download_signed_url_v4, metadata_url_to_movie_blob_name
+from static_content import ROOT_PAGE
 
 # --- FastAPI アプリケーション ---
 app = FastAPI()
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def root():
     """ルートエンドポイント"""
-    pass
+    return ROOT_PAGE
 
 
 @app.get("/file_search")
