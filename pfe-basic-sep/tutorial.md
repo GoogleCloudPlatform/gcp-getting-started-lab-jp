@@ -80,7 +80,7 @@ gcloud config set compute/region asia-northeast1 && gcloud config set compute/zo
 
 一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` が切れてしまう、またはブラウザのリロードが必要になる場合があります。その場合は以下の対応を行い、チュートリアルを再開してください。
 
-### **01. チュートリアル資材があるディレクトリに移動する**
+### **01. 再接続ボタンを押下し、チュートリアル資材があるディレクトリに移動する**
 
 ```bash
 cd ~/gcp-getting-started-lab-jp/pfe-basic-sep
@@ -95,7 +95,7 @@ teachme tutorial.md
 ### **03. プロジェクト ID を設定する**
 
 ```bash
-export PROJECT_ID=[PROJECT_ID]
+export PROJECT_ID=$(gcloud config get-value project)
 ```
 
 ### **4. gcloud のデフォルト設定**
