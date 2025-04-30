@@ -2,6 +2,8 @@
 
 [GIF Video](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/movie_search_metadata/demo_app/docs/images/movie_search_demo.gif)
 
+![](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/movie_search_metadata/demo_app/docs/images/movie_search_demo.gif)
+
 ## Instructions
 
 After creating a new project, open Cloud Shell with a user with owner privileges and run the following commands:
