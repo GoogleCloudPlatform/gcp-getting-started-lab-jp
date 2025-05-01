@@ -15,6 +15,13 @@ git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git
 cd gcp-getting-started-lab-jp/movie_search_metadata/demo_app
 ```
 
+The default output language is Japanese. To change it, modify the following part of `backend/prompt_content_search.py`:
+
+```
+[format instruction]
+Output in Japanese. Output is a JSON list with "scene dict".
+```
+
 ### Configure the Vertex AI Search search engine
 
 ```
