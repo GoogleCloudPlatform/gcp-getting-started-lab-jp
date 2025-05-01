@@ -22,6 +22,8 @@ The default output language is Japanese. To change it, modify the following part
 Output in Japanese. Output is a JSON list with "scene dict".
 ```
 
+Change `Japanese` to your favorite language.
+
 ### Configure the Vertex AI Search search engine
 
 ```
