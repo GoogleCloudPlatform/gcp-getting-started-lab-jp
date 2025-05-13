@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: balloon-deploy
 spec:
-  replicas: 10
+  replicas: 4
   selector:
     matchLabels:
       app: balloon
