@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: balloon-deploy
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: balloon
+  template:
+    metadata:
+      labels:
+        app: balloon
+    spec:
+      priorityClassName: balloon-priority
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: busybox
+        image: busybox:latest
+        command: ["sleep"]
+        args: ["infinity"]
+        resources:
+            requests:
+              cpu: 200m
+              memory: 250Mi
