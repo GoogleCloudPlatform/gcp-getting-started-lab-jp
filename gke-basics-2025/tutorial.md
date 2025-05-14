@@ -199,7 +199,7 @@ watch -d kubectl get pods,nodes
 次に frontend の pod を 1 から 4 へスケールアウトします。
 
 ```bash
-kubectl scale --replicas=4 deployment gke-dojo
+kubectl scale --replicas=4 deployment helloweb
 ```
 
 Balloon Pod を先に作成していたため、目的の Pod のスケールアウトはスピーディに完了します。一方　Balloon Pod　は優先度が低いため、ノードから削除され、さらなるノードのスケールアウトが始まります。Balloon Pod は追加されたノードに配置されます。
@@ -217,8 +217,8 @@ Lab02 はこちらで完了となります。
 ```bash
 kubectl delete -f lab-02/balloon-priority.yaml 
 kubectl delete -f lab-02/balloon-deploy.yaml 
-kubectl delete deployment gke-dojo
-kubectl delete svc gke-dojo
+kubectl delete deployment helloweb
+kubectl delete svc helloweb-lb
 ```
 
 ## **Ex01.Google Cloud サービスによる CI/CD**

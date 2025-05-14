@@ -63,7 +63,15 @@ gcloud コマンドライン インターフェースは、Google Cloud でメ�
 gcloud コマンドでは操作の対象とするプロジェクトの設定が必要です。操作対象のプロジェクトを設定します。
 
 ```bash
-gcloud config set project ${PROJECT_ID}
+export REGION="us-central1"
+export ZONE="us-central1-a"
+export AR_REPO_NAME="gemma3-1b-lora-repo"
+export IMAGE_NAME="gemma3-1b-lora-server"
+export IMAGE_TAG="latest"
+export GKE_CLUSTER_NAME="gke-dojo-cluster"
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
 ```
 
 承認するかどうかを聞かれるメッセージがでた場合は、`承認` ボタンをクリックします。
@@ -161,7 +169,6 @@ Autopilot Mode では GPU などのアクセラレーター利用において特
 
 ```Bash
 export HF_MODEL_NAME="google/gemma-3-1b-it"
-export LORA_ADAPTER_NAME="[YOUR_LORA_ADAPTER_HF_ID]" # 例: "huggingface_user/gemma3-1b-lora-adapter-example"
 export HF_TOKEN="[YOUR_HUGGINGFACE_ACCESS_TOKEN]" 
 ```
 
