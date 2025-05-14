@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gozaru-gemma-server-deployment
+  labels:
+    app: gozaru-gemma-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gozaru-gemma-server
+  template:
+    metadata:
+      labels:
+        app: gozaru-gemma-server
+      annotations:
+        autopilot.gke.io/compute-class: "Accelerator"
+        autopilot.gke.io/resource-adjustment: |-
+          [
+            {"name": "*", "cpu": "2000m", "memory": "8Gi", "ephemeral-storage": "15Gi"}
+          ]
+    spec:
+      terminationGracePeriodSeconds: 90
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cloud.google.com/gke-accelerator
+                operator: Exists
+      containers:
+      - name: gozaru-gemma-server-container
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+        env:
+        - name: HF_MODEL_NAME
+          value: "${HF_MODEL_NAME}"
+        - name: LORA_ADAPTER_NAME
+          value: "${LORA_ADAPTER_NAME}" # ファインチューニングしたアダプターID
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 480
+          periodSeconds: 20
+          timeoutSeconds: 15
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 600
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5

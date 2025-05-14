@@ -116,14 +116,14 @@ logger.info("トレーニング引数設定完了。")
 
 # --- 5. SFTTrainer クラスのインスタンスを作成 ---
 logger.info("SFTTrainer を準備中...")
-max_seq_length = 1024 # モデルに入力できるテキストの最大長
+max_seq_length = 1024 # この変数は使用しないが、元のコードに合わせて残しておく
 trainer = SFTTrainer(
     model=model,
     args=args,
     train_dataset=train_dataset,
     peft_config=peft_config,
-    max_seq_length=max_seq_length,
-    tokenizer=tokenizer,
+    # max_seq_length=max_seq_length, # ★ここを削除★ (前回削除済み)
+    # tokenizer=tokenizer, # ★ここを削除★
     packing=True,
     dataset_text_field="text",
     dataset_kwargs={
@@ -141,7 +141,7 @@ logger.info("--------------------------------------")
 trainer.train()
 logger.info("--------------------------------------")
 logger.info("ファインチューニング完了。")
-logger0.info("--------------------------------------")
+logger.info("--------------------------------------")
 
 # --- 7. トレーニングが完了したモデルを保存 ---
 trainer.save_model()
