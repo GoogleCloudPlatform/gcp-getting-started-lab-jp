@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gemma3-1b-lora-server-deployment
+  labels:
+    app: gemma3-1b-lora-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gemma3-1b-lora-server
+  template:
+    metadata:
+      labels:
+        app: gemma3-1b-lora-server
+      annotations:
+        autopilot.gke.io/compute-class: "Accelerator" # GPUを使用
+        # gemma-3-1b-it (量子化4bit) の場合のAutopilotリソース調整の目安
+        # VRAM: 1Bモデルの4bit量子化で約1GB弱。余裕を見てT4(16GB)なら十分。
+        # CPU/Memory: モデルロードと推論処理に必要。
+        # 例: CPU 2コア, メモリ 8-12Gi, エフェメラルストレージ 20Gi
+        # 実際の値はLoRAアダプタのサイズやワークロードにより調整してください。
+        autopilot.gke.io/resource-adjustment: |-
+          [
+            {"name": "*", "cpu": "2000m", "memory": "10Gi", "ephemeral-storage": "20Gi"}
+          ]
+    spec:
+      terminationGracePeriodSeconds: 90 # モデルのクリーンアップに時間を要する場合
+      containers:
+      - name: gemma3-1b-lora-server-container
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} # シェルで展開される想定
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1 # 1つのGPUを要求 (例: NVIDIA T4, L4)
+          requests: # Autopilotではlimitsのみで良い場合が多い
+            nvidia.com/gpu: 1
+        env:
+        - name: HF_MODEL_NAME
+          value: "${HF_MODEL_NAME}" # google/gemma-3-1b-it
+        - name: LORA_ADAPTER_NAME
+          value: "${LORA_ADAPTER_NAME}" # 指定したLoRAアダプタ
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}" # Hugging Face Access Token
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: MAX_CONCURRENCY # (オプション) FastAPIワーカーと関連
+          value: "10"
+        readinessProbe: # Podがリクエストを受け付け可能か
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 480 # 8分 (1Bモデルならこれくらいか。要調整)
+          periodSeconds: 20
+          timeoutSeconds: 15
+          failureThreshold: 6
+        livenessProbe: # Podが生存しているか
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 600 # readinessより長く (10分)
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5
