@@ -62,8 +62,7 @@ if $DEPLOY_BACKEND; then
 
   gcloud iam service-accounts add-iam-policy-binding \
     --role=roles/iam.serviceAccountTokenCreator  \
-    --member=serviceAccount:$SERVICE_ACCOUNT \
-    $SERVICE_ACCOUNT
+    --member=serviceAccount:$SERVICE_ACCOUNT
 
   pushd backend
   gcloud run deploy movie-search-backend --source . \
