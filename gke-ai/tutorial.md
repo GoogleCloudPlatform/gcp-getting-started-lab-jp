@@ -205,12 +205,12 @@ kubectl apply -f service.yaml
 ```
 ### **2. Podのログ確認**
 
+デプロイから起動まで 15 分程度かかる可能性があります。
 ```bash
 export POD_NAME_GEMMA3=$(kubectl get pods -l app=gemma3-1b-lora-server -o jsonpath='{.items[0].metadata.name}')
 kubectl logs -f $POD_NAME_GEMMA3
 ```
 ### **3. アクセス先の確認**
-
 以下で 外部 IP アドレスを確認して、環境変数にセットします。数分かかりますので、Pending と表示された場合、5分ほどお待ちください。
 ```bash
 export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-1b-lora-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -224,223 +224,589 @@ curl コマンドで推論APIにリクエストを送信します。
 curl -X POST "http://${EXTERNAL_IP_GEMMA3}:80/generate" \
     -H "Content-Type: application/json" \
     -d '{
-        "prompt": "Translate to Japanese: Hello, how are you doing today?",
+        "prompt": "日本の首都は？",
         "max_new_tokens": 50
     }'
 ```
 
-
-```Bash
-{
-  "generated_text": "Translate to Japanese: Hello, how are you doing today?\nこんにちは、今日はお元気ですか？",
-  "model_name": "google/gemma-3-1b-it + your-username/your-gemma3-1b-lora-adapter",
-  "processing_time_ms": 1234
-}
-```
+簡単なレスポンスが帰ってきたらlab-01 は完了です。
 以上で、google/gemma-3-1b-it の GKE でのサービングは終わります。
 
 
+## **Lab02.GKE 上で Gemma をファインチューニングする**
+
+### **1. 環境変数の設定**
+
+このラボでは、GKE クラスタ上で google/gemma-3-1b-it モデルを、LoRA を使ってファインチューニングします。
+具体的には、Gemma からの返答の語尾を全て「ござる」にする学習を行います。
+
+ファインチューニングは GPU が必須の処理です。
+ここでは、GKE の Kubernetes Job を利用して、必要な GPU リソースを動的にプロビジョニングし、学習ジョブを実行します。
+HF_TOKEN とHF_USERNAME についてはご自身のアカウントに合わせて変更ください。
+
+```Bash
+export PROJECT_ID=$(gcloud config get project)
+export REGION=$(gcloud config get compute/region)
+export CLUSTER_NAME="gke-dojo-cluster"
+export AR_REPO_NAME="gemma-finetune-job-repo"
+export IMAGE_NAME="gemma-finetune-job"
+export IMAGE_TAG="latest"
+export HF_MODEL_NAME="google/gemma-2-2b-jpn-it"
+export HF_TOKEN="[YOUR_HUGGINGFACE_WRITE_ACCESS_TOKEN]"
+export HF_USERNAME="[YOUR_HUGGINGFACE_USERNAME]"
+export LORA_ADAPTER_REPO_NAME="gemma-gozaru-adapter"
+```
+### **2.学習用スクリプトと Dockerfile の準備**
+
+GKE 上で実行するファインチューニングのロジックを Python スクリプトとして定義し、それを Docker イメージに含めます。
+学習ジョブを実行するための Docker イメージをビルドします。GPU の利用と必要なライブラリのインストールが含まれます。
+
+### **3.Docker イメージのビルドと Artifact Registry へのプッシュ**
 
 
-
-
-
-
-
-
-
-
-まず、クラスタへの接続情報を取得します。
+Artifact Registry リポジトリの作成をします。
 ```bash
-gcloud container clusters get-credentials gke-dojo-cluster --region asia-northeast1 --project ${PROJECT_ID}
+gcloud artifacts repositories describe ${AR_REPO_NAME} --repository-format=docker --location=${REGION} > /dev/null 2>&1 || \
+gcloud artifacts repositories create ${AR_REPO_NAME} \
+    --repository-format=docker \
+    --location=${REGION} \
+    --description="Gemma Fine-tuning Job Images"
 ```
 
-以下のコマンドで、マニフェストの適用を行ってください。
-実行時 Warning が複数出力されますが、デプロイ自体には問題ございません。
-
-```bash
-kubectl apply -f lab-01/app/
-```
-以下のコマンドで、現在の Pod および Node のステータスを取得を継続して行います。
-Pod の作成に伴い、Node が複製され、Pod がデプロイされる様子が確認できます。
-デプロイには 2,3 分程度の時間がかかります。
-```bash
-watch -d kubectl get pods,nodes,svc
-```
-
-数分後、Pod の Status が Running となることを確認できたら、 `Ctrl-C` でコマンドの実行を終了します。
-
-### **2. Demo サイトの確認**
-ロードバランサーの設定が完了するまで数分かかります。数分後、以下のコマンドでアプリケーションの URL を確認します。
-確認した URL をコピーして Chrome などの Web ブラウザのアドレスバーに貼り付けアプリケーションを確認します。
-なお、設定が完了するまでの数分間（場合によってはそれ以上）は、Connection reset by peer のエラーが出力されます。
-その場合は、さらにしばらくお待ちください。
-
-```bash
-kubectl get svc | grep LoadBalancer | awk '{print "http://"$4}'
-```
-
-Lab01 はこちらで完了となります。
-
-
-## **Lab02.Balloon Pod の利用による高速なスケーリング**
-<walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
-
-
-手動または HPA 経由でスケールアップすると、新しい Pod がプロビジョニングされますが、予備容量がない場合は、新しいノードがプロビジョニングされるために遅延が発生する可能性があります。
-Autopilot モードで迅速にスケールアップするためには、Balloon Pod を利用します。
-
-### **1. Priority Class と Balloon Pod の作成**
-まずは、Priority の定義リソースである Priority Class と Balloon Pod を作成します。
+次にビルドを行います。
 
 ```bash
-kubectl apply -f lab-02/balloon-priority.yaml 
-kubectl apply -f lab-02/balloon-deploy.yaml 
+cd lab-02/
+gcloud auth configure-docker ${REGION}-docker.pkg.dev
+gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} .
 ```
 
-Balloon Pod の作成により、ノードがスケールすることを watch コマンドで動的に確認します。
-完了までに数分かかります。
+### **4.GKE 上でのファインチューニングジョブの実行**
+
+ここでは、GKE クラスタで学習ジョブを実行するための Kubernetes Job マニフェストを作成します。
+
+job 用マニフェストをクラスタに適用します。
+```bash
+sed -i \
+  -e 's|\${REGION}|'"${REGION}"'|g' \
+  -e 's|\${PROJECT_ID}|'"${PROJECT_ID}"'|g' \
+  -e 's|\${AR_REPO_NAME}|'"${AR_REPO_NAME}"'|g' \
+  -e 's|\${IMAGE_NAME}|'"${IMAGE_NAME}"'|g' \
+  -e 's|\${IMAGE_TAG}|'"${IMAGE_TAG}"'|g' \
+  -e 's|\${HF_MODEL_NAME}|'"${HF_MODEL_NAME}"'|g' \
+  -e 's|\${HF_TOKEN}|'"${HF_TOKEN}"'|g' \
+  -e 's|\${HF_USERNAME}|'"${HF_USERNAME}"'|g' \
+  -e 's|\${LORA_ADAPTER_REPO_NAME}|'"${LORA_ADAPTER_REPO_NAME}"'|g' \
+  finetune_job.yaml
+```
+```bash
+kubectl apply -f finetune_job.yaml
+```
+Job の Pod が起動し、学習が開始されるまで時間がかかります。
 
 ```bash
-watch -d kubectl get pods,nodes
+kubectl get pods -l job-name=gemma-gozaru-finetune-job -w
 ```
-数分後、すべての Pod と Node の Status が Running となることを確認できたら、 `Ctrl-C` でコマンドの実行を終了します。
+Pod のステータスが Pending から Running に、そして Completed になるまで監視してください。
+Running になるまでに GPU ノードのプロビジョニングで数分かかることがあります。
+Job が起動したら、Pod のログを追跡して学習の進捗を確認します。
 
-### **2. 迅速なスケールアウトの確認**
+```Bash
+export FINETUNE_POD_NAME=$(kubectl get pods -l job-name=gemma-gozaru-finetune-job -o jsonpath='{.items[0].metadata.name}')
+kubectl logs -f $FINETUNE_POD_NAME
+```
+ログには、データセットのロード、モデルのロード、そして学習エポックの進捗状況が表示されるはずです。INFO:root:ファインチューニング完了。 のようなメッセージが表示されれば、学習は成功です。
+所要時間: 学習には、GPU の性能とデータセットのサイズ、エポック数に応じて、数分から数十分かかることがあります。
 
-次に frontend の pod を 1 から 4 へスケールアウトします。
+### **4.Hugging Face Hub で結果を確認する**
+学習が完了し、trainer.push_to_hub=True の設定により、ファインチューニングされた LoRA アダプターは自動的に Hugging Face Hub にプッシュされます。
+
+以下の URL にアクセスし、あなたのリポジトリが作成され、ファイルがアップロードされていることを確認してください。
+
+https://huggingface.co/[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]
+
+
+## **Lab01.GKE 上でファインチューニング済み Gemma をサービングする**
+### **1.環境変数を設定する**
+
+このラボでは、前の Lab02 でファインチューニングし、Hugging Face Hub にプッシュした 「ござる」語尾の Gemma モデル を GKE クラスタ上にデプロイし、実際にその特性を確認します。
+
+デプロイメントマニフェストで使用する環境変数を設定します。[YOUR_PROJECT_ID]、[YOUR_REGION]、[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]、[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN] は、ご自身の情報に置き換えてください。
 
 ```bash
-kubectl scale --replicas=4 deployment gke-dojo
+export PROJECT_ID=$(gcloud config get project)
+export REGION=$(gcloud config get compute/region)
+export CLUSTER_NAME="gke-dojo-cluster"
+export AR_REPO_NAME="gozaru-gemma-repo"
+export IMAGE_NAME="gozaru-gemma-server"
+export IMAGE_TAG="latest"
+export HF_MODEL_NAME="google/gemma-2-2b-jpn-it"
+export LORA_ADAPTER_NAME="[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]"
+export HF_TOKEN="[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN]"
 ```
+推論用 Python スクリプトの作成 (main_gozaru.py)
+以下のコードを、main_gozaru.py というファイル名で、現在のディレクトリ (Cloud Shell の ~/gcp-getting-started-lab-jp/gke-ai/lab-03 など) に作成してください。
 
-Balloon Pod を先に作成していたため、目的の Pod のスケールアウトはスピーディに完了します。一方　Balloon Pod　は優先度が低いため、ノードから削除され、さらなるノードのスケールアウトが始まります。Balloon Pod は追加されたノードに配置されます。
-以下のコマンドで一連の流れを確認しましょう。
+Bash
 
-```bash
-watch -n 1 kubectl get pods,nodes
-```
+# main_gozaru.py を作成
+cat <<'EOF' > main_gozaru.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
+import os
+import logging
+import time
 
-数分後、すべての Pod と Node の Status が Running となることを確認できたら、 `Ctrl-C` でコマンドの実行を終了します。
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-Lab02 はこちらで完了となります。
+app = FastAPI()
 
-次の内容に入る前に不要なリソースを削除します。
-```bash
-kubectl delete -f lab-02/balloon-priority.yaml 
-kubectl delete -f lab-02/balloon-deploy.yaml 
-kubectl delete deployment gke-dojo
-kubectl delete svc gke-dojo
-```
+# 環境変数からモデル名、LoRAアダプター名、Hugging Faceトークンを取得
+MODEL_NAME = os.getenv("HF_MODEL_NAME", "google/gemma-2-2b-jpn-it")
+LORA_ADAPTER_NAME = os.getenv("LORA_ADAPTER_NAME", None)
+HF_TOKEN = os.getenv("HF_TOKEN", None)
 
-## **Ex01.Google Cloud サービスによる CI/CD**
-<walkthrough-tutorial-duration duration=30></walkthrough-tutorial-duration>
+if not HF_TOKEN:
+    logger.warning(f"Hugging Face token (HF_TOKEN) is not set. Downloads may fail if {MODEL_NAME} is a gated model.")
 
-### **0. ２つ目のクラスター作成**
-後続で使う 2 つ目のクラスターを作成しておきます。
+model = None
+tokenizer = None
+model_loaded_time = 0
 
-```bash
-gcloud container --project "$PROJECT_ID" clusters create-auto "gke-dojo-cluster-prod" \
---region "asia-northeast1" --release-channel "regular"
-```
-このクラスタは、本番環境向けクラスタとして扱います。
-開発環境クラスタで動作を確認したアプリケーションを本番環境にデプロイするという流れを Cloud Build と Cloud Deploy で実装します。
+class GenerationRequest(BaseModel):
+    prompt: str
+    max_new_tokens: int = 150
 
-### **1. 対象のアプリケーション確認**
+class GenerationResponse(BaseModel):
+    generated_text: str
+    model_name: str
+    processing_time_ms: int
 
-ローカルにある python アプリケーションを出力して確認してください。
-こちらはテキストを出力するシンプルな Flask アプリケーションです。
+@app.on_event("startup")
+async def load_model_on_startup():
+    global model, tokenizer, model_loaded_time
+    start_time = time.time()
+    try:
+        logger.info(f"Loading tokenizer for {MODEL_NAME}...")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN) # MODEL_ID を使うように修正
+        logger.info("Tokenizer loaded successfully.")
 
-```bash
-cat lab-ex01/main.py
-```
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        logger.info(f"Using device: {device}")
 
-### **2. レポジトリ作成**
+        logger.info(f"Loading base model {MODEL_ID}...") # MODEL_ID を使うように修正
+        base_model = AutoModelForCausalLM.from_pretrained(
+            MODEL_ID, # MODEL_ID を使うように修正
+            device_map="auto" if device.type == 'cuda' else {"": "cpu"},
+            torch_dtype=torch.bfloat16 if device.type == 'cuda' else torch.float32,
+            token=HF_TOKEN
+        )
+        logger.info("Base model loaded successfully.")
 
-以下のコマンドで Flask アプリケーションのコンテナイメージを配置するための Artifact Registry のレポジトリを作成します。
-```bash
-gcloud artifacts repositories create gke-dojo --repository-format=docker --location=asia-northeast1
-```
+        if LORA_ADAPTER_NAME and LORA_ADAPTER_NAME.strip():
+            logger.info(f"Loading LoRA adapter {LORA_ADAPTER_NAME} for {MODEL_NAME}...")
+            try:
+                model = PeftModel.from_pretrained(base_model, LORA_ADAPTER_NAME, token=HF_TOKEN)
+                logger.info(f"LoRA adapter {LORA_ADAPTER_NAME} loaded successfully.")
+            except Exception as e:
+                logger.error(f"Failed to load LoRA adapter {LORA_ADAPTER_NAME}: {e}. Proceeding with the base model only.")
+                model = base_model
+        else:
+            logger.info(f"No LoRA adapter specified or LORA_ADAPTER_NAME is empty. Using base model: {MODEL_NAME}.")
+            model = base_model
 
-### **3. Cloud Build によるコンテナイメージの作成**
+        model.eval() # 推論モードに設定
 
-Cloud Build を利用して、クラウド上でコンテナイメージのビルドを行います。
-Cloud Build に含まれている Buildpacks により Dockerfile を書かなくとも、アプリケーションの構成を認識して適切なコンテナイメージを作成することができます。
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "right"
 
-以下のコマンドで、ディレクトリを移動します。
+        model_loaded_time = round((time.time() - start_time) * 1000)
+        logger.info(f"Model and tokenizer loaded in {model_loaded_time} ms.")
 
-```bash
-cd lab-ex01
-```
-移動後、ビルドを実行します。
+        logger.info("Performing a quick test inference on startup...")
+        try:
+            test_messages = [{"role": "user", "content": "日本の首都はどこですか？"}]
+            test_inputs = tokenizer.apply_chat_template(
+                test_messages,
+                return_tensors="pt",
+                add_generation_prompt=True,
+                return_dict=True
+            ).to(model.device)
+            
+            test_outputs = model.generate(**test_inputs, max_new_tokens=50, pad_token_id=tokenizer.eos_token_id)
+            test_generated_text = tokenizer.batch_decode(test_outputs[:, test_inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
+            logger.info(f"Test inference successful: {test_generated_text.strip()}")
+        except Exception as e:
+            logger.error(f"Test inference failed: {e}")
 
-```bash
-gcloud builds submit --config cloudbuild.yaml
-```
-最終的に`STATUS: SUCCESS`と表示されましたら、ビルド成功です。
+    except Exception as e:
+        logger.error(f"Error loading model on startup: {e}")
+        raise RuntimeError(f"Failed to load model: {e}")
 
-カレントディレクトリを戻しておきます。
 
-```bash
-cd ..
-```
+@app.post("/generate", response_model=GenerationResponse)
+async def generate_text(request: GenerationRequest):
+    if not model or not tokenizer:
+        raise HTTPException(status_code=503, detail="Model or tokenizer not loaded yet. Please wait or check logs.")
+    
+    start_time = time.time()
+    try:
+        messages = [{"role": "user", "content": request.prompt}]
+        inputs = tokenizer.apply_chat_template(
+            messages,
+            return_tensors="pt",
+            add_generation_prompt=True,
+            return_dict=True
+        ).to(model.device)
 
-### **4. Cloud Deploy による デプロイ**
+        logger.info(f"Generating text for prompt (first 50 chars): '{request.prompt[:50]}...' with max_new_tokens: {request.max_new_tokens}")
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=request.max_new_tokens,
+                pad_token_id=tokenizer.eos_token_id,
+                do_sample=True,
+                temperature=0.8,
+            )
+        generated_text = tokenizer.batch_decode(outputs[:, inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
+        processing_time_ms = round((time.time() - start_time) * 1000)
+        logger.info(f"Generated text (first 100 chars): '{generated_text[:100]}...' in {processing_time_ms} ms.")
+        
+        current_model_name = MODEL_NAME
+        if LORA_ADAPTER_NAME and LORA_ADAPTER_NAME.strip():
+             current_model_name = f"{MODEL_NAME} + {LORA_ADAPTER_NAME}"
 
-前の手順で用意した Flask アプリケーションを Kubernetes マニフェストを確認します。
+        return GenerationResponse(
+            generated_text=generated_text.strip(),
+            model_name=current_model_name,
+            processing_time_ms=processing_time_ms
+            )
+            
+    except Exception as e:
+        logger.error(f"Error during text generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-```bash
-cat lab-ex01/k8s/deployment.yaml
-```
+@app.get("/health")
+async def health_check():
+    if model and tokenizer:
+        try:
+            _ = model.device 
+            return {"status": "healthy", "model_name": MODEL_NAME, "model_loaded_ms": model_loaded_time, "device": str(model.device)}
+        except Exception as e:
+            logger.error(f"Health check failed due to model access: {e}")
+            return {"status": "unhealthy", "model_name": MODEL_NAME, "error": str(e)}
+    return {"status": "unhealthy", "model_name": MODEL_NAME, "detail": "Model or tokenizer not loaded."}
 
-```bash
-cat lab-ex01/k8s/service.yaml
-```
 
-続いて Cloud Deploy にてターゲットとなる GKE クラスタにデプロイするための定義ファイルを確認します。
-```bash
-cat lab-ex01/clouddeploy.yaml
-```
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
+EOF
+2-2. requirements_gozaru.txt の作成
+Bash
 
-以下のコマンドで `clouddeploy.yaml` 内の`PROJECT_ID`を実際の環境変数(プロジェクトID)へ置き換えます。
-```
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex01/clouddeploy.yaml
-```
+# requirements_gozaru.txt を作成
+cat <<'EOF' > requirements_gozaru.txt
+fastapi
+uvicorn[standard]
+torch --index-url https://download.pytorch.org/whl/cu121
+transformers
+peft
+accelerate
+trl
+datasets
+bitsandbytes
+sentencepiece
+protobuf
+EOF
+2-3. Dockerfile_gozaru の作成
+Bash
 
-このファイルを利用して、アプリケーションをデプロイするためのパイプラインを用意します。
-```bash
-gcloud deploy apply --file=lab-ex01/clouddeploy.yaml --region asia-northeast1 --project=$PROJECT_ID
-```
+# Dockerfile_gozaru を作成
+cat <<'EOF' > Dockerfile_gozaru
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 
-Cloud Deploy ではテンプレートとなる Kubernetes のマニフェストを環境に合わせてレンダリングするために、Skaffold を利用します。
-ここでは、コンテナイメージを今回のアプリケーションに書き換えるのみのため、シンプルなコンフィグを作成しています。
+WORKDIR /app
 
-```bash
-cat lab-ex01/skaffold.yaml
-```
-それでは、デプロイを開始します。以下のコマンドでリリースを作成します。
+# 必要なツールをインストール (git は Hugging Face モデルダウンロードに必要)
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-```bash
-cd lab-ex01/
-gcloud deploy releases create release01 \
-    --delivery-pipeline=gke-dojo \
-    --region=asia-northeast1 \
-    --skaffold-file=skaffold.yaml \
-    --source=./ \
-    --images=gke-dojo="asia-northeast1-docker.pkg.dev/$PROJECT_ID/gke-dojo/gke-dojo-app:v1"
-```
-数分の経過後、[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に最初のリリースの詳細が表示され、それが最初のクラスタに正常にデプロイされたことが確認できます。
+# requirements.txtをコピーしてライブラリをインストール
+COPY requirements_gozaru.txt .
+RUN pip install --no-cache-dir -r requirements_gozaru.txt
 
-[Kubernetes Engine コンソール](https://console.cloud.google.com/kubernetes)に移動して、アプリケーションのエンドポイントを探します。
-左側のメニューバーより Services & Ingress を選択し、gke-dojo-service という名前のサービスを見つけます。
-Endpoints 列に IP アドレスが表示され、リンクとなっているため、それをクリックして、アプリケーションが期待どおりに動作していることを確認します。
+# アプリケーションコードをコピー
+COPY main_gozaru.py .
 
-ステージングでテストしたので、本番環境に昇格する準備が整いました。
-[Cloud Deploy コンソール](https://console.cloud.google.com/deploy)に戻ります。
-デリバリーパイプラインの一覧から、`gke-dojo` をクリックします。
-すると、`プロモート` という青いリンクが表示されています。リンクをクリックし、内容を確認した上で、下部の`プロモート`ボタンをクリックします。すると本番環境へのデプロイを実施されます。
+# ポート8080を公開
+EXPOSE 8080
 
-先ほどの手順と同様に本番環境のアプリケーションの動作を確認できましたら、本ハンズオンは終了です。
+# アプリケーションの起動コマンド
+CMD ["uvicorn", "main_gozaru:app", "--host", "0.0.0.0", "--port", "8080", "--timeout-keep-alive", "60", "--workers", "1"]
+EOF
+2-4. Docker イメージのビルドと Artifact Registry へのプッシュ
+Bash
 
-## **Configurations!**
-これで、GKE での基本的なアプリケーションのデプロイと操作、Autopilot Mode におけるスケールの方法、CI/CD の操作を学ぶことができました。引き続き応用編もお楽しみ下さい。
+# Artifact Registry リポジトリの作成 (存在しない場合のみ)
+gcloud artifacts repositories describe ${AR_REPO_NAME} --repository-format=docker --location=${REGION} > /dev/null 2>&1 || \
+gcloud artifacts repositories create ${AR_REPO_NAME} \
+    --repository-format=docker \
+    --location=${REGION} \
+    --description="Gozaru Gemma LoRA inference server"
+
+# Docker 認証の設定
+gcloud auth configure-docker ${REGION}-docker.pkg.dev
+
+# Docker イメージのビルド
+gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} --file=Dockerfile_gozaru .
+
+# Docker イメージを Artifact Registry にタグ付けしてプッシュ
+# (gcloud builds submit が自動的にプッシュするため、厳密には不要ですが、念のため記載)
+# docker image tag gozaru-gemma-server:latest ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} && \
+# docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+3. GKE へのデプロイ
+ファインチューニングした「ござる」Gemma モデルを GKE にデプロイします。
+
+Bash
+
+# GKE クラスタへの認証情報を取得し、コンテキストにセットします。
+gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}
+3-1. deployment_gozaru_serving.yaml の作成
+YAML
+
+# deployment_gozaru_serving.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gozaru-gemma-server-deployment
+  labels:
+    app: gozaru-gemma-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gozaru-gemma-server
+  template:
+    metadata:
+      labels:
+        app: gozaru-gemma-server
+      annotations:
+        autopilot.gke.io/compute-class: "Accelerator"
+        autopilot.gke.io/resource-adjustment: |-
+          [
+            {"name": "*", "cpu": "2000m", "memory": "8Gi", "ephemeral-storage": "15Gi"}
+          ]
+    spec:
+      terminationGracePeriodSeconds: 90
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cloud.google.com/gke-accelerator
+                operator: Exists
+      containers:
+      - name: gozaru-gemma-server-container
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+        env:
+        - name: HF_MODEL_NAME
+          value: "${HF_MODEL_NAME}"
+        - name: LORA_ADAPTER_NAME
+          value: "${LORA_ADAPTER_NAME}" # ファインチューニングしたアダプターID
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 480
+          periodSeconds: 20
+          timeoutSeconds: 15
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 600
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5
+3-2. service_gozaru_serving.yaml の作成
+YAML
+
+# service_gozaru_serving.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: gozaru-gemma-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: gozaru-gemma-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+3-3. マニフェストの生成と適用
+Bash
+
+# deployment_gozaru_serving.yaml のテンプレートを一時的に保存
+cat <<'EOF' > deployment_gozaru_serving_template.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gozaru-gemma-server-deployment
+  labels:
+    app: gozaru-gemma-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gozaru-gemma-server
+  template:
+    metadata:
+      labels:
+        app: gozaru-gemma-server
+      annotations:
+        autopilot.gke.io/compute-class: "Accelerator"
+        autopilot.gke.io/resource-adjustment: |-
+          [
+            {"name": "*", "cpu": "2000m", "memory": "8Gi", "ephemeral-storage": "15Gi"}
+          ]
+    spec:
+      terminationGracePeriodSeconds: 90
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cloud.google.com/gke-accelerator
+                operator: Exists
+      containers:
+      - name: gozaru-gemma-server-container
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+        env:
+        - name: HF_MODEL_NAME
+          value: "${HF_MODEL_NAME}"
+        - name: LORA_ADAPTER_NAME
+          value: "${LORA_ADAPTER_NAME}"
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 480
+          periodSeconds: 20
+          timeoutSeconds: 15
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 600
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 5
+EOF
+
+# service_gozaru_serving.yaml のテンプレートを一時的に保存
+cat <<'EOF' > service_gozaru_serving_template.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: gozaru-gemma-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: gozaru-gemma-server
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+EOF
+
+# envsubst を使って実際の YAML ファイルを生成
+envsubst < deployment_gozaru_serving_template.yaml > deployment_gozaru_serving.yaml
+envsubst < service_gozaru_serving_template.yaml > service_gozaru_serving.yaml
+
+echo "deployment_gozaru_serving.yaml と service_gozaru_serving.yaml が生成されました。内容を確認してください。"
+cat deployment_gozaru_serving.yaml
+echo "---"
+cat service_gozaru_serving.yaml
+
+# 生成されたファイルを適用
+kubectl apply -f deployment_gozaru_serving.yaml
+kubectl apply -f service_gozaru_serving.yaml
+4. 動作確認
+4-1. Pod のデプロイ状況の確認
+Bash
+
+kubectl get pods -l app=gozaru-gemma-server -w
+STATUS が Running になった後も、READY が 1/1 になるまで、設定した initialDelaySeconds (8分) の時間がかかります。気長にお待ちください。
+
+4-2. Pod のログを継続的に確認
+Bash
+
+export POD_NAME=$(kubectl get pods -l app=gozaru-gemma-server -o jsonpath='{.items[0].metadata.name}')
+kubectl logs -f $POD_NAME
+ログで Application startup complete. や Test inference successful: が表示されれば、アプリケーションは起動しています。
+
+4-3. 外部 IP アドレスの取得
+Bash
+
+kubectl get service gozaru-gemma-service -w
+EXTERNAL-IP が <pending> から実際の IP アドレスに変わるまで待ちます。
+
+Bash
+
+export EXTERNAL_IP_GOZARU=$(kubectl get service gozaru-gemma-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "External IP for Gozaru Gemma service: $EXTERNAL_IP_GOZARU"
+4-4. 推論リクエストを送信
+curl コマンドで推論 API にリクエストを送信し、応答の語尾が「ござる」になっているか確認します。
+
+Bash
+
+curl -X POST "http://${EXTERNAL_IP_GOZARU}:80/generate" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "prompt": "日本の首都はどこですか？",
+        "max_new_tokens": 50
+    }'
+期待される応答の例:
+
+JSON
+
+{
+  "generated_text": "日本の首都は東京にございまする。",
+  "model_name": "google/gemma-2-2b-jpn-it + [YOUR_GOZARU_LORA_ADAPTER_HF_ID]",
+  "processing_time_ms": XXXX
+}
+語尾が「ござる」になっていれば、ファインチューニングされた LoRA アダプターがGKE上で正しく適用され、動作しています！
+
+5. クリーンアップ
+ハンズオンが完了したら、不要な課金を防ぐため、デプロイしたリソースを削除します。

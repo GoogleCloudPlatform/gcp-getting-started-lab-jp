@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gemma-gozaru-finetune-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
+      tolerations: # GPU ノードのテイントを許容
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: finetune-container
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+        resources:
+          limits:
+            nvidia.com/gpu: 1 
+            cpu: "8000m" 
+            memory: "30Gi" 
+            ephemeral-storage: "50Gi"
+          requests:
+            nvidia.com/gpu: 1
+            cpu: "4000m"
+            memory: "15Gi"
+            ephemeral-storage: "20Gi"
+        env:
+        - name: HF_MODEL_NAME
+          value: "${HF_MODEL_NAME}"
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}"
+        - name: HF_USERNAME
+          value: "${HF_USERNAME}"
+        - name: LORA_ADAPTER_REPO_NAME
+          value: "${LORA_ADAPTER_REPO_NAME}"
