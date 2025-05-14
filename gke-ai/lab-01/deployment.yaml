@@ -1,4 +1,3 @@
-# deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,39 +14,39 @@ spec:
       labels:
         app: gemma3-1b-lora-server
       annotations:
-        autopilot.gke.io/compute-class: "Accelerator" # GPUを使用することを示すアノテーション
-        autopilot.gke.io/resource-adjustment: |- # リソース要求の調整
+        autopilot.gke.io/compute-class: "Accelerator"
+        autopilot.gke.io/resource-adjustment: |-
           [
             {"name": "*", "cpu": "2000m", "memory": "10Gi", "ephemeral-storage": "20Gi"}
           ]
     spec:
-      nodeSelector: # <--- この値を変更
-        cloud.google.com/gke-accelerator: nvidia-l4 # 使用するGPUタイプを L4 に指定
       terminationGracePeriodSeconds: 90
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
       containers:
       - name: gemma3-1b-lora-server-container
-        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} # シェルで展開される想定
+        image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
         ports:
         - containerPort: 8080
         resources:
           limits:
-            nvidia.com/gpu: 1 # 1つのGPUを要求
+            nvidia.com/gpu: 1
           requests:
             nvidia.com/gpu: 1
         env:
         - name: HF_MODEL_NAME
-          value: "${HF_MODEL_NAME}" # google/gemma-3-1b-it
+          value: "${HF_MODEL_NAME}"
         - name: LORA_ADAPTER_NAME
-          value: "${LORA_ADAPTER_NAME}" # 指定したLoRAアダプタ
+          value: "${LORA_ADAPTER_NAME}"
         - name: HF_TOKEN
-          value: "${HF_TOKEN}" # Hugging Face Access Token
+          value: "${HF_TOKEN}"
         - name: PYTHONUNBUFFERED
           value: "1"
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 480 # モデルロード時間に応じて調整 (L4でも大幅には変わらない想定)
+          initialDelaySeconds: 480
           periodSeconds: 20
           timeoutSeconds: 15
           failureThreshold: 6
@@ -55,8 +54,7 @@ spec:
           httpGet:
             path: /health
             port: 8080
-          initialDelaySeconds: 600 # readinessより長く
+          initialDelaySeconds: 600
           periodSeconds: 30
           timeoutSeconds: 15
           failureThreshold: 5
-          

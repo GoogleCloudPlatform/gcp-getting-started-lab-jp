@@ -14,7 +14,7 @@
 
 ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID とプロジェクト番号を環境変数に設定し、以降の手順で利用できるようにします。 
 
-```bash
+```
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
@@ -63,15 +63,7 @@ gcloud コマンドライン インターフェースは、Google Cloud でメ�
 gcloud コマンドでは操作の対象とするプロジェクトの設定が必要です。操作対象のプロジェクトを設定します。
 
 ```bash
-export REGION="us-central1"
-export ZONE="us-central1-a"
-export AR_REPO_NAME="gemma3-1b-lora-repo"
-export IMAGE_NAME="gemma3-1b-lora-server"
-export IMAGE_TAG="latest"
-export GKE_CLUSTER_NAME="gke-dojo-cluster"
 gcloud config set project $PROJECT_ID
-gcloud config set compute/region $REGION
-gcloud config set compute/zone $ZONE
 ```
 
 承認するかどうかを聞かれるメッセージがでた場合は、`承認` ボタンをクリックします。
@@ -99,7 +91,6 @@ export AR_REPO_NAME="gemma3-1b-lora-repo"
 export IMAGE_NAME="gemma3-1b-lora-server"
 export IMAGE_TAG="latest"
 export GKE_CLUSTER_NAME="gke-dojo-cluster"
-gcloud config set project $PROJECT_ID
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
 ```
@@ -122,7 +113,7 @@ teachme tutorial.md
 
 ### **3. プロジェクト ID とプロジェクト番号を設定する**
 
-```bash
+```
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
@@ -150,8 +141,7 @@ gcloud config set compute/zone $ZONE
 以下のコマンドを実行し、GKE Autopilot クラスタを作成します。
 ```bash
  gcloud container --project "$PROJECT_ID" clusters create-auto "$GKE_CLUSTER_NAME" --region "$REGION" --release-channel "rapid"
- --async
- ```
+```
 
 クラスタの作成には10分〜20分程度の時間がかかります。
 Autopilot Mode では GPU などのアクセラレーター利用において特別なクラスタ設定は不要です。
@@ -172,14 +162,8 @@ export HF_MODEL_NAME="google/gemma-3-1b-it"
 export HF_TOKEN="[YOUR_HUGGINGFACE_ACCESS_TOKEN]" 
 ```
 
-### **1. 推論用 Docker イメージの作成**
 
-google/gemma-3-1b-it をロードし、テキスト生成APIを提供するFastAPIアプリケーションを作成します。
-```bash
-docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} .
-```
-
-### **2. 推論用 Docker イメージの Artifact Registry へのプッシュ**
+### **1. 推論用 Docker イメージの作成と Artifact Registry へのプッシュ**
 
 ```bash
 gcloud artifacts repositories describe ${AR_REPO_NAME} --location=${REGION} > /dev/null 2>&1 || \
@@ -189,60 +173,71 @@ gcloud artifacts repositories create ${AR_REPO_NAME} \
     --description="Gemma 3 GKE handson repository"
 ```
 
-```
+```bash
+cd lab-01/
 gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} .
 ```
 
-### **3. GKE へのデプロイ**
+### **2. GKE へのデプロイ**
 
 GKE クラスタへの認証情報を取得し、コンテキストにセットします。
 ```bash
 gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}
 ```
+ファイルの環境変数を実際の値に置換しておきます。
+```bash
+sed -i \
+  -e 's|\${REGION}|'"${REGION}"'|g' \
+  -e 's|\${PROJECT_ID}|'"${PROJECT_ID}"'|g' \
+  -e 's|\${AR_REPO_NAME}|'"${AR_REPO_NAME}"'|g' \
+  -e 's|\${IMAGE_NAME}|'"${IMAGE_NAME}"'|g' \
+  -e 's|\${IMAGE_TAG}|'"${IMAGE_TAG}"'|g' \
+  -e 's|\${HF_MODEL_NAME}|'"${HF_MODEL_NAME}"'|g' \
+  -e 's|\${HF_TOKEN}|'"${HF_TOKEN}"'|g' \
+  -e 's|\${LORA_ADAPTER_NAME}|'"${LORA_ADAPTER_NAME:-"\${LORA_ADAPTER_NAME}"}"'|g' \
+  deployment.yaml
+```
 
-6環境変数を展開してマニフェストを適用します。
+デプロイは以下で行います。
+```bash
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+```
+### **2. Podのログ確認**
 
-
-# deployment.yaml の適用
-
-kubectl get pods -l app=gemma3-1b-lora-server -w
-
-# Podのログ確認
+```bash
 export POD_NAME_GEMMA3=$(kubectl get pods -l app=gemma3-1b-lora-server -o jsonpath='{.items[0].metadata.name}')
 kubectl logs -f $POD_NAME_GEMMA3
-ログに Test inference successful や Application startup complete が表示され、readinessProbeが成功すればOKです。
+```
+### **3. アクセス先の確認**
 
-6.3. 外部IPアドレスの取得
-Bash
-
-kubectl get service gemma3-1b-lora-service -w
-EXTERNAL-IP がIPアドレスに変わるまで待ちます。
-
-Bash
-
+以下で 外部 IP アドレスを確認して、環境変数にセットします。数分かかりますので、Pending と表示された場合、5分ほどお待ちください。
+```bash
 export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-1b-lora-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "External IP for Gemma 3 (1B) service: $EXTERNAL_IP_GEMMA3"
-6.4. 動作確認 (推論リクエスト)
+```
+
+### **3. 推論リクエスト**
 curl コマンドで推論APIにリクエストを送信します。
 
-Bash
-
+```Bash
 curl -X POST "http://${EXTERNAL_IP_GEMMA3}:80/generate" \
     -H "Content-Type: application/json" \
     -d '{
         "prompt": "Translate to Japanese: Hello, how are you doing today?",
         "max_new_tokens": 50
     }'
-レスポンス例 (Gemma 3 1B + LoRA の場合、アダプタによって出力は大きく変わります):
+```
 
-JSON
 
+```Bash
 {
   "generated_text": "Translate to Japanese: Hello, how are you doing today?\nこんにちは、今日はお元気ですか？",
   "model_name": "google/gemma-3-1b-it + your-username/your-gemma3-1b-lora-adapter",
   "processing_time_ms": 1234
 }
-以上で、google/gemma-3-1b-it 
+```
+以上で、google/gemma-3-1b-it の GKE でのサービングは終わります。
 
 
 
