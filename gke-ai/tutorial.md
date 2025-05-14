@@ -152,9 +152,9 @@ Autopilot Mode では GPU などのアクセラレーター利用において特
 
 クラスタの作成が完了しましたら、サンプルアプリケーションをデプロイします。
 
-### **1. Gemma 3 (1B) モデルとLoRAアダプタの準備**
+### **1. Gemma 3 (1B) モデルの準備**
 
-このハンズオンでは、Hugging Face Hub から google/gemma-3-1b-it モデルと、 LoRA アダプタを推論時にロードします。
+このハンズオンでは、Hugging Face Hub から google/gemma-3-1b-it モデルを推論時にロードします。
 まずは環境変数をセットします。HF_TOKEN については、ご自身の Hugging Face アクセストークンに置き換えてください(講義スライドに利用方法が記載されています。)
 
 ```Bash
