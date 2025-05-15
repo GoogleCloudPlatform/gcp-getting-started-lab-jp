@@ -84,13 +84,9 @@ gcloud services enable cloudbuild.googleapis.com container.googleapis.com artifa
 
 コンピュートリソースを作成するデフォルトのリージョン、ゾーンを指定します。
 
-```bash
+```
 export REGION="us-central1"
 export ZONE="us-central1-a"
-export AR_REPO_NAME="gemma3-1b-lora-repo"
-export IMAGE_NAME="gemma3-1b-lora-server"
-export IMAGE_TAG="latest"
-export GKE_CLUSTER_NAME="gke-dojo-cluster"
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
 ```
@@ -125,10 +121,6 @@ echo $PROJECT_NUMBER
 ```bash
 export REGION="us-central1"
 export ZONE="us-central1-a"
-export AR_REPO_NAME="gemma3-1b-lora-repo"
-export IMAGE_NAME="gemma3-1b-lora-server"
-export IMAGE_TAG="latest"
-export GKE_CLUSTER_NAME="gke-dojo-cluster"
 gcloud config set project $PROJECT_ID
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
@@ -140,7 +132,8 @@ gcloud config set compute/zone $ZONE
 
 以下のコマンドを実行し、GKE Autopilot クラスタを作成します。
 ```bash
- gcloud container --project "$PROJECT_ID" clusters create-auto "$GKE_CLUSTER_NAME" --region "$REGION" --release-channel "rapid"
+export GKE_CLUSTER_NAME="gke-dojo-cluster"
+gcloud container --project "$PROJECT_ID" clusters create-auto "$GKE_CLUSTER_NAME" --region "$REGION" --release-channel "rapid"
 ```
 
 クラスタの作成には10分〜20分程度の時間がかかります。
@@ -158,13 +151,22 @@ Autopilot Mode では GPU などのアクセラレーター利用において特
 まずは環境変数をセットします。HF_TOKEN については、ご自身の Hugging Face アクセストークンに置き換えてください(講義スライドに利用方法が記載されています。)
 
 ```Bash
-export HF_MODEL_NAME="google/gemma-3-1b-it"
+export HF_MODEL_NAME="google/gemma-3-4b-it"
 export HF_TOKEN="[YOUR_HUGGINGFACE_ACCESS_TOKEN]" 
 ```
 
 
 ### **1. 推論用 Docker イメージの作成と Artifact Registry へのプッシュ**
 
+コマンドラインで設定するにあたり、各種パラメータを環境変数で設定します。
+
+```bash
+export AR_REPO_NAME="gemma3-4b-repo"
+export IMAGE_NAME="gemma3-4b-server"
+export IMAGE_TAG="latest"
+```
+
+推論、サービング用のアプリを配布するための Artifact Registry のレポジトリを作成します。
 ```bash
 gcloud artifacts repositories describe ${AR_REPO_NAME} --location=${REGION} > /dev/null 2>&1 || \
 gcloud artifacts repositories create ${AR_REPO_NAME} \
@@ -172,6 +174,7 @@ gcloud artifacts repositories create ${AR_REPO_NAME} \
     --location=${REGION} \
     --description="Gemma 3 GKE handson repository"
 ```
+推論、サービング用のアプリを Artifact Registry のレポジトリに Push します。
 
 ```bash
 cd lab-01/
@@ -184,18 +187,9 @@ GKE クラスタへの認証情報を取得し、コンテキストにセット�
 ```bash
 gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}
 ```
-ファイルの環境変数を実際の値に置換しておきます。
+マニフェストのテンプレートファイルを置換して、実際の値に置き換えます。
 ```bash
-sed -i \
-  -e 's|\${REGION}|'"${REGION}"'|g' \
-  -e 's|\${PROJECT_ID}|'"${PROJECT_ID}"'|g' \
-  -e 's|\${AR_REPO_NAME}|'"${AR_REPO_NAME}"'|g' \
-  -e 's|\${IMAGE_NAME}|'"${IMAGE_NAME}"'|g' \
-  -e 's|\${IMAGE_TAG}|'"${IMAGE_TAG}"'|g' \
-  -e 's|\${HF_MODEL_NAME}|'"${HF_MODEL_NAME}"'|g' \
-  -e 's|\${HF_TOKEN}|'"${HF_TOKEN}"'|g' \
-  -e 's|\${LORA_ADAPTER_NAME}|'"${LORA_ADAPTER_NAME:-"\${LORA_ADAPTER_NAME}"}"'|g' \
-  deployment.yaml
+envsubst < deployment_template.yaml > deployment.yaml
 ```
 
 デプロイは以下で行います。
@@ -207,30 +201,33 @@ kubectl apply -f service.yaml
 
 デプロイから起動まで 15 分程度かかる可能性があります。
 ```bash
-export POD_NAME_GEMMA3=$(kubectl get pods -l app=gemma3-1b-lora-server -o jsonpath='{.items[0].metadata.name}')
+export POD_NAME_GEMMA3=$(kubectl get pods -l app=gemma3-server -o jsonpath='{.items[0].metadata.name}')
 kubectl logs -f $POD_NAME_GEMMA3
 ```
 ### **3. アクセス先の確認**
 以下で 外部 IP アドレスを確認して、環境変数にセットします。数分かかりますので、Pending と表示された場合、5分ほどお待ちください。
-```bash
-export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-1b-lora-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo "External IP for Gemma 3 (1B) service: $EXTERNAL_IP_GEMMA3"
+
+```
+export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "External IP for Gemma 3 (4B) service: $EXTERNAL_IP_GEMMA3"
 ```
 
 ### **3. 推論リクエスト**
 curl コマンドで推論APIにリクエストを送信します。
 
-```Bash
-curl -X POST "http://${EXTERNAL_IP_GEMMA3}:80/generate" \
+```
+curl -i -X POST "http://${EXTERNAL_IP_GEMMA3}:80/v1/completions" \
     -H "Content-Type: application/json" \
     -d '{
-        "prompt": "日本の首都は？",
-        "max_new_tokens": 50
+        "model": "google/gemma-3-4b-it",
+        "prompt": "日本の首都はどこですか？",
+        "max_tokens": 50
     }'
 ```
 
 簡単なレスポンスが帰ってきたらlab-01 は完了です。
 以上で、google/gemma-3-1b-it の GKE でのサービングは終わります。
+
 
 
 ## **Lab02.GKE 上で Gemma をファインチューニングする**

@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: gemma3-1b-lora-service
+  name: gemma3-server-service
 spec:
   type: LoadBalancer
   selector:
-    app: gemma3-1b-lora-server # deployment.yamlのラベルと一致
+    app: gemma3-server # deployment.yamlのラベルと一致
   ports:
   - protocol: TCP
     port: 80

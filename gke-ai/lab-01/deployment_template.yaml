@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gemma3-1b-lora-server-deployment
+  name: gemma3-server-deployment
   labels:
-    app: gemma3-1b-lora-server
+    app: gemma3-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gemma3-1b-lora-server
+      app: gemma3-server
   template:
     metadata:
       labels:
-        app: gemma3-1b-lora-server
+        app: gemma3-server
       annotations:
         autopilot.gke.io/compute-class: "Accelerator"
         autopilot.gke.io/resource-adjustment: |-
@@ -24,7 +24,7 @@ spec:
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
       containers:
-      - name: gemma3-1b-lora-server-container
+      - name: gemma3-server-container
         image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
         ports:
         - containerPort: 8080

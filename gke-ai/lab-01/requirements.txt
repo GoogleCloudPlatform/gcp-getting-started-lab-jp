@@ -1,10 +1,10 @@
 fastapi
 uvicorn[standard]
 torch --index-url https://download.pytorch.org/whl/cu121
-transformers>=4.38.0 # Gemmaモデル対応のため比較的新しいバージョンを推奨
-peft>=0.9.0 # LoRA関連
-accelerate>=0.25.0
-bitsandbytes >=0.41.0 # 量子化用 (Linux, CUDA 11.0+推奨)
-sentencepiece # Gemma Tokenizerで必要
-protobuf # Gemma Tokenizerで必要
-# pydantic <2 # uvicorn との組み合わせで v1 が安定している場合がある。FastAPIのバージョンによる。
+transformers
+peft
+accelerate
+trl
+datasets
+sentencepiece
+protobuf
