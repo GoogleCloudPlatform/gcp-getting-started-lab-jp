@@ -5,9 +5,9 @@ metadata:
 spec:
   template:
     spec:
-      restartPolicy: Never
+      restartPolicy: Never # ジョブは完了したら再起動しない
       nodeSelector:
-        cloud.google.com/gke-accelerator: nvidia-l4
+        cloud.google.com/gke-accelerator: nvidia-l4 # 使用するGPUタイプを指定
       tolerations: # GPU ノードのテイントを許容
       - key: "nvidia.com/gpu"
         operator: "Exists"
@@ -17,15 +17,15 @@ spec:
         image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
         resources:
           limits:
-            nvidia.com/gpu: 1 
-            cpu: "8000m" 
-            memory: "30Gi" 
-            ephemeral-storage: "50Gi"
+            nvidia.com/gpu: 1
+            cpu: "12000m"      # ★12vCPUに増量★
+            memory: "40Gi"    # ★40GBメモリに増量★
+            ephemeral-storage: "70Gi" # ★70GBに増量★
           requests:
             nvidia.com/gpu: 1
-            cpu: "4000m"
-            memory: "15Gi"
-            ephemeral-storage: "20Gi"
+            cpu: "8000m"
+            memory: "20Gi"
+            ephemeral-storage: "30Gi"
         env:
         - name: HF_MODEL_NAME
           value: "${HF_MODEL_NAME}"

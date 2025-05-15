@@ -1,173 +1,142 @@
-import os
-import torch
-from datasets import load_dataset, Dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments
-from peft import LoraConfig, prepare_model_for_kbit_training, PeftModel
-from trl import SFTTrainer
-import logging
+import os, sys, logging, torch
+from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, PeftModel
+from trl import SFTConfig, SFTTrainer
 from huggingface_hub import HfApi
 
-# ロギング設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# 環境変数から設定を取得
-MODEL_ID = os.getenv("HF_MODEL_NAME", "google/gemma-2-2b-jpn-it")
-HF_TOKEN = os.getenv("HF_TOKEN")
+# ---------- 0. 環境変数チェック ----------
+HF_TOKEN    = os.getenv("HF_TOKEN")
 HF_USERNAME = os.getenv("HF_USERNAME")
-LORA_ADAPTER_REPO_NAME = os.getenv("LORA_ADAPTER_REPO_NAME", "my-gemma-gozaru-adapter") # デフォルト名
+MODEL_ID    = os.getenv("HF_MODEL_NAME", "google/gemma-3-4b-it")
+REPO_NAME   = os.getenv("LORA_ADAPTER_REPO_NAME", "gemma-gozaru-adapter")
 
 if not HF_TOKEN or not HF_USERNAME:
-    logger.error("HF_TOKEN and HF_USERNAME environment variables must be set for fine-tuning and pushing to Hub.")
-    exit(1)
+    sys.stderr.write("ERROR: HF_TOKEN / HF_USERNAME を export してください\n")
+    sys.exit(1)
 
-OUTPUT_DIR = f"./{LORA_ADAPTER_REPO_NAME}" # 学習結果のローカル保存ディレクトリ
-FINAL_REPO_ID = f"{HF_USERNAME}/{LORA_ADAPTER_REPO_NAME}" # Hugging Face Hub の最終リポジトリID
+# ---------- 1. ロギング ----------
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
+    level=logging.INFO,
+)
+log = logging.getLogger(__name__)
+log.info(f"Base Model : {MODEL_ID}")
+log.info(f"Adapter Repo: {HF_USERNAME}/{REPO_NAME}")
 
-logger.info(f"Fine-tuning model: {MODEL_ID}")
-logger.info(f"LoRA adapter will be saved to: {FINAL_REPO_ID}")
-
-# --- 1. データセットの準備 ---
-logger.info("データセットを準備中...")
-# 日本語「ござる」データセットを読み込み
-dataset = load_dataset("bbz662bbz/databricks-dolly-15k-ja-gozaru", split="train", token=HF_TOKEN)
-# open_qa カテゴリのみにフィルタリング
-dataset = dataset.filter(lambda example: example["category"] == "open_qa")
-
-# データセットをプロンプト形式に変換する関数の定義
-def generate_prompt(example):
-    return f"<bos><start_of_turn>user\n{example['instruction']}<end_of_turn>\n<start_of_turn>model\n{example['output']}<eos>"
-
-# textカラムの追加
-def add_text(example):
-    example["text"] = generate_prompt(example)
-    return example
-
-dataset = dataset.map(add_text)
-dataset = dataset.remove_columns(["input", "category", "output", "index", "instruction"])
-
-# データセットを学習用と評価用に分割
-train_test_split = dataset.train_test_split(test_size=0.1)
-train_dataset = train_test_split["train"]
-eval_dataset = train_test_split["test"]
-logger.info(f"学習データセットサイズ: {len(train_dataset)}")
-logger.info(f"評価データセットサイズ: {len(eval_dataset)}")
-logger.info(f"学習データセットの最初の例:\n{train_dataset[0]['text']}")
-
-# --- 2. トークナイザーとモデルの読み込み ---
-logger.info(f"トークナイザーとベースモデル {MODEL_ID} を読み込み中...")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
-
-# GPU が利用可能なら bf16 でロード
-torch_dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
-device_map = "auto" if torch.cuda.is_available() else {"": "cpu"}
-
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_ID,
-    device_map=device_map,
-    torch_dtype=torch_dtype,
+# ---------- 2. データセット ----------
+log.info("▶ データセット読み込み …")
+ds = load_dataset(
+    "bbz662bbz/databricks-dolly-15k-ja-gozaru",
+    split="train",
     token=HF_TOKEN,
 )
-logger.info("モデルとトークナイザーの読み込み完了。")
+ds = ds.filter(lambda x: x["category"] == "open_qa").train_test_split(test_size=0.1)
+train_ds, eval_ds = ds["train"], ds["test"]
 
-# 警告を回避するためトークナイザーのパディング方向を右側に設定
-tokenizer.padding_side = 'right'
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
+# ---------- 3. モデル & トークナイザー ----------
+dtype = (
+    torch.bfloat16
+    if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8
+    else torch.float16
+)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    torch_dtype=dtype,
+    attn_implementation="eager",
+    device_map="auto",
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+tokenizer.pad_token = tokenizer.eos_token           # Gemma 固定
+model.config.use_cache = False                      # gradient_checkpointing と両立
 
-# モデルをk-bitトレーニング用に準備 (PEFTでメモリ効率を上げるため)
-model = prepare_model_for_kbit_training(model)
-
-# --- 3. LoRA の設定 ---
-logger.info("LoRA 設定を定義中...")
-peft_config = LoraConfig(
-    lora_alpha=32,
+# ---------- 4. LoRA Config ----------
+peft_conf = LoraConfig(
+    r=16,
+    lora_alpha=16,
     lora_dropout=0.1,
-    r=8,
-    bias="none",
-    target_modules=["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
+    target_modules="all-linear",        # Gemma3 は Linear に自動マッチ
     task_type="CAUSAL_LM",
+    modules_to_save=["lm_head", "embed_tokens"],
 )
-logger.info("LoRA 設定定義完了。")
 
-# --- 4. ハイパーパラメータの設定 ---
-logger.info("トレーニング引数を設定中...")
-args = TrainingArguments(
-    output_dir=OUTPUT_DIR,                   # モデルを保存するディレクトリ
-    num_train_epochs=3,                      # 学習エポック数
-    per_device_train_batch_size=1,           # デバイスごとの学習バッチサイズ
-    gradient_accumulation_steps=2,           # 勾配蓄積ステップ数
-    gradient_checkpointing=True,             # メモリ節約のために勾配チェックポイントを使用
-    optim="adamw_torch_fused",               # 融合AdamWオプティマイザを使用
-    logging_steps=10,                        # 10ステップごとにログ出力
-    save_strategy="epoch",                   # 各エポック終了時にチェックポイントを保存
-    learning_rate=2e-4,                      # 学習率
-    bf16=True,                               # 対応GPUがある場合にbfloat16精度を使用
-    tf32=True,                               # 対応GPUがある場合にtf32精度を使用
-    max_grad_norm=0.3,                       # 最大勾配ノルム
-    warmup_ratio=0.03,                       # ウォームアップ比率
-    lr_scheduler_type="constant",            # 定数学習率スケジューラを使用
-    push_to_hub=True,                        # モデルをHugging Face Hubにプッシュ
-    report_to="tensorboard",                 # メトリクスをtensorboardにレポート
-    hub_model_id=FINAL_REPO_ID,              # Hugging Face HubのリポジトリID
-    hub_token=HF_TOKEN,                      # Hugging Faceトークン
-)
-logger.info("トレーニング引数設定完了。")
-
-# --- 5. SFTTrainer クラスのインスタンスを作成 ---
-logger.info("SFTTrainer を準備中...")
-max_seq_length = 1024 # この変数は使用しないが、元のコードに合わせて残しておく
-trainer = SFTTrainer(
-    model=model,
-    args=args,
-    train_dataset=train_dataset,
-    peft_config=peft_config,
-    # max_seq_length=max_seq_length, # ★ここを削除★ (前回削除済み)
-    # tokenizer=tokenizer, # ★ここを削除★
-    packing=True,
-    dataset_text_field="text",
-    dataset_kwargs={
-        "add_special_tokens": False,
-        "append_concat_token": False,
+# ---------- 5. prompt 生成関数 ----------
+def to_chat(example):
+    """
+    Gemma chat_template を用いて user/model 2 turn に整形
+    """
+    msgs = [
+        {"role": "user",  "content": example["instruction"]},
+        {"role": "model", "content": example["output"]},
+    ]
+    return {
+        "text": tokenizer.apply_chat_template(
+            msgs,
+            tokenize=False,
+            add_generation_prompt=True,     # 公式推奨: <end_of_turn> を付ける
+        )
     }
+
+log.info("▶ prompt 変換 …")
+train_ds = train_ds.map(to_chat, remove_columns=train_ds.column_names, desc="train->text")
+eval_ds  = eval_ds.map(to_chat,  remove_columns=eval_ds.column_names,  desc="eval->text")
+
+# ---------- 6. SFTConfig ----------
+sft_cfg = SFTConfig(
+    output_dir=REPO_NAME,
+    max_length=512,                 # TRL 0.17.0 は max_length
+    packing=True,
+    num_train_epochs=3,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=4,
+    gradient_checkpointing=True,
+    logging_steps=10,
+    save_strategy="epoch",
+    learning_rate=2e-4,
+    fp16=(dtype == torch.float16),
+    bf16=(dtype == torch.bfloat16),
+    max_grad_norm=0.3,
+    warmup_ratio=0.03,
+    lr_scheduler_type="constant",
+    push_to_hub=True,
+    hub_model_id=f"{HF_USERNAME}/{REPO_NAME}",
+    hub_token=HF_TOKEN,
+    dataset_text_field="text",
 )
-logger.info("SFTTrainer 準備完了。")
 
-# --- 6. トレーニングの実行 ---
-logger.info("--------------------------------------")
-logger.info("ファインチューニングを開始します。")
-logger.info("GPUリソースとデータ量に応じて時間がかかります。")
-logger.info("--------------------------------------")
+# ---------- 7. Trainer ----------
+log.info("▶ SFTTrainer 構築 …")
+trainer = SFTTrainer(
+    model,
+    train_dataset=train_ds,
+    eval_dataset=eval_ds,
+    args=sft_cfg,
+    peft_config=peft_conf,
+    # tokenizer 引数は 0.17.0 に存在しない
+)
+
+# ---------- 8. 学習 ----------
+log.info("▶ ファインチューニング開始")
 trainer.train()
-logger.info("--------------------------------------")
-logger.info("ファインチューニング完了。")
-logger.info("--------------------------------------")
 
-# --- 7. トレーニングが完了したモデルを保存 ---
-trainer.save_model()
-logger.info(f"LoRA adapter saved locally to {OUTPUT_DIR}")
+# ---------- 9. アダプタ保存 & Push ----------
+log.info("▶ アダプタ保存")
+trainer.save_model()                        # REPO_NAME 内に adapter_config.json + adapter_model.bin
 
-# 必要に応じて、マージとアップロードを明示的に行う
-try:
-    logger.info("LoRA adapter とベースモデルをマージ中...")
-    merged_model = model.merge_and_unload()
-    merged_model_output_dir = f"{OUTPUT_DIR}_merged"
-    merged_model.save_pretrained(merged_model_output_dir, safe_serialization=True, max_shard_size="2GB")
-    tokenizer.save_pretrained(merged_model_output_dir)
-    logger.info(f"マージ済みモデルが {merged_model_output_dir} に保存されました。")
+# ---------- 10. マージ (任意) ----------
+log.info("▶ LoRA とベースモデルをマージ …")
+merged_dir = f"{sft_cfg.output_dir}_merged"
+merged = PeftModel.from_pretrained(model, sft_cfg.output_dir).merge_and_unload()
+merged.save_pretrained(merged_dir, safe_serialization=True)
+tokenizer.save_pretrained(merged_dir)
 
-    # マージ済みモデルをHugging Face Hubにプッシュ（オプション）
-    api = HfApi()
-    logger.info(f"マージ済みモデルをHugging Face Hubにプッシュ中: {FINAL_REPO_ID}-merged...")
-    api.upload_folder(
-        folder_path=merged_model_output_dir,
-        repo_id=f"{FINAL_REPO_ID}-merged",
-        repo_type="model",
-        token=HF_TOKEN
-    )
-    logger.info(f"マージ済みモデルが https://huggingface.co/{FINAL_REPO_ID}-merged にプッシュされました。")
+# log.info("▶ Hub へ push")
+# api = HfApi()
+# api.upload_folder(
+#     folder_path=merged_dir,
+#     repo_id=f"{HF_USERNAME}/{REPO_NAME}-merged",
+#     repo_type="model",
+#     token=HF_TOKEN,
+# )
 
-except Exception as e:
-    logger.error(f"モデルのマージまたはプッシュ中にエラーが発生しました: {e}")
-
-logger.info("すべての処理が完了しました。")
+log.info("=== 完了 ===")

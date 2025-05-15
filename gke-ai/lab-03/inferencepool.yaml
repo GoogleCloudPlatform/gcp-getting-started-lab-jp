@@ -1,0 +1,17 @@
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferencePool
+metadata:
+  name: gozaru-gemma-pool
+spec:
+  # --- Pod を選ぶラベル (単なる key:value の map) ---
+  selector:
+    app: gozaru-gemma-server
+
+  # --- Pod 内で公開しているポート番号 ---
+  targetPortNumber: 8080
+
+  # --- Gateway が呼び出す拡張サービス (固定値で OK) ---
+  extensionRef:
+    name: gke          # Service 名。変更しない
+    kind: Service      # 既定値なので省略可
+    group: ""          # Core API group（省略可）

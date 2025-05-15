@@ -145,9 +145,9 @@ Autopilot Mode では GPU などのアクセラレーター利用において特
 
 クラスタの作成が完了しましたら、サンプルアプリケーションをデプロイします。
 
-### **1. Gemma 3 (1B) モデルの準備**
+### **1. Gemma 3 (4B) モデルの準備**
 
-このハンズオンでは、Hugging Face Hub から google/gemma-3-1b-it モデルを推論時にロードします。
+このハンズオンでは、Hugging Face Hub から google/gemma-3-4b-it モデルを推論時にロードします。
 まずは環境変数をセットします。HF_TOKEN については、ご自身の Hugging Face アクセストークンに置き換えてください(講義スライドに利用方法が記載されています。)
 
 ```Bash
@@ -226,7 +226,7 @@ curl -i -X POST "http://${EXTERNAL_IP_GEMMA3}:80/v1/completions" \
 ```
 
 簡単なレスポンスが帰ってきたらlab-01 は完了です。
-以上で、google/gemma-3-1b-it の GKE でのサービングは終わります。
+以上で、google/gemma-3-4b-it の GKE でのサービングは終わります。
 
 
 
@@ -234,21 +234,20 @@ curl -i -X POST "http://${EXTERNAL_IP_GEMMA3}:80/v1/completions" \
 
 ### **1. 環境変数の設定**
 
-このラボでは、GKE クラスタ上で google/gemma-3-1b-it モデルを、LoRA を使ってファインチューニングします。
+このラボでは、GKE クラスタ上で google/gemma-3-4b-it モデルを、LoRA を使ってファインチューニングします。
 具体的には、Gemma からの返答の語尾を全て「ござる」にする学習を行います。
 
 ファインチューニングは GPU が必須の処理です。
 ここでは、GKE の Kubernetes Job を利用して、必要な GPU リソースを動的にプロビジョニングし、学習ジョブを実行します。
-HF_TOKEN とHF_USERNAME についてはご自身のアカウントに合わせて変更ください。
+HF_TOKEN とHF_USERNAME についてはテキストエディタなどに貼ったあとご自身のアカウントに合わせて変更ください。
 
-```Bash
-export PROJECT_ID=$(gcloud config get project)
+```
 export REGION=$(gcloud config get compute/region)
 export CLUSTER_NAME="gke-dojo-cluster"
 export AR_REPO_NAME="gemma-finetune-job-repo"
 export IMAGE_NAME="gemma-finetune-job"
 export IMAGE_TAG="latest"
-export HF_MODEL_NAME="google/gemma-2-2b-jpn-it"
+export HF_MODEL_NAME="google/gemma-3-4b-it"
 export HF_TOKEN="[YOUR_HUGGINGFACE_WRITE_ACCESS_TOKEN]"
 export HF_USERNAME="[YOUR_HUGGINGFACE_USERNAME]"
 export LORA_ADAPTER_REPO_NAME="gemma-gozaru-adapter"
@@ -284,18 +283,9 @@ gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME
 
 job 用マニフェストをクラスタに適用します。
 ```bash
-sed -i \
-  -e 's|\${REGION}|'"${REGION}"'|g' \
-  -e 's|\${PROJECT_ID}|'"${PROJECT_ID}"'|g' \
-  -e 's|\${AR_REPO_NAME}|'"${AR_REPO_NAME}"'|g' \
-  -e 's|\${IMAGE_NAME}|'"${IMAGE_NAME}"'|g' \
-  -e 's|\${IMAGE_TAG}|'"${IMAGE_TAG}"'|g' \
-  -e 's|\${HF_MODEL_NAME}|'"${HF_MODEL_NAME}"'|g' \
-  -e 's|\${HF_TOKEN}|'"${HF_TOKEN}"'|g' \
-  -e 's|\${HF_USERNAME}|'"${HF_USERNAME}"'|g' \
-  -e 's|\${LORA_ADAPTER_REPO_NAME}|'"${LORA_ADAPTER_REPO_NAME}"'|g' \
-  finetune_job.yaml
+envsubst < finetune_job_template.yaml > finetune_job.yaml
 ```
+
 ```bash
 kubectl apply -f finetune_job.yaml
 ```
@@ -323,21 +313,19 @@ kubectl logs -f $FINETUNE_POD_NAME
 https://huggingface.co/[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]
 
 
-## **Lab01.GKE 上でファインチューニング済み Gemma をサービングする**
+## **Lab03.GKE 上でファインチューニング済み Gemma をサービングする**
 ### **1.環境変数を設定する**
 
 このラボでは、前の Lab02 でファインチューニングし、Hugging Face Hub にプッシュした 「ござる」語尾の Gemma モデル を GKE クラスタ上にデプロイし、実際にその特性を確認します。
 
-デプロイメントマニフェストで使用する環境変数を設定します。[YOUR_PROJECT_ID]、[YOUR_REGION]、[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]、[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN] は、ご自身の情報に置き換えてください。
+デプロイメントマニフェストで使用する環境変数を設定します。[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]、[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN] は、ご自身の情報に置き換えてください。
 
 ```bash
-export PROJECT_ID=$(gcloud config get project)
-export REGION=$(gcloud config get compute/region)
 export CLUSTER_NAME="gke-dojo-cluster"
 export AR_REPO_NAME="gozaru-gemma-repo"
 export IMAGE_NAME="gozaru-gemma-server"
 export IMAGE_TAG="latest"
-export HF_MODEL_NAME="google/gemma-2-2b-jpn-it"
+export HF_MODEL_NAME="google/gemma-3-4b-it"
 export LORA_ADAPTER_NAME="[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]"
 export HF_TOKEN="[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN]"
 ```
@@ -355,7 +343,7 @@ gcloud artifacts repositories create ${AR_REPO_NAME} \
 
 ```bash
 gcloud auth configure-docker ${REGION}-docker.pkg.dev
-gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} --file=Dockerfile_gozaru .
+gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} .
 ```
 
 ### **3. GKE クラスタへのデプロイ**
@@ -365,24 +353,16 @@ gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME
 ```bash
 gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}
 ```
-ファイルの環境変数を実際の値に置換しておきます。
+マニフェストのテンプレートファイルを置換して、実際の値に置き換えます。
+
 ```bash
-sed -i \
-  -e 's|\${REGION}|'"${REGION}"'|g' \
-  -e 's|\${PROJECT_ID}|'"${PROJECT_ID}"'|g' \
-  -e 's|\${AR_REPO_NAME}|'"${AR_REPO_NAME}"'|g' \
-  -e 's|\${IMAGE_NAME}|'"${IMAGE_NAME}"'|g' \
-  -e 's|\${IMAGE_TAG}|'"${IMAGE_TAG}"'|g' \
-  -e 's|\${HF_MODEL_NAME}|'"${HF_MODEL_NAME}"'|g' \
-  -e 's|\${HF_TOKEN}|'"${HF_TOKEN}"'|g' \
-  -e 's|\${LORA_ADAPTER_NAME}|'"${LORA_ADAPTER_NAME:-"\${LORA_ADAPTER_NAME}"}"'|g' \
-  deployment.yaml
+envsubst < deployment_template.yaml > deployment.yaml
 ```
 
 生成されたファイルを適用します。
 ```bash
-kubectl apply -f deployment_gozaru_serving.yaml
-kubectl apply -f service_gozaru_serving.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
 
 ```bash
 kubectl get pods -l app=gozaru-gemma-server -w

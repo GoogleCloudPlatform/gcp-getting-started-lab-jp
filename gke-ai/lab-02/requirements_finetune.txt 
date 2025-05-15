@@ -1,9 +1,0 @@
-torch
-transformers
-peft
-accelerate
-trl
-datasets
-tensorboard
-sentencepiece
-protobuf

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gozaru-gemma-pool-epp       # ★ InferencePool から参照する名前
+spec:
+  selector:
+    app: gozaru-gemma-server        # モデル Pod のラベル
+  ports:
+  - name: grpc
+    port: 9002                      # ここは自由 (9002 がデフォルト推奨)
+    targetPort: 9002

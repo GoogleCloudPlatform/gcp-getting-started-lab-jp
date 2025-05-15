@@ -1,154 +1,151 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Gozaru Gemma Server
+  * ベース : google/gemma-3-4b-it
+  * LoRA  : tarota0226/gemma-gozaru-adapter   (環境変数で変更可)
+"""
+import os, time, logging
+from typing import List
+
 import torch
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
-import os
-import logging
-import time
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# ───────── ログ設定 ─────────
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s | %(levelname)7s | %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger("gozaru-server")
 
-app = FastAPI()
-
-# 環境変数からモデル名、LoRAアダプター名、Hugging Faceトークンを取得
-MODEL_NAME = os.getenv("HF_MODEL_NAME", "google/gemma-2-2b-jpn-it")
-LORA_ADAPTER_NAME = os.getenv("LORA_ADAPTER_NAME", None)
-HF_TOKEN = os.getenv("HF_TOKEN", None)
+# ───────── 環境変数 ─────────
+MODEL_NAME        = os.getenv("HF_MODEL_NAME", "google/gemma-3-4b-it")
+LORA_ADAPTER_NAME = os.getenv("LORA_ADAPTER_NAME")           # 必須
+HF_TOKEN          = os.getenv("HF_TOKEN")
 
 if not HF_TOKEN:
-    logger.warning(f"Hugging Face token (HF_TOKEN) is not set. Downloads may fail if {MODEL_NAME} is a gated model.")
+    log.warning("HF_TOKEN が未設定です。（公開モデルでなければ失敗します）")
 
-model = None
-tokenizer = None
-model_loaded_time = 0
+# ───────── FastAPI ─────────
+app = FastAPI(title="Gozaru Gemma Server", version="1.0.0")
 
+# ───────── Pydantic ─────────
 class GenerationRequest(BaseModel):
     prompt: str
-    max_new_tokens: int = 150
+    max_new_tokens: int = Field(150, ge=1, le=1024)
+    temperature: float  = Field(0.7, ge=0.0, le=2.0)
+    top_p: float        = Field(1.0, ge=0.0, le=1.0)
 
 class GenerationResponse(BaseModel):
     generated_text: str
     model_name: str
     processing_time_ms: int
 
+# ───────── グローバル ─────────
+model, tokenizer = None, None
+model_loaded_ms  = 0
+
+# ───────── 起動時ロード ────────
 @app.on_event("startup")
-async def load_model_on_startup():
-    global model, tokenizer, model_loaded_time
-    start_time = time.time()
-    try:
-        logger.info(f"Loading tokenizer for {MODEL_NAME}...")
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN) # MODEL_ID を使うように修正
-        logger.info("Tokenizer loaded successfully.")
+async def load_model() -> None:
+    global model, tokenizer, model_loaded_ms
+    t0 = time.time()
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Using device: {device}")
+    # Tokenizer
+    log.info(f"Tokenizer → {MODEL_NAME}")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
+    tokenizer.pad_token, tokenizer.padding_side = tokenizer.eos_token, "right"
 
-        logger.info(f"Loading base model {MODEL_ID}...") # MODEL_ID を使うように修正
-        base_model = AutoModelForCausalLM.from_pretrained(
-            MODEL_ID, # MODEL_ID を使うように修正
-            device_map="auto" if device.type == 'cuda' else {"": "cpu"},
-            torch_dtype=torch.bfloat16 if device.type == 'cuda' else torch.float32,
-            token=HF_TOKEN
-        )
-        logger.info("Base model loaded successfully.")
+    # Device / dtype
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dtype  = torch.bfloat16 if device.type == "cuda" and torch.cuda.is_bf16_supported() else torch.float32
+    log.info(f"Device={device}  dtype={dtype}")
 
-        if LORA_ADAPTER_NAME and LORA_ADAPTER_NAME.strip():
-            logger.info(f"Loading LoRA adapter {LORA_ADAPTER_NAME} for {MODEL_NAME}...")
-            try:
-                model = PeftModel.from_pretrained(base_model, LORA_ADAPTER_NAME, token=HF_TOKEN)
-                logger.info(f"LoRA adapter {LORA_ADAPTER_NAME} loaded successfully.")
-            except Exception as e:
-                logger.error(f"Failed to load LoRA adapter {LORA_ADAPTER_NAME}: {e}. Proceeding with the base model only.")
-                model = base_model
-        else:
-            logger.info(f"No LoRA adapter specified or LORA_ADAPTER_NAME is empty. Using base model: {MODEL_NAME}.")
-            model = base_model
+    # Base model
+    base_model = AutoModelForCausalLM.from_pretrained(
+        MODEL_NAME,
+        device_map="auto" if device.type == "cuda" else {"": "cpu"},
+        torch_dtype=dtype,
+        low_cpu_mem_usage=True,
+        token=HF_TOKEN,
+    )
 
-        model.eval() # 推論モードに設定
+    # LoRA
+    if not LORA_ADAPTER_NAME:
+        raise RuntimeError("LORA_ADAPTER_NAME が未設定です。")
+    log.info(f"LoRA adapter → {LORA_ADAPTER_NAME}")
+    model = PeftModel.from_pretrained(
+        base_model,
+        LORA_ADAPTER_NAME,
+        device_map="auto",
+        torch_dtype=dtype,
+        token=HF_TOKEN,
+    ).eval()
 
-        tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.padding_side = "right"
+    model_loaded_ms = int((time.time() - t0) * 1000)
+    log.info(f"モデルロード完了 ({model_loaded_ms} ms)")
 
-        model_loaded_time = round((time.time() - start_time) * 1000)
-        logger.info(f"Model and tokenizer loaded in {model_loaded_time} ms.")
+    # Warm-up (input_ids を位置引数で渡す)
+    warm_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "拙者の名は？"}],
+        return_tensors="pt",
+        add_generation_prompt=True,
+    ).to(model.device)
+    _ = model.generate(warm_ids, max_new_tokens=8, pad_token_id=tokenizer.eos_token_id)
+    log.info("Warm-up 完了")
 
-        logger.info("Performing a quick test inference on startup...")
-        try:
-            test_messages = [{"role": "user", "content": "日本の首都はどこですか？"}]
-            test_inputs = tokenizer.apply_chat_template(
-                test_messages,
-                return_tensors="pt",
-                add_generation_prompt=True,
-                return_dict=True
-            ).to(model.device)
-            
-            test_outputs = model.generate(**test_inputs, max_new_tokens=50, pad_token_id=tokenizer.eos_token_id)
-            test_generated_text = tokenizer.batch_decode(test_outputs[:, test_inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
-            logger.info(f"Test inference successful: {test_generated_text.strip()}")
-        except Exception as e:
-            logger.error(f"Test inference failed: {e}")
-
-    except Exception as e:
-        logger.error(f"Error loading model on startup: {e}")
-        raise RuntimeError(f"Failed to load model: {e}")
-
-
+# ───────── 推論エンドポイント ─────────
 @app.post("/generate", response_model=GenerationResponse)
-async def generate_text(request: GenerationRequest):
-    if not model or not tokenizer:
-        raise HTTPException(status_code=503, detail="Model or tokenizer not loaded yet. Please wait or check logs.")
-    
-    start_time = time.time()
+async def generate(req: GenerationRequest):
+    if model is None:
+        raise HTTPException(503, "Model not loaded")
+
+    t0 = time.time()
     try:
-        messages = [{"role": "user", "content": request.prompt}]
-        inputs = tokenizer.apply_chat_template(
-            messages,
+        input_ids = tokenizer.apply_chat_template(
+            [{"role": "user", "content": req.prompt}],
             return_tensors="pt",
             add_generation_prompt=True,
-            return_dict=True
         ).to(model.device)
 
-        logger.info(f"Generating text for prompt (first 50 chars): '{request.prompt[:50]}...' with max_new_tokens: {request.max_new_tokens}")
         with torch.no_grad():
             outputs = model.generate(
-                **inputs,
-                max_new_tokens=request.max_new_tokens,
+                input_ids,
+                max_new_tokens=req.max_new_tokens,
+                temperature=req.temperature,
+                top_p=req.top_p,
+                do_sample=req.temperature > 0.0,
                 pad_token_id=tokenizer.eos_token_id,
-                do_sample=True,
-                temperature=0.8,
             )
-        generated_text = tokenizer.batch_decode(outputs[:, inputs['input_ids'].shape[1]:], skip_special_tokens=True)[0]
-        processing_time_ms = round((time.time() - start_time) * 1000)
-        logger.info(f"Generated text (first 100 chars): '{generated_text[:100]}...' in {processing_time_ms} ms.")
-        
-        current_model_name = MODEL_NAME
-        if LORA_ADAPTER_NAME and LORA_ADAPTER_NAME.strip():
-             current_model_name = f"{MODEL_NAME} + {LORA_ADAPTER_NAME}"
+
+        prompt_len = input_ids.shape[1]
+        generated  = tokenizer.batch_decode(outputs[:, prompt_len:], skip_special_tokens=True)[0]
+        elapsed_ms = int((time.time() - t0) * 1000)
 
         return GenerationResponse(
-            generated_text=generated_text.strip(),
-            model_name=current_model_name,
-            processing_time_ms=processing_time_ms
-            )
-            
+            generated_text=generated.strip(),
+            model_name=f"{MODEL_NAME}+{LORA_ADAPTER_NAME}",
+            processing_time_ms=elapsed_ms,
+        )
+
     except Exception as e:
-        logger.error(f"Error during text generation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        log.exception("Generation failed")
+        raise HTTPException(500, str(e)) from e
 
+# ───────── ヘルスチェック ─────────
 @app.get("/health")
-async def health_check():
-    if model and tokenizer:
-        try:
-            _ = model.device 
-            return {"status": "healthy", "model_name": MODEL_NAME, "model_loaded_ms": model_loaded_time, "device": str(model.device)}
-        except Exception as e:
-            logger.error(f"Health check failed due to model access: {e}")
-            return {"status": "unhealthy", "model_name": MODEL_NAME, "error": str(e)}
-    return {"status": "unhealthy", "model_name": MODEL_NAME, "detail": "Model or tokenizer not loaded."}
+async def health():
+    try:
+        _ = model.device
+        return {"status": "healthy", "model": MODEL_NAME, "adapter": LORA_ADAPTER_NAME, "loaded_ms": model_loaded_ms}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
 
-
+# ───────── 手動起動用 ─────────
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080, log_level="info")
