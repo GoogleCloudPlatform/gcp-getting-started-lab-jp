@@ -24,7 +24,7 @@ def index():
     </head>
     <body>
         <div>
-            Welcome to <span style="border-bottom: 3px solid #61dafb;">gke-dojo 2023</span>
+            Welcome to <span style="border-bottom: 3px solid #61dafb;">gke-dojo 2025</span>
         </div>
     </body>
     </html>
