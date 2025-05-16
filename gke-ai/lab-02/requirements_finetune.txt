@@ -1,10 +1,5 @@
-# --- 核心ライブラリ ---
-trl==0.17.0          # transformers も依存として入る（>=4.46.0）
+trl==0.17.0
 peft==0.10.0
-
-# --- 補助 ---
 tensorboard
 sentencepiece
 protobuf<4
-
-
