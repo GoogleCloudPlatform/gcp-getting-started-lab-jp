@@ -218,7 +218,7 @@ gcloud artifacts repositories create ${AR_REPO_NAME} \
 lab-01/ ディレクトリには、アプリケーションコードと Dockerfile（イメージの設計図）が含まれています。
 カレントディレクトリを変更します。
 ```bash
-cd lab-01/
+cd $HOME/gcp-getting-started-lab-jp/gke-ai/lab-01/
 ```
 
 現在、lab-01にカレントディレクトリが指定されていることをプロンプトから確認して実行します。
@@ -372,7 +372,7 @@ gcloud artifacts repositories create ${AR_REPO_NAME} \
 その前に、Cloud ShellからArtifact Registry（${REGION}-docker.pkg.devという形式のホスト名）に対してDockerコマンドで認証できるように設定しておきます。
 
 ```bash
-cd lab-02/
+cd $HOME/gcp-getting-started-lab-jp/gke-ai/lab-02/
 ```
 lab-02ディレクトリに移動していることを確認してください。
 
@@ -481,7 +481,7 @@ lab-03/ ディレクトリには、このための Dockerfile やアプリケー
 まず、この Lab 用のArtifact Registryリポジトリを作成します。（既に存在する場合はスキップされます）
 
 ```bash
-cd lab-03/
+cd $HOME/gcp-getting-started-lab-jp/gke-ai/lab-03/
 ```
 カレントディレクトリが lab-03 であることを確認してください。
 
