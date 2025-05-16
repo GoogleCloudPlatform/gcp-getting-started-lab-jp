@@ -208,7 +208,7 @@ kubectl logs -f $POD_NAME_GEMMA3
 以下で 外部 IP アドレスを確認して、環境変数にセットします。数分かかりますので、Pending と表示された場合、5分ほどお待ちください。
 
 ```
-export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export EXTERNAL_IP_GEMMA3=$(kubectl get service gemma3-server-service  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "External IP for Gemma 3 (4B) service: $EXTERNAL_IP_GEMMA3"
 ```
 
