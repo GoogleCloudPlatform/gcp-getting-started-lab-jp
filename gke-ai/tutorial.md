@@ -390,44 +390,77 @@ Kubernetesの Job は、バッチ処理や一度きりのタスクを実行す�
 
 まず、finetune_job_template.yaml の中のプレースホルダーを環境変数の実際の値で置換し、finetune_job.yaml を作成します
 
-job 用マニフェストをクラスタに適用します。
 ```bash
 envsubst < finetune_job_template.yaml > finetune_job.yaml
 ```
 
+finetune_job.yaml を開いて、spec.template.spec.containers[0].image や env の値が正しく設定されているか確認してみてください。
+特に nodeSelector や tolerations でGPUの種類 (cloud.google.com/gke-accelerator: nvidia-l4) を指定している部分に注目です。
+Autopilot モードでは、このようなリソース要求に基づいて適切なノードが自動的にプロビジョニングされます。
+
+作成した finetune_job.yaml をクラスタに適用して、Jobを開始します。
+Jobが作成されると、Kubernetesは指定されたリソース（この場合はL4 GPUが利用可能なノード）を確保し、Podをスケジュールします。
+
+
+
 ```bash
 kubectl apply -f finetune_job.yaml
 ```
-Job の Pod が起動し、学習が開始されるまで時間がかかります。
+JobのPodが起動し、学習が開始されるまでには少し時間がかかります。特に、GPUノードのプロビジョニングが必要な場合（クラスタに利用可能なL4 GPUノードがまだない場合）、数分から10分程度 かかることがあります。
+
+以下のコマンドで、Jobに関連するPodの状態を監視できます (-wオプションで変更を監視)。
 
 ```bash
 kubectl get pods -l job-name=gemma-gozaru-finetune-job -w
 ```
-Pod のステータスが Pending から Running に、そして Completed になるまで監視してください。
-Running になるまでに GPU ノードのプロビジョニングで数分かかることがあります。
-Job が起動したら、Pod のログを追跡して学習の進捗を確認します。
+Podのステータスが Pending (保留中) から ContainerCreating (コンテナ作成中)、そして Running (実行中) に変わるのを確認してください。最終的には学習が完了すると Completed (完了) になります。
+
+&lt;walkthrough-important>
+Podが Pending から進まない場合: kubectl describe pod [POD_NAME] でPodのイベントを確認してください。
+よくある原因としては、リージョンで指定したGPUタイプが一時的に利用できない、リソースクォータの不足などが考えられます。
+Autopilot が適切なノードをプロビジョニングするまで待つか、エラーメッセージに応じて対処が必要です。
+JobのPodが Running になったら、Podのログを追跡して学習の進捗を確認できます。
 
 ```Bash
 export FINETUNE_POD_NAME=$(kubectl get pods -l job-name=gemma-gozaru-finetune-job -o jsonpath='{.items[0].metadata.name}')
 kubectl logs -f $FINETUNE_POD_NAME
 ```
-ログには、データセットのロード、モデルのロード、そして学習エポックの進捗状況が表示されるはずです。INFO:root:ファインチューニング完了。 のようなメッセージが表示されれば、学習は成功です。
-所要時間: 学習には、GPU の性能とデータセットのサイズ、エポック数に応じて、数分から数十分かかることがあります。
+ログには、データセットのロード、ベースモデルのロード、そしてLoRAアダプタの学習エポックごとの進捗（loss の値など）が表示されるはずです。
+学習が進むと、以下のようなログが期待されます（一部抜粋）。
+
+```
+INFO:root:LoRA config: PeftConfig(...)
+INFO:root:Training model...
+...
+{'loss': ..., 'learning_rate': ..., 'epoch': ...}
+...
+INFO:root:ファインチューニング完了。モデルをHubにプッシュします: [YOUR_HUGGINGFACE_USERNAME]/gemma-gozaru-adapter
+```
+
+最終的に INFO:root:ファインチューニング完了。 のようなメッセージが表示され、Podのステータスが Completed になれば、学習ジョブは成功です！
+
+所要時間: 学習自体には、使用する GPU の性能、データセットのサイズ、エポック数などによって異なりますが、このハンズオンの構成では L4 GPU でおよそ15〜30分程度かかる見込みです。
 
 ### **4.Hugging Face Hub で結果を確認する**
-学習が完了し、trainer.push_to_hub=True の設定により、ファインチューニングされた LoRA アダプターは自動的に Hugging Face Hub にプッシュされます。
+学習スクリプト (train.py) の中で trainer.push_to_hub() が実行されるように設定されているため、ファインチューニングが正常に完了すると、学習されたLoRAアダプタ（モデルの差分ファイル群）が自動的にHugging Face Hubにご自身の新しいリポジトリとしてプッシュされます。
 
-以下の URL にアクセスし、あなたのリポジトリが作成され、ファイルがアップロードされていることを確認してください。
+以下のURLの [YOUR_HUGGINGFACE_USERNAME] と [YOUR_GOZARU_LORA_ADAPTER_REPO_NAME] (環境変数 LORA_ADAPTER_REPO_NAME で設定した名前、デフォルトは gemma-gozaru-adapter) の部分をご自身のものに置き換えて、ブラウザでアクセスしてみてください。
 
 https://huggingface.co/[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]
 
+アクセスすると、新しいリポジトリが作成され、adapter_config.json, adapter_model.safetensors などのファイルがアップロードされているはずです。
+これらが、Gemmaを「ござる」化するための LoRA アダプタです。
+
+GKE 上で Gemma モデルのファインチューニング（LoRA学習）を行い、その結果を Hugging Face Hub に保存することができました。
 
 ## **Lab03.GKE 上でファインチューニング済み Gemma をサービングする**
 ### **1.環境変数を設定する**
 
-このラボでは、前の Lab02 でファインチューニングし、Hugging Face Hub にプッシュした 「ござる」語尾の Gemma モデル を GKE クラスタ上にデプロイし、実際にその特性を確認します。
+前の Lab02 では、Gemma モデルを「ござる」語尾になるようにファインチューニングし、その LoRA アダプタを Hugging Face Hub に保存しました。この Lab03 では、その成果を実際にデプロイして体験します！
 
-デプロイメントマニフェストで使用する環境変数を設定します。[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]、[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN] は、ご自身の情報に置き換えてください。
+具体的には、ベースとなる Gemma モデルに、Lab02 で作成した「ござる」LoRA アダプタを適用した形で GKE クラスタ上にサービングアプリケーションをデプロイし、実際に「ござる」と返答するかどうかを確認します。
+まず、このラボで使用する環境変数を設定します。
+主に、デプロイするアプリケーションのコンテナイメージ名、ベースモデル名、そして最も重要な Lab02 で Hugging Face HubにプッシュしたLoRAアダプタのリポジトリIDなどを設定します。
 
 ```bash
 export CLUSTER_NAME="gke-dojo-cluster"
@@ -438,17 +471,29 @@ export HF_MODEL_NAME="google/gemma-3-4b-it"
 export LORA_ADAPTER_NAME="[YOUR_HUGGINGFACE_USERNAME]/[YOUR_GOZARU_LORA_ADAPTER_REPO_NAME]"
 export HF_TOKEN="[YOUR_HUGGINGFACE_READ_ACCESS_TOKEN]"
 ```
+LORA_ADAPTER_NAME の [YOUR_HUGGINGFACE_USERNAME] と [YOUR_GOZARU_LORA_ADAPTER_REPO_NAME] の部分は、ご自身の Hugging Face ユーザー名と、Lab02 で LoRA アダプタをプッシュしたリポジトリ名に正しく置き換えてください。
 
 ### **2. コンテナのビルドとプッシュ**
 
+次に、ファインチューニング済みのGemmaモデル（正確にはベースモデル＋LoRAアダプタ）をサービングするためのアプリケーションをDockerイメージとしてビルドし、Artifact Registryにプッシュします。
+lab-03/ ディレクトリには、このための Dockerfile やアプリケーションコード（LoRAアダプタをロードする機能を含む）が用意されています。
+
+まず、この Lab 用のArtifact Registryリポジトリを作成します。（既に存在する場合はスキップされます）
+
 ```bash
 cd lab-03/
+```
+カレントディレクトリが lab-03 であることを確認してください。
+
+```bash
 gcloud artifacts repositories describe ${AR_REPO_NAME} --repository-format=docker --location=${REGION} > /dev/null 2>&1 || \
 gcloud artifacts repositories create ${AR_REPO_NAME} \
     --repository-format=docker \
     --location=${REGION} \
     --description="Gozaru Gemma LoRA inference server"
 ```
+
+イメージをビルドしてプッシュします。ビルドには数分かかることがあります。
 
 ```bash
 gcloud auth configure-docker ${REGION}-docker.pkg.dev
@@ -457,43 +502,65 @@ gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO_NAME
 
 ### **3. GKE クラスタへのデプロイ**
 
-ファインチューニングした「ござる」Gemma モデルを GKE にデプロイします。
+Dockerイメージの準備ができたので、ファインチューニング済みの「ござる」GemmaモデルをGKEにデプロイしましょう。
+手順はLab01とほぼ同様です。
+
+まず、kubectl がGKEクラスタを操作できるように認証情報を取得します（既に設定済みのはずですが、念のためとなります）。
 
 ```bash
 gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}
 ```
-マニフェストのテンプレートファイルを置換して、実際の値に置き換えます。
+次に、マニフェストのテンプレートファイル (deployment_template.yaml) のプレースホルダーを環境変数の値で置き換えて、deployment.yaml を生成します。このテンプレートには、ベースモデル名、LoRA　アダプタ名、HF　トークンなどが渡されるように設定されています。
 
 ```bash
 envsubst < deployment_template.yaml > deployment.yaml
 ```
+deployment.yaml を確認し、HF_MODEL_NAME, LORA_ADAPTER_NAME, HF_TOKEN が正しく設定されているか見てみましょう。これらの情報を使って、Pod起動時にアプリケーションがHugging Face HubからモデルとLoRAアダプタをダウンロードします。
 
-生成されたファイルを適用します。
+```bash
+cat deployment.yaml
+```
+
+もし、プレースホルダー(環境変数名)のままの場合、環境変数を設定してから envsubst コマンドをもう一度実施ください。
+生成されたマニフェストファイル (deployment.yaml と service.yaml) を使って、GKEにデプロイします。
+service.yaml は、この「ござる」Gemmaサーバーに外部からアクセスするためのものです。
+
 ```bash
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
+```
+デプロイされたPodの状態を監視します。app=gozaru-gemma-server というラベルを持つPodです。
 
 ```bash
 kubectl get pods -l app=gozaru-gemma-server -w
 ```
-ステータスを継続的に確認します。
-STATUS が Running になった後も、READY が 1/1 になるまで時間がかかります。
+Podのステータスが Running になり、READY列が 1/1 になるまで待ちます。
+モデルとLoRAアダプタのダウンロード、そしてそれらのロードには時間がかかるため、Running になった後もREADYが 1/1 になるまで10〜20分程度かかることがあります。
+
+Podのログを確認して、起動状況を詳しく見てみましょう。
+
 
 ```bash
 export POD_NAME=$(kubectl get pods -l app=gozaru-gemma-server -o jsonpath='{.items[0].metadata.name}')
 kubectl logs -f $POD_NAME
 ```
-ログで Application startup complete. や Test inference successful: が表示されれば、アプリケーションは起動しています。
+ログの中で、ベースモデルとLoRAアダプタのダウンロード・ロードに関するメッセージや、Application startup complete. や Test inference successful: といったメッセージが表示されれば、アプリケーションの起動はほぼ完了です。
+
+次に、外部からアクセスするためのIPアドレスを取得します。
 
 ```bash
 kubectl get service gozaru-gemma-service -w
-EXTERNAL-IP が <pending> から実際の IP アドレスに変わるまで待ちます。
 ```
+
+IPアドレスが割り当てられたら、環境変数にセットします。
+
 ```bash
 export EXTERNAL_IP_GOZARU=$(kubectl get service gozaru-gemma-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "External IP for Gozaru Gemma service: $EXTERNAL_IP_GOZARU"
 ```
-curl コマンドで推論 API にリクエストを送信し、応答の語尾が「ござる」になっているか確認します。
+いよいよ、ファインチューニングの成果を確認する時が来ました！
+curl コマンドで、デプロイした「ござる」Gemmaサーバーに推論リクエストを送信し、応答の語尾が「ござる」になっているか確認します。
+Lab01 とはエンドポイントのパスが /generate になっている点に注意してください (使用しているサンプルアプリの仕様です)。
 
 ```bash
 curl -X POST "http://${EXTERNAL_IP_GOZARU}:80/generate" \
@@ -503,15 +570,16 @@ curl -X POST "http://${EXTERNAL_IP_GOZARU}:80/generate" \
         "max_new_tokens": 50
     }'
 ```
-期待される応答の例
+期待される応答の例は以下の通りです。generated_text の語尾に注目してください
 ```json
 {
-  "generated_text": "日本の首都は東京にございまする。",
+  "generated_text": "日本の首都は東京でござる。",
   "model_name": "google/gemma-2-2b-jpn-it + [YOUR_GOZARU_LORA_ADAPTER_HF_ID]",
   "processing_time_ms": XXXX
 }
 ```
-語尾が「ござる」になっていれば、ファインチューニングされた LoRA アダプターがGKE上で正しく適用され、動作しています！
+応答の語尾が「ござる」風になっていれば大成功です！
+これで、ファインチューニングされたLoRAアダプタがGKE上で正しくベースモデルに適用され、期待通りに動作していることが確認できました。
 
 ## **Configurations!**
-これで、GKE での基本的な 推論アプリケーションのデプロイと操作を学ぶことができました。引き続き今後のハンズオンをお楽しみください。
+これでGKE道場 AI編の全てのラボが完了です。Gemma モデルのサービングからファインチューニング、そしてファインチューニング済みモデルのサービングまで、GKE を活用した一連の AI/ML ワークフローを体験できました。この経験が、皆さんの今後に役立つことを願っています！
