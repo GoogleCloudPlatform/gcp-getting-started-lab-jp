@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Gozaru Gemma Server
-  * ベース : google/gemma-3-4b-it
-  * LoRA  : tarota0226/gemma-gozaru-adapter   (環境変数で変更可)
-"""
 import os, time, logging
 from typing import List
 
@@ -24,7 +17,7 @@ log = logging.getLogger("gozaru-server")
 
 # ───────── 環境変数 ─────────
 MODEL_NAME        = os.getenv("HF_MODEL_NAME", "google/gemma-3-4b-it")
-LORA_ADAPTER_NAME = os.getenv("LORA_ADAPTER_NAME")           # 必須
+LORA_ADAPTER_NAME = os.getenv("LORA_ADAPTER_NAME")
 HF_TOKEN          = os.getenv("HF_TOKEN")
 
 if not HF_TOKEN:
