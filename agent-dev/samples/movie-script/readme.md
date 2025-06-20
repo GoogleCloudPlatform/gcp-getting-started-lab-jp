@@ -27,7 +27,7 @@
 最終的に、マルチエージェントシステムはこのようになります.。
 
 
-![architecture](/Users/tayzar/Desktop/dev/adk-workshop/movie-script/arch.png)
+![architecture](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/agent-dev/samples/movie-script/arch.png)
 
 
 ## Agentの使い方
