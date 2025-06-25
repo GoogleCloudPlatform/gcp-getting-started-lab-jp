@@ -1,0 +1,575 @@
+{
+  "eval_set_id": "evalset542a64",
+  "name": "evalset542a64",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "case98ccb8",
+      "conversation": [
+        {
+          "invocation_id": "e-168c62b2-3ad4-40fc-841e-63ec37e0baf1",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Hey what can you do?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "I can help you discover your dream vacation, plan for it, and book flights and hotels.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748834652.625077
+        },
+        {
+          "invocation_id": "e-627f2e9c-8d60-4d7f-a769-8ff6f4255672",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Give me some ideas for trip to Japan"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Japan offers a diverse range of experiences! How about exploring the ancient temples and gardens of Kyoto, diving into the vibrant, modern culture of Tokyo, or enjoying the street food scene in Osaka? Each city provides a unique flavor of Japan. Which of these sounds most appealing to you?\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-8966e9f9-1c75-43ea-be21-7eecf5ae2c3c",
+                "args": {
+                  "agent_name": "inspiration_agent"
+                },
+                "name": "transfer_to_agent"
+              },
+              {
+                "id": "adk-009fcbd6-73ec-4cdc-9101-5854b10a6a4e",
+                "args": {
+                  "request": "trip to Japan"
+                },
+                "name": "place_agent"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748834664.066025
+        },
+        {
+          "invocation_id": "e-29bc5779-da05-4210-a1cb-f9ecacb68853",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Osaka sounds nice"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Osaka is a fantastic choice! It's known for its delicious street food (especially takoyaki and okonomiyaki), vibrant Dotonbori district, and historical Osaka Castle. Would you like me to provide some suggestions for points of interest and activities in Osaka?\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748834678.057438
+        },
+        {
+          "invocation_id": "e-071a2818-a693-472e-9be2-47c4c786c585",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Yes please"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "All locations have been verified.\n\nConsidering your vegan food preference, Dotonbori or Shinsekai might be great options to explore, as they offer a variety of street food and restaurants that could accommodate vegan options. Would any of these activities interest you, or would you like me to explore other options in Osaka based on your preferences?\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-183e0c70-80cb-435a-a290-2f902b65ac15",
+                "args": {
+                  "request": "Osaka"
+                },
+                "name": "poi_agent"
+              },
+              {
+                "id": "adk-134f37b9-75ff-4248-9585-396fcfa276f0",
+                "args": {
+                  "key": "poi"
+                },
+                "name": "map_tool"
+              }
+            ],
+            "intermediate_responses": [
+              [
+                "inspiration_agent",
+                [
+                  {
+                    "video_metadata": null,
+                    "thought": null,
+                    "inline_data": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "text": "Okay, here are a few popular spots in Osaka:\n\n*   **Osaka Castle:** An iconic castle with a museum, surrounded by a beautiful park.\n*   **Dotonbori:** A vibrant entertainment district famous for its nightlife and street food.\n*   **Universal Studios Japan:** A popular theme park with movie-themed rides and attractions.\n*   **Shinsekai:** A retro district with the Tsutenkaku Tower and a nostalgic atmosphere.\n*   **Umeda Sky Building:** Offers panoramic city views from its floating garden observatory.\n\nTo ensure you have the best experience, let me verify the locations.\n\n"
+                  }
+                ]
+              ]
+            ]
+          },
+          "creation_timestamp": 1748834686.405195
+        },
+        {
+          "invocation_id": "e-5559e0f1-43e8-4f0c-9f7d-0edf5f2e680a",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "It's okay. Plan a five day trip from Singapore to Osaka"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I have memorized your origin as Singapore and your destination as Osaka. Now, please provide the start date for your trip.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-fd109bd0-d855-4732-be1c-d8cbd1e0f3c8",
+                "args": {
+                  "agent_name": "planning_agent"
+                },
+                "name": "transfer_to_agent"
+              },
+              {
+                "id": "adk-c012c57a-d282-4d3e-9577-1851f0f01ee0",
+                "args": {
+                  "key": "destination",
+                  "value": "Osaka"
+                },
+                "name": "memorize"
+              },
+              {
+                "id": "adk-9d4293e0-7337-4446-a77a-b688a14776f9",
+                "args": {
+                  "value": "Singapore",
+                  "key": "origin"
+                },
+                "name": "memorize"
+              }
+            ],
+            "intermediate_responses": [
+              [
+                "planning_agent",
+                [
+                  {
+                    "video_metadata": null,
+                    "thought": null,
+                    "inline_data": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "text": "Okay, I can help you plan a five-day trip to Osaka. First, I need a little more information. What date would you like to start your trip? Also, your origin is Singapore.\n"
+                  }
+                ]
+              ]
+            ]
+          },
+          "creation_timestamp": 1748834722.082705
+        },
+        {
+          "invocation_id": "e-acf08234-9b14-4155-a24d-ada45823dd7e",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Maybe around July"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "To help me plan effectively, could you provide a specific start date in July and the year of travel? For example, July 10, 2025.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748834734.585051
+        },
+        {
+          "invocation_id": "e-3047105b-22f4-47f1-91de-0a9b1af84d65",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay then July 10, 2025"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I have found some flights for you.\n\n**Outbound Flights (July 10, 2025):**\n\n1.  **Singapore Airlines (SQ618):**\n    *   Departs Singapore (SIN) at 09:25\n    *   Arrives Osaka (KIX) at 17:00\n    *   Price: $750\n2.  **Japan Airlines (JL712):**\n    *   Departs Singapore (SIN) at 14:00\n    *   Arrives Osaka (KIX) at 22:00\n    *   Price: $820\n3.  **All Nippon Airways (NH802):**\n    *   Departs Singapore (SIN) at 22:55\n    *   Arrives Osaka (KIX) at 06:30 (next day)\n    *   Price: $780\n\n**Return Flight (July 14, 2025):**\n\n*   **Singapore Airlines (SQ619):**\n    *   Departs Osaka (KIX) at 11:00\n    *   Arrives Singapore (SIN) at 16:30\n    *   Price: $700\n\nWhich outbound and return flights would you like to choose? Based on your user profile, you prefer a window seat. I will help you select seats after you confirm the flights.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-a68ab562-97c9-4955-8043-17ec0c7959bd",
+                "args": {
+                  "value": "2025-07-10",
+                  "key": "start_date"
+                },
+                "name": "memorize"
+              },
+              {
+                "id": "adk-561fab05-464c-4e4f-a2f1-808a9ab8e652",
+                "args": {
+                  "value": "2025-07-14",
+                  "key": "end_date"
+                },
+                "name": "memorize"
+              },
+              {
+                "id": "adk-92d325b8-1b39-436c-bf82-06658601e8b2",
+                "args": {
+                  "request": "flights from Singapore to Osaka, departing on 2025-07-10 and returning on 2025-07-14"
+                },
+                "name": "flight_search_agent"
+              }
+            ],
+            "intermediate_responses": [
+              [
+                "planning_agent",
+                [
+                  {
+                    "video_metadata": null,
+                    "thought": null,
+                    "inline_data": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "text": "Okay, I have the start date as July 10, 2025, and it's a five-day trip. So the end date will be July 14, 2025.\n"
+                  }
+                ]
+              ],
+              [
+                "planning_agent",
+                [
+                  {
+                    "video_metadata": null,
+                    "thought": null,
+                    "inline_data": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "text": "Great! I have the origin, destination, start date, and end date. Now, let's find some flights. I will search for flights from Singapore to Osaka, departing on July 10, 2025, and returning on July 14, 2025.\n"
+                  }
+                ]
+              ]
+            ]
+          },
+          "creation_timestamp": 1748834745.784634
+        },
+        {
+          "invocation_id": "e-f8c3df00-3ce5-4de3-88b4-c0565935436f",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Oh wait, when would be cheapest time in July? I want to settle the date with that"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I have searched for the flights in July 2025. The cheapest option appears to be on July 10, 2025, with Singapore Airlines (SQ618) for $750. Japan Airlines on July 15 is the next cheapest at $820.\n\nTo proceed with the cheapest option, July 10, 2025, I will need to update the end date to reflect a five-day trip. This would make the return date July 14, 2025.\n\nDo you want to proceed with these dates (July 10 - July 14) and the Singapore Airlines flights?\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-acbc65a3-7d8e-43bc-b713-a11703c17bb8",
+                "args": {
+                  "request": "cheapest flights from Singapore to Osaka in July 2025"
+                },
+                "name": "flight_search_agent"
+              }
+            ],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748834778.812922
+        },
+        {
+          "invocation_id": "e-4b2d36f8-9a54-4092-ac7f-098d77b6384e",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Sure"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, here are some available window seats for Singapore Airlines SQ618:\n\n*   1A: $70\n*   1F: $70\n*   2A: $70\n*   2F: $70\n*   3A: $70\n*   3F: $70\n\nWhich seat would you prefer?\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "id": "adk-8517c995-3fe4-4b15-982e-6fe2f2e944e0",
+                "args": {
+                  "request": "Singapore Airlines SQ618, departing from Singapore (SIN) on 2025-07-10 at 09:20, window seat"
+                },
+                "name": "flight_seat_selection_agent"
+              }
+            ],
+            "intermediate_responses": [
+              [
+                "planning_agent",
+                [
+                  {
+                    "video_metadata": null,
+                    "thought": null,
+                    "inline_data": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "text": "Okay, let's lock in those flights.\n\n**Outbound Flight (July 10, 2025):**\n\n*   **Singapore Airlines (SQ618):**\n    *   Departs Singapore (SIN) at 09:20\n    *   Arrives Osaka (KIX) at 17:05\n    *   Price: $750\n\n**Return Flight (July 14, 2025):**\n\n*   **Singapore Airlines (SQ619):**\n    *   Departs Osaka (KIX) at 11:00\n    *   Arrives Singapore (SIN) at 16:30\n    *   Price: $700\n\nNow that we've selected the flights, let's pick your seats. Since you prefer a window seat, I'll check the availability for both flights.\n"
+                  }
+                ]
+              ]
+            ]
+          },
+          "creation_timestamp": 1748834808.983328
+        }
+      ],
+      "session_input": {
+        "app_name": "travel_concierge",
+        "user_id": "user",
+        "state": {
+          "user_profile": "",
+          "_time": "",
+          "origin": "",
+          "destination": "",
+          "start_date": "",
+          "end_date": "",
+          "itinerary": "",
+          "outbound_flight_selection": "",
+          "outbound_seat_number": "",
+          "return_flight_selection": "",
+          "return_seat_number": "",
+          "hotel_selection": "",
+          "room_selection": "",
+          "poi": "",
+          "itinerary_datetime": "",
+          "itinerary_start_date": "",
+          "itinerary_end_date": ""
+        }
+      },
+      "creation_timestamp": 1748834830.096437
+    }
+  ],
+  "creation_timestamp": 1748834826.3758981
+}
