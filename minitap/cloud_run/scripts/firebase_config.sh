@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_ID=$(firebase -j apps:list -P $PROJECT_ID | jq '.result[] | select(.displayName == "streamchat")' | jq -r '.appId')
+APP_ID=$(firebase -j apps:list -P $GOOGLE_CLOUD_PROJECT | jq '.result[] | select(.displayName == "streamchat")' | jq -r '.appId')
 TMP_FILE=firebaseConfig.json
 ENV_PATH=./src/streamchat
 
@@ -8,7 +8,7 @@ if [ ! -z ${1} ]; then
     ENV_PATH=$1
 fi
 
-firebase -j apps:sdkconfig -P $PROJECT_ID WEB $APP_ID | jq '.result.sdkConfig' > $TMP_FILE
+firebase -j apps:sdkconfig -P $GOOGLE_CLOUD_PROJECT WEB $APP_ID | jq '.result.sdkConfig' > $TMP_FILE
 
 function update_env() {
     json_key=$1
