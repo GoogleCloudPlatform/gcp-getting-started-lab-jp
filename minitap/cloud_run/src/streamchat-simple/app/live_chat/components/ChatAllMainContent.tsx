@@ -6,7 +6,6 @@ import {
   orderBy,
   limit,
   getFirestore,
-  where,
 } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import firebaseClientApp from "../../libs/firebase/client";
@@ -15,11 +14,10 @@ import AvatarIcon from "./AvatarIcon";
 
 const firestore = getFirestore(firebaseClientApp);
 
-const ChatMainContent = () => {
+const ChatAllMainContent = () => {
   const [snapshot] = useCollection(
     query(
       collection(firestore, "messages"),
-      where("banned", "==", false),
       orderBy("timestamp", "desc"),
       limit(100)
     ),
@@ -68,4 +66,4 @@ const ChatMainContent = () => {
   );
 };
 
-export default ChatMainContent;
+export default ChatAllMainContent;

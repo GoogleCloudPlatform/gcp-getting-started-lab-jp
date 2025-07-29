@@ -36,6 +36,7 @@ const Input: React.FC<InputProps> = ({
           font-medium 
           leading-6 
           text-gray-900
+          dark:text-white
         "
       >
         {label}
@@ -60,14 +61,18 @@ const Input: React.FC<InputProps> = ({
             border-0 
             py-1.5 
             text-gray-900 
+            dark:text-white
             shadow-sm 
             ring-1 
             px-2
             ring-inset 
             ring-gray-300 
+            dark:ring-gray-600
             placeholder:text-gray-400 
+            dark:placeholder:text-gray-800
             focus:ring-2 
             focus:ring-inset 
+            dark:bg-black
             focus:ring-sky-600 
             sm:text-sm 
             sm:leading-6`,

@@ -84,6 +84,7 @@ const AuthForm = ({ csrfToken }: Props) => {
       <div
         className="
         bg-white
+        dark:bg-gray-900
           px-4
           py-8
           shadow
@@ -142,14 +143,14 @@ const AuthForm = ({ csrfToken }: Props) => {
             px-2 
           "
         >
-          <div className="text-black rk:text-gray-300">
+          <div className="text-black dark:text-gray-300">
             {variant === "LOGIN"
               ? "初めての方は?"
               : "既にアカウントを持っている方は?"}
           </div>
           <div
             onClick={toggleVariant}
-            className="underline cursor-pointer text-black"
+            className="underline cursor-pointer text-black dark:text-gray-300"
           >
             {variant === "LOGIN" ? "アカウントを登録する" : "サインイン"}
           </div>

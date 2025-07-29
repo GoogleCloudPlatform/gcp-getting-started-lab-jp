@@ -1,7 +1,7 @@
 import { MessagePostRequest } from "@/app/types/message";
 import axios from "axios";
 
-const MESSAGE_ENDPOINT = "/api/messages";
+const MESSAGE_ENDPOINT = "/api/pubsub";
 
 export const postMessageApi = async (
   request: MessagePostRequest,
