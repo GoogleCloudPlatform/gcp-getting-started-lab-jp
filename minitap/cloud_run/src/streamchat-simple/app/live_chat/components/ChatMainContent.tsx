@@ -36,7 +36,7 @@ const ChatMainContent = () => {
   }, [snapshot]);
 
   return (
-    <main className="bg-white overflow-auto">
+    <main className="bg-white dark:bg-black overflow-auto">
       <div className="mt-8">
         {snapshot && (
           <div>
@@ -48,10 +48,10 @@ const ChatMainContent = () => {
                       bgColor={"bg-" + doc.data().color}
                       animal={doc.data().animal}
                     />
-                    <span className="text-[13px] ml-4 pt-[2px] font-medium text-black text-opacity-50">
+                    <span className="text-[13px] ml-4 pt-[2px] font-medium text-black dark:text-white text-opacity-50">
                       {doc.data().name}
                     </span>
-                    <span className="ml-2 text-[13px] pt-[2px] text-black">
+                    <span className="ml-2 text-[13px] pt-[2px] text-black dark:text-white">
                       {doc.data().text}
                     </span>
                   </div>
