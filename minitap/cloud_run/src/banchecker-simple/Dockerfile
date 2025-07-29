@@ -1,4 +1,4 @@
-FROM golang:1.20-buster as builder
+FROM golang:1.20-bullseye as builder
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -18,7 +18,7 @@ RUN go build -v -o server
 # Use the official Debian slim image for a lean production container.
 # https://hub.docker.com/_/debian
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
