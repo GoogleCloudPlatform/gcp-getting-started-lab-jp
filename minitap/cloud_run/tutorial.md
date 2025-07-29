@@ -1,3 +1,4 @@
+
 # **クラウドネイティブなアプリケーション開発ハンズオン**
 
 本ハンズオンではコンテナをサーバーレスで動かすサービスである [Cloud Run](https://cloud.google.com/run) そして、フルマネージドなデータベースである [Firestore] の様々な機能を実際のリアルタイムチャット アプリケーションを用いて体験します。
@@ -34,60 +35,23 @@ gcloud コマンドライン インターフェースは、Google Cloud でメ�
 
 **ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
 
-### **2. gcloud から利用する Google Cloud のデフォルトプロジェクトを設定**
-
-gcloud コマンドでは操作の対象とするプロジェクトの設定が必要です。操作対象のプロジェクトを設定します。
+### **2. プロジェクト ID を設定する**
+`test-project` を実際のプロジェクト ID に更新して実行してください。
+Cloud Shellの場合はこのステップをスキップしても大丈夫です。
 
 ```bash
-gcloud config set project $PROJECT_ID
+export GOOGLE_CLOUD_PROJECT=test-project
 ```
 
-承認するかどうかを聞かれるメッセージがでた場合は、`承認` ボタンをクリックします。
-
-### **3. gcloud からの Cloud Run のデフォルト設定**
-
-Cloud Run の利用するリージョン、プラットフォームのデフォルト値を設定します。
+### **3. gcloud のデフォルト設定**
 
 ```bash
+gcloud config set project $GOOGLE_CLOUD_PROJECT
 gcloud config set run/region asia-northeast1
 gcloud config set run/platform managed
 ```
 
 ここではリージョンを東京、プラットフォームをフルマネージドに設定しました。この設定を行うことで、gcloud コマンドから Cloud Run を操作するときに毎回指定する必要がなくなります。
-
-<walkthrough-footnote>CLI（gcloud）で利用するプロジェクトの指定、Cloud Run のデフォルト値の設定が完了しました。次にハンズオンで利用する機能（API）を有効化します。</walkthrough-footnote>
-
-## **参考: Cloud Shell の接続が途切れてしまったときは?**
-
-一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` が切れてしまう、またはブラウザのリロードが必要になる場合があります。その場合は以下の対応を行い、チュートリアルを再開してください。
-
-### **1. チュートリアル資材があるディレクトリに移動する**
-
-```bash
-cd ~/gcp-getting-started-cloudrun
-```
-
-### **2. チュートリアルを開く**
-
-```bash
-teachme tutorial_chat.md
-```
-
-### **3. プロジェクト ID を設定する**
-
-`test-project` を実際のプロジェクト ID に更新して実行してください。
-
-```bash
-export PROJECT_ID=test-project
-```
-
-### **4. gcloud のデフォルト設定**
-
-```bash
-gcloud config set project $PROJECT_ID
-gcloud config set run/region asia-northeast1
-gcloud config set run/platform managed
-```
 
 途中まで進めていたチュートリアルのページまで `Next` ボタンを押し、進めてください。
 
@@ -120,10 +84,10 @@ gcloud services enable \
 **GUI** から Firebase を有効化します。
 
 1. [Firebase コンソール](https://console.firebase.google.com/) にブラウザからアクセスします。
-1. `プロジェクトを作成` または `プロジェクトを追加` ボタンをクリックします。
+1. `Firebase プロジェクトを作成する`ボタンをクリックします。
 1. プロジェクトの作成 (手順 1/3)
 
-   `プロジェクト名を入力` のところから作成済みの Google Cloud プロジェクトを選択します。次に 規約への同意、利用目的のチェックマークを入れ、`続行` をクリックします。
+   `Google Cloud プロジェクトに Firebase を追加` のところからLabの Google Cloud プロジェクトを選択します。次に 規約への同意、利用目的のチェックマークを入れ、`続行` をクリックします。
 
    料金確認画面が表示された場合は、`プランを確認` ボタンをクリックします。
 
@@ -133,7 +97,7 @@ gcloud services enable \
 
 1. プロジェクトの作成 (手順 3/3)
 
-   `このプロジェクトで Google アナリティクスを有効にする` をオフにし、`Firebase を追加` をクリックします。
+   `このプロジェクトで Google アナリティクスを有効にする` をオフにし、`プロジェクトを作成` をクリックします。
 
 1. `新しいプロジェクトの準備ができました` と表示されたら `続行` をクリックします。
 
@@ -142,12 +106,13 @@ gcloud services enable \
 **CLI** から実行します。
 
 ```bash
-firebase apps:create -P $PROJECT_ID WEB streamchat
+firebase apps:create -P $GOOGLE_CLOUD_PROJECT WEB streamchat
 ```
 
 ### **3. Firestore 設定のアプリケーションへの埋め込み**
 
 ```bash
+cp ./src/streamchat-simple/.env.example ./src/streamchat-simple/.env
 ./scripts/firebase_config.sh ./src/streamchat-simple
 ```
 
@@ -160,14 +125,12 @@ firebase apps:create -P $PROJECT_ID WEB streamchat
 1. 以下のコマンドで出力された URL にブラウザからアクセスします。
 
    ```bash
-   echo "https://console.firebase.google.com/project/$PROJECT_ID/overview?hl=ja"
+   echo "https://console.firebase.google.com/project/$GOOGLE_CLOUD_PROJECT/overview?hl=ja"
    ```
 
-1. `Authentication` カードをクリックします。
+1. 左パネルから　構築 > `Authentication` カードをクリックします。
 1. `始める` ボタンをクリックします。
-1. ネイティブのプロバイダから `メール / パスワード` をクリックします。
-1. `プロジェクトを作成` または `プロジェクトを追加` ボタンをクリックします。
-1. メール / パスワードの `有効にする` をクリックし、有効化します。
+1. ログイン方法から `メール / パスワード` をクリックし、メール / パスワードを有効にします
 1. `保存` ボタンをクリックします。
 1. メール / パスワードのプロバイダに有効のチェックが付いていることを確認します。
 
@@ -184,7 +147,7 @@ gcloud firestore databases create --location asia-northeast1
 ### **2. Firestore を操作するための CLI の初期化**
 
 ```bash
-firebase init firestore -P $PROJECT_ID
+firebase init firestore -P $GOOGLE_CLOUD_PROJECT
 ```
 
 2つプロンプトが出ますが両方とも `Enter` を押しデフォルト設定を採用します。
@@ -210,7 +173,7 @@ EOF
 ### **4. 更新したルールをデプロイ**
 
 ```bash
-firebase deploy --only firestore:rules -P $PROJECT_ID
+firebase deploy --only firestore:rules -P $GOOGLE_CLOUD_PROJECT
 ```
 
 ## **チャット アプリケーション用の事前設定**
@@ -241,14 +204,14 @@ gcloud iam service-accounts create streamchat
 チャットアプリケーションは認証情報の操作、Firestore の読み書き権限が必要です。先程作成したサービスアカウントに権限を付与します。
 
 ```bash
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member serviceAccount:streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
+  --member serviceAccount:streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/firebase.sdkAdminServiceAgent'
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member serviceAccount:streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
+  --member serviceAccount:streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/firebaseauth.admin'
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member serviceAccount:streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
+  --member serviceAccount:streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/iam.serviceAccountTokenCreator'
 ```
 
@@ -260,11 +223,10 @@ Cloud Build でコンテナイメージを作成、作成したイメージを C
 
 ```bash
 gcloud builds submit ./src/streamchat-simple \
-  --tag asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
-  --machine-type e2-highcpu-8 && \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat && \
 gcloud run deploy streamchat \
-  --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
-  --service-account streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+  --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
+  --service-account streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --allow-unauthenticated
 ```
 
@@ -305,11 +267,11 @@ git switch darkmode
 
 ```bash
 gcloud builds submit ./src/streamchat-simple \
-  --tag asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
   --machine-type e2-highcpu-8 && \
 gcloud run deploy streamchat \
-  --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
-  --service-account streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+  --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
+  --service-account streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --no-traffic \
   --tag darkmode \
   --allow-unauthenticated
@@ -357,7 +319,7 @@ gcloud pubsub topics create streamchat
 
 ```bash
 gcloud pubsub topics add-iam-policy-binding streamchat \
-  --member serviceAccount:streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+  --member serviceAccount:streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/pubsub.publisher'
 ```
 
@@ -372,8 +334,8 @@ gcloud iam service-accounts create banchecker
 ### **2. 放送禁止判定サービス用のサービスアカウントへの権限設定**
 
 ```bash
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member serviceAccount:banchecker@$PROJECT_ID.iam.gserviceaccount.com \
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
+  --member serviceAccount:banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/datastore.user'
 ```
 
@@ -381,11 +343,10 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 ```bash
 gcloud builds submit ./src/banchecker-simple \
-  --tag asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/banchecker \
-  --machine-type e2-highcpu-8 && \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker && \
 gcloud run deploy banchecker \
-  --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/banchecker \
-  --service-account banchecker@$PROJECT_ID.iam.gserviceaccount.com \
+  --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker \
+  --service-account banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --no-allow-unauthenticated
 ```
 
@@ -401,7 +362,7 @@ gcloud iam service-accounts create sub-to-banchecker
 
 ```bash
 gcloud run services add-iam-policy-binding banchecker \
-  --member serviceAccount:sub-to-banchecker@$PROJECT_ID.iam.gserviceaccount.com \
+  --member serviceAccount:sub-to-banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --role 'roles/run.invoker'
 ```
 
@@ -412,7 +373,7 @@ CHECKER_URL=$(gcloud run services describe banchecker --format json | jq -r '.st
 gcloud pubsub subscriptions create sub-to-banchecker \
   --topic streamchat \
   --push-endpoint $CHECKER_URL \
-  --push-auth-service-account sub-to-banchecker@$PROJECT_ID.iam.gserviceaccount.com
+  --push-auth-service-account sub-to-banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 ```
 
 ## **チャットアプリケーションの更新**
@@ -458,18 +419,17 @@ EOF
 ### **3. インデックスの反映**
 
 ```bash
-firebase deploy --only firestore:indexes -P $PROJECT_ID
+firebase deploy --only firestore:indexes -P $GOOGLE_CLOUD_PROJECT
 ```
 
 ### **4. 連携機能のデプロイ**
 
 ```bash
 gcloud builds submit ./src/streamchat-simple \
-  --tag asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
-  --machine-type e2-highcpu-8 && \
+  --tag asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat && \
 gcloud run deploy streamchat \
-  --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat \
-  --service-account streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+  --image asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
+  --service-account streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --allow-unauthenticated
 ```
 
@@ -596,11 +556,11 @@ cat > cloudbuild.yaml << 'EOF'
 steps:
   # チャットアプリケーションのビルド
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat', './src/streamchat-simple']
+    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat', './src/streamchat-simple']
   
   # Docker イメージのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat']
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat']
   
   # Cloud Run へのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -609,19 +569,19 @@ steps:
       - 'run'
       - 'deploy'
       - 'streamchat'
-      - '--image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/streamchat'
+      - '--image=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat'
       - '--region=asia-northeast1'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--service-account=streamchat@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--service-account=streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com'
 
   # 放送禁止用語チェッカーのビルド（必要な場合）
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/banchecker', './src/banchecker-simple']
+    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker', './src/banchecker-simple']
   
   # Docker イメージのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/banchecker']
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker']
   
   # Cloud Run へのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -630,11 +590,11 @@ steps:
       - 'run'
       - 'deploy'
       - 'banchecker'
-      - '--image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/chat-repo/banchecker'
+      - '--image=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker'
       - '--region=asia-northeast1'
       - '--platform=managed'
       - '--no-allow-unauthenticated'
-      - '--service-account=banchecker@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--service-account=banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -647,19 +607,19 @@ EOF
 Cloud Build がCloud Run にデプロイできるよう権限を付与します：
 
 ```bash
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-gcloud projects add-iam-policy-binding $PROJECT_ID \
+PROJECT_NUMBER=$(gcloud projects describe $GOOGLE_CLOUD_PROJECT --format='value(projectNumber)')
+gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
   --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
   --role="roles/run.developer"
 
 # サービスアカウントを使用する権限も追加
 gcloud iam service-accounts add-iam-policy-binding \
-  streamchat@$PROJECT_ID.iam.gserviceaccount.com \
+  streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 
 gcloud iam service-accounts add-iam-policy-binding \
-  banchecker@$PROJECT_ID.iam.gserviceaccount.com \
+  banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
   --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 ```
@@ -769,7 +729,7 @@ gcloud config unset project
 ### **2. プロジェクトの削除**
 
 ```bash
-gcloud projects delete $PROJECT_ID
+gcloud projects delete $GOOGLE_CLOUD_PROJECT
 ```
 
 ### **3. ハンズオン資材の削除**
@@ -779,4 +739,3 @@ cd $HOME && rm -rf gcp-getting-started-cloudrun gopath
 ```
 
 <walkthrough-footnote>GitLab と Cloud Build を使った CI/CD パイプラインが正常に動作することを確認しました。これでコードの変更を GitLab にプッシュするだけで、自動的にチャットアプリケーションがデプロイされるようになりました。</walkthrough-footnote>
-
