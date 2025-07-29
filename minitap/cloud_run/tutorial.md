@@ -1,7 +1,7 @@
 
 # **クラウドネイティブなアプリケーション開発ハンズオン**
 
-本ハンズオンではコンテナをサーバーレスで動かすサービスである [Cloud Run](https://cloud.google.com/run) そして、フルマネージドなデータベースである [Firestore] の様々な機能を実際のリアルタイムチャット アプリケーションを用いて体験します。
+本ハンズオンではコンテナをサーバーレスで動かすサービスである [Cloud Run](https://cloud.google.com/run) そして、フルマネージドなデータベースである [Firestore](https://firebase.google.com/docs/firestore?hl=ja) の様々な機能を実際のリアルタイムチャット アプリケーションを用いて体験します。
 
 Cloud Run
 
@@ -37,7 +37,8 @@ gcloud コマンドライン インターフェースは、Google Cloud でメ�
 
 ### **2. プロジェクト ID を設定する**
 `test-project` を実際のプロジェクト ID に更新して実行してください。
-Cloud Shellの場合はこのステップをスキップしても大丈夫です。
+
+⚠️ Cloud Shellの場合はこのステップをスキップしても大丈夫です。
 
 ```bash
 export GOOGLE_CLOUD_PROJECT=test-project
@@ -449,7 +450,7 @@ Cloud Run では GitLab、GitHub などのソースコード リポジトリと 
 
 ここで構築するパイプラインのアーキテクチャは下記になります。
 
-[アーキテクチャ図](https://github.com/google-cloud-japan/gcp-getting-started-cloudrun/blob/main/images/cicd_pipeline.png?raw=true)
+[アーキテクチャ参考](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/minitap/images/cicd_pipeline.png?raw=true)
 
 ## **GitLab アカウントとプロジェクトの準備**
 
@@ -511,43 +512,13 @@ git push -u gitlab $CURRENT_BRANCH
 
 ## **Cloud Run の CI / CD 設定**
 
-Cloud Run で GitLab と連携した CI/CD を設定するには、Cloud Build トリガーを作成します。
-
 ### **1. Cloud Build API を有効化（既に有効化済みの場合はスキップ）**
 
 ```bash
 gcloud services enable cloudbuild.googleapis.com
 ```
 
-### **2. Cloud Build トリガーの作成**
-
-GUI から Cloud Build のトリガーを作成します。
-
-<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> CI/CD -> Cloud Build -> トリガー
-
-「トリガーを作成」ボタンをクリックします。
-
-### **3. トリガーの設定**
-
-以下の設定を行います：
-
-1. **名前**: `streamchat-trigger`
-2. **リージョン**: `asia-northeast1 (東京)`
-3. **イベント**: `ブランチに push する`
-4. **ソース**:
-   - リポジトリ: `接続` をクリックし、GitLab を選択
-   - GitLab との連携を設定（初回のみ）
-   - リポジトリで `cloudrun-chat-app` を選択
-   - ブランチ: `^main$` または現在使用しているブランチ名
-
-### **4. ビルド設定**
-
-1. **タイプ**: `Cloud Build 構成ファイル（yaml または json）`
-2. **Cloud Build 構成ファイルの場所**: `/cloudbuild.yaml`
-
-「作成」をクリックします。
-
-### **5. Cloud Build 構成ファイルの作成**
+### **2. Cloud Build 構成ファイルの作成**
 
 プロジェクトのルートディレクトリに `cloudbuild.yaml` を作成します：
 
@@ -557,11 +528,11 @@ steps:
   # チャットアプリケーションのビルド
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat', './src/streamchat-simple']
-  
+
   # Docker イメージのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat']
-  
+
   # Cloud Run へのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -578,11 +549,11 @@ steps:
   # 放送禁止用語チェッカーのビルド（必要な場合）
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker', './src/banchecker-simple']
-  
+
   # Docker イメージのプッシュ
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/banchecker']
-  
+
   # Cloud Run へのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -595,14 +566,10 @@ steps:
       - '--platform=managed'
       - '--no-allow-unauthenticated'
       - '--service-account=banchecker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-  machineType: E2_HIGHCPU_8
 EOF
 ```
 
-### **6. Cloud Build サービスアカウントに権限を付与**
+### **3. Cloud Build サービスアカウントに権限を付与**
 
 Cloud Build がCloud Run にデプロイできるよう権限を付与します：
 
@@ -624,7 +591,53 @@ gcloud iam service-accounts add-iam-policy-binding \
   --role="roles/iam.serviceAccountUser"
 ```
 
-### **7. GitLab に変更をプッシュ**
+### **4. アプリケーションの修正**
+
+チャットアプリケーションのタイトルを少し変更してみます。
+
+`minitap/cloud_run/src/streamchat-simple/app/live_chat/components/ChatHeader.tsx`
+
+### **5. Cloud Buildのpipelineの動作確認**
+以下を実行してください。
+
+```bash
+gcloud builds submit . --config=cloudbuild.yaml
+```
+
+## **Cloud BuildをSource Code Repositoryの変更によってTriggerする場合(参考）**
+
+Cloud Run で GitLab と連携した CI/CD を設定するには、Cloud Build トリガーを作成できます。
+以下はあくまでも例です。今回のハンズオンでは含めません。
+
+### **1. Cloud Build トリガーの作成**
+
+GUI から Cloud Build のトリガーを作成します。
+
+<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> CI/CD -> Cloud Build -> トリガー
+
+「トリガーを作成」ボタンをクリックします。
+
+### **2. トリガーの設定**
+
+以下の設定を行います：
+
+1. **名前**: `streamchat-trigger`
+2. **リージョン**: `asia-northeast1 (東京)`
+3. **イベント**: `ブランチに push する`
+4. **ソース**:
+   - リポジトリ: `接続` をクリックし、GitLab を選択
+   - GitLab との連携を設定（初回のみ）
+   - リポジトリで `cloudrun-chat-app` を選択
+   - ブランチ: `^main$` または現在使用しているブランチ名
+
+### **3. ビルド設定**
+
+1. **タイプ**: `Cloud Build 構成ファイル（yaml または json）`
+2. **Cloud Build 構成ファイルの場所**: `/cloudbuild.yaml`
+
+「作成」をクリックします。
+
+### **4. GitLab に変更をプッシュ**
 
 ```bash
 git add cloudbuild.yaml
@@ -634,81 +647,7 @@ git push gitlab $CURRENT_BRANCH
 
 <walkthrough-footnote>これで Cloud Run と GitLab を Cloud Build を介して連携させました。次にこのパイプラインの動作を確認します。</walkthrough-footnote>
 
-## **CI / CD パイプラインの動作確認**
-
-### **1. アプリケーションの修正**
-
-チャットアプリケーションのタイトルを少し変更してみます。
-
-```bash
-# タイトルを変更（CI/CDテスト用）
-if [ -f "src/streamchat-simple/pages/index.html" ]; then
-  sed -i 's/<title>Stream Chat.*<\/title>/<title>Stream Chat CI\/CD Test<\/title>/' src/streamchat-simple/pages/index.html
-else
-  echo "注: index.html が見つからない場合は、適切なHTMLファイルのタイトルを変更してください"
-fi
-```
-
-### **2. リポジトリへのプッシュ**
-
-```bash
-git add . && git commit -m "Update chat app title for CI/CD test" && git push gitlab $CURRENT_BRANCH
-```
-
-### **3. Cloud Build トリガーの確認**
-
-Cloud Build コンソールでビルドの状態を確認します：
-
-<walkthrough-spotlight-pointer spotlightId="console-nav-menu">ナビゲーションメニュー</walkthrough-spotlight-pointer> -> CI/CD -> Cloud Build -> 履歴
-
-ビルドが自動的にトリガーされ、実行中または完了していることを確認します。
-
-### **4. ビルド完了まで待機**
-
-```bash
-# 最新のビルドIDを取得
-BUILD_ID=$(gcloud builds list --limit=1 --region=asia-northeast1 --format="value(id)")
-
-# ビルドの状態を確認
-gcloud builds describe $BUILD_ID --region=asia-northeast1 --format="value(status)"
-
-# ビルドが完了するまで待機
-while true; do 
-  STATUS=$(gcloud builds describe $BUILD_ID --region=asia-northeast1 --format="value(status)")
-  if [ "$STATUS" = "SUCCESS" ]; then
-    echo 'Build finished successfully!'
-    break
-  elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "TIMEOUT" ] || [ "$STATUS" = "CANCELLED" ]; then
-    echo "Build failed with status: $STATUS"
-    break
-  fi
-  echo "Build status: $STATUS. Waiting..."
-  sleep 5
-done
-```
-
-### **5. 動作確認**
-
-デプロイされたチャットアプリケーションの URL を取得して動作確認します：
-
-```bash
-CHAT_URL=$(gcloud run services describe streamchat --region asia-northeast1 --format 'value(status.url)')
-echo "チャットアプリケーション URL: $CHAT_URL"
-```
-
-ブラウザでアクセスし、タイトルが「Stream Chat CI/CD Test」に更新されていることを確認します。
-
-### **6. ビルドログの確認（オプション）**
-
-ビルドの詳細ログを確認したい場合：
-
-```bash
-gcloud builds log $BUILD_ID --region=asia-northeast1
-```
-
-
-
-## **Congraturations!**
+## **Congratulations!**
 
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
 
