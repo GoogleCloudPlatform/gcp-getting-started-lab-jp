@@ -1,7 +1,7 @@
 
 # **クラウドネイティブなアプリケーション開発ハンズオン**
 
-本ハンズオンではコンテナをサーバーレスで動かすサービスである [Cloud Run](https://cloud.google.com/run) そして、フルマネージドなデータベースである [Firestore] の様々な機能を実際のリアルタイムチャット アプリケーションを用いて体験します。
+本ハンズオンではコンテナをサーバーレスで動かすサービスである [Cloud Run](https://cloud.google.com/run) そして、フルマネージドなデータベースである [Firestore](https://firebase.google.com/docs/firestore?hl=ja) の様々な機能を実際のリアルタイムチャット アプリケーションを用いて体験します。
 
 Cloud Run
 
@@ -450,7 +450,7 @@ Cloud Run では GitLab、GitHub などのソースコード リポジトリと 
 
 ここで構築するパイプラインのアーキテクチャは下記になります。
 
-[アーキテクチャ図](https://github.com/google-cloud-japan/gcp-getting-started-cloudrun/blob/main/images/cicd_pipeline.png?raw=true)
+[アーキテクチャ参考](https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/blob/master/minitap/images/cicd_pipeline.png?raw=true)
 
 ## **GitLab アカウントとプロジェクトの準備**
 
