@@ -160,12 +160,6 @@ export default function VoiceClient() {
       // ユーザーの音声入力の文字起こし
       console.log("音声入力テキスト:", messageResponse.text);
       const text = messageResponse.text.trim();
-      
-      // 短すぎるテキストは無視
-      if (text.length <= 2) {
-        return;
-      }
-      
       setTranscriptions(prev => [...prev, {
         id: generateUniqueId(),
         text: text,
@@ -173,28 +167,15 @@ export default function VoiceClient() {
         type: 'input'
       }]);
     } else if (messageResponse.type == "output_transcription") {
-      // AI音声応答の文字起こし（完全な文章のみ）
+      // AI音声応答の文字起こし
+      console.log("音声出力テキスト:", messageResponse.text);
       const text = messageResponse.text.trim();
-      console.log("音声出力テキスト:", text);
-      
-      // 短すぎるテキスト（3文字以下）は無視
-      if (text.length <= 3) {
-        return;
-      }
-      
-      // 文章が完結しているかチェック（句点、疑問符、感嘆符で終わる）
-      const isComplete = text.endsWith('。') || text.endsWith('？') || text.endsWith('！') || 
-                        text.endsWith('.') || text.endsWith('?') || text.endsWith('!');
-      
-      if (isComplete && text.length > 10) {
-        // 完全な文章の場合のみ追加
-        setTranscriptions(prev => [...prev, {
-          id: generateUniqueId(),
-          text: text,
-          timestamp: new Date(),
-          type: 'output'
-        }]);
-      }
+      setTranscriptions(prev => [...prev, {
+        id: generateUniqueId(),
+        text: text,
+        timestamp: new Date(),
+        type: 'output'
+      }]);
     } else if (messageResponse.type == "order_confirmation") {
       // 注文確認データを受信
       console.log("注文確認データを受信:", messageResponse.data);
