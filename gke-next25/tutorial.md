@@ -185,21 +185,21 @@ export EXTERNAL_IP=<EXTERNAL_IP>
 curl コマンドを使用して、NIM の推論エンドポイントにリクエストを送信します。このコマンドは Cloud Shell で実行ボタンがうまくいかない可能性があるので、
 ご自身でコピー＆ペーストしてください。
 
-```
-curl -X "POST" "http://${EXTERNAL_IP}:8000/v1/chat/completions"   
-     -H 'Content-Type: application/json'   
-     -d $'{  
-  "model": "meta/llama3-8b-instruct",  
-  "messages": [  
-    {  
-      "role": "user",  
-      "content": "日本の首都について、小学生にも分かるように短い言葉で教えて。"  
-    }  
-  ],  
-  "temperature": 0.7,  
-  "top_p": 1,  
-  "max_tokens": 1024  
-}'
+```bash
+curl -vvv -X POST "http://${EXTERNAL_IP}:8000/v1/chat/completions" -H "Content-Type: application/json" -d @- <<EOF
+{
+  "model": "llama-3.1-swallow-8b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "日本の首都について、小学生にも分かるように短い言葉で教えて。"
+    }
+  ],
+  "temperature": 0.7,
+  "top_p": 1,
+  "max_tokens": 1024
+}
+EOF
 ```
 
 モデルからの応答が JSON 形式で返ってくれば成功です！
