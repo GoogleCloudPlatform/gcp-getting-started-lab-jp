@@ -201,6 +201,8 @@ EOF
 ```
 
 モデルからの応答が JSON 形式で返ってくれば成功です！
+もし`curl: (7) Failed to connect to [IPアドレス] port 8000 after 155 ms: Couldn't connect to server`のように表示される場合は、2,3分待って
+再度お試しください。
 
 ```
 {  
