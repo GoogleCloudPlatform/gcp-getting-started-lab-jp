@@ -174,10 +174,8 @@ EXTERNAL-IP 列に IP アドレスが表示されるまで、数分待ちます�
 
 まず、前のステップで確認した外部 IP アドレスを環境変数に設定します。
 
-#【重要】<EXTERNAL_IP> の部分を、`kubectl get service nim-swallow-autopilot-service` で確認した実際のIPアドレスに置き換えてください  
-
 ```bash
-export EXTERNAL_IP=<EXTERNAL_IP>
+export EXTERNAL_IP=$(kubectl get service nim-swallow-autopilot-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 ```
 
 ### **2. 推論リクエストの実行**
@@ -185,7 +183,7 @@ export EXTERNAL_IP=<EXTERNAL_IP>
 curl コマンドを使用して、NIM の推論エンドポイントにリクエストを送信します。このコマンドは Cloud Shell で実行ボタンがうまくいかない可能性があるので、
 ご自身でコピー＆ペーストしてください。
 
-```bash
+```
 curl -vvv -X POST "http://${EXTERNAL_IP}:8000/v1/chat/completions" -H "Content-Type: application/json" -d @- <<EOF
 {
   "model": "llama-3.1-swallow-8b",
