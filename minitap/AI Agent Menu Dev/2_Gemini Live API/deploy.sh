@@ -67,6 +67,12 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 
+# Grant Cloud Run management permissions
+echo "Setting Cloud Run permissions for Cloud Build service account..."
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
+  --role="roles/run.admin"
+
 # Wait for permissions to propagate
 echo "Waiting 30 seconds for permissions to propagate..."
 sleep 30
