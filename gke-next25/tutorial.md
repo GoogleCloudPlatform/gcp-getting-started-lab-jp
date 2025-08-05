@@ -48,19 +48,27 @@ qwiklabs-gcp-01-3c69409e1eb8
 
 次に、このハンズオンで使用する GKE クラスタに kubectl コマンドでアクセスできるように、接続情報を取得します。
 
-* gke-cluster-asia-east1 (リージョン: asia-east1)  
 * gke-cluster-us-central1 (リージョン: us-central1)  
 * gke-cluster-us-west1 (リージョン: us-west1)
+* gke-cluster-asia-east1 (リージョン: asia-east1)  
 
 インストラクターの指示に従い、接続するクラスタを選択してください。
 
 【重要】インストラクターの指示に従い、以下のリージョンとクラスタ名を変更してください  
 
+* gke-cluster-us-central1 (リージョン: us-central1)  
 ```bash
 export REGION="us-central1"  
 export GKE_CLUSTER_NAME="gke-cluster-us-central1"
 ```
 または、
+* gke-cluster-us-west1 (リージョン: us-west1)
+```bash
+export REGION="us-west1"  
+export GKE_CLUSTER_NAME="gke-cluster-us-west1"
+```
+または、
+* gke-cluster-asia-east1 (リージョン: asia-east1)  
 ```bash
 export REGION="asia-east1"  
 export GKE_CLUSTER_NAME="gke-cluster-asia-east1"
