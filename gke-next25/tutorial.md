@@ -227,6 +227,15 @@ EOF
   }  
 }
 ```
+
+最後に Jupyter Nodebook で利用するため以下の IP アドレスをメモ帳などに控えておきます。
+```bash
+LLM_IP=$(kubectl get service nim-swallow-autopilot-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+EMBED_IP=$(kubectl get service nim-embedding-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "LLM (Swallow) IP Address: ${LLM_IP}"
+echo "Embedding Model IP Address: ${EMBED_IP}"
+```
+
 <walkthrough-congratulated>  
 おめでとうございます。NIM の推論コンテナを正しく GKE にデプロイできました。
 ここからは Vertex AI Workbench を使用して、Jupyter notebook を利用して操作します。
