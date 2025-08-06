@@ -247,6 +247,7 @@ echo "Embedding Model IP Address: ${EMBED_IP}"
 <walkthrough-congratulated>  
 おめでとうございます。NIM の推論コンテナを正しく GKE にデプロイできました。
 ここからは Vertex AI Workbench を使用して、Jupyter notebook を利用して操作します。
-** 【重要】講義スライド(お手元のPDF資料)に戻り、スライド番号 21 から再開ください。 **
+  
+### 【重要】講義スライド(お手元のPDF資料)に戻り、スライド番号 21 から再開ください。
 </walkthrough-congratulated>
 
