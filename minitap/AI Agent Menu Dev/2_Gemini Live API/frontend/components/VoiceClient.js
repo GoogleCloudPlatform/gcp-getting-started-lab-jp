@@ -62,7 +62,7 @@ export default function VoiceClient() {
   useEffect(() => {
     if (connectionStatus == "connected") {
       startAudioInput(); // マイクへのアクセス開始
-      setMicStatus("on"); // 初期状態はマイクオン（電話の想定）
+      setMicStatus("off"); // 初期状態はマイクオフ
       setTranscriptions([]); // トランスクリプション履歴をクリア
       transcriptionIdRef.current = 0; // IDカウンターをリセット
     } else {
