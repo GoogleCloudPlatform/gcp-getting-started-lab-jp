@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Kitchen Analysis</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+
+        /* Header */
+        .header {
+            background-color: #ffffff;
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 24px;
+            color: #8b8989; 
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+        }
+
+        .nav a {
+            color: #333;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+
+        .nav a:hover {
+            background-color: #f2f2f2;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            width: 50%;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 25px;
+            display: flex;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-bar input[type="text"] {
+            border: none;
+            outline: none;
+            padding: 8px;
+            flex: 1;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #7a7274; 
+            color: #ffffff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        /* Listing Cards Section */
+        .listings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-gap: 20px;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .listing-card {
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .listing-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 20px; 
+        }
+
+        .listing-card .content {
+            padding: 15px;
+        }
+
+        .listing-card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .listing-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: auto 1fr; 
+            gap: 10px;   
+            height: 100%;
+        }
+        .sub-container {
+            margin: 40px;
+            display: grid;             
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto; 
+            gap: 10px;          
+            grid-template-rows: 100px 50px 30px;       
+        }
+        .sub-header {
+            grid-column: 1 / 3;      
+            padding: 20px;
+            text-align: center;
+        }
+        .button-generate{
+            grid-column: 1 / 3;  
+            width: 100%;
+            height: 40px;
+        }
+        .button-generate-2{
+            grid-column: 1 / 3;  
+            width: 100%;
+            height: 30px;
+        }
+        .box {
+            padding: 20px;
+        }
+        img {
+            width: 100%;
+            height: 100% !important;
+            height: auto;
+            display: block;
+        }
+        .grid-header {
+            grid-column: 1 / 3;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 100%;
+            z-index: 100;
+            display: none;
+        }
+        .modal-content {
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-close-btn {
+            position: absolute; 
+            top: 0;
+            right: 0;
+            margin: 10px;
+            color: #fff;
+            background-color: #FF385C;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .modal-image {
+            width: 80%;
+            height: auto;
+            border-radius: 20px;
+            width: 50%!important;
+            height: 50% !important;
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background-color: #00000080;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+        video {
+            border: 5px solid white; 
+            box-sizing: border-box; 
+            border-radius: 30px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: #2b3fc0;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #preview-video {
+            width: 100%;
+            height: auto;
+        }
+        .tabs-container { 
+            width: 80%; 
+            margin: 0 auto; 
+        }
+
+        .tabs {
+            display: flex;
+            overflow-x: auto; 
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #555;
+            transition: background-color 0.3s ease; 
+            white-space: nowrap; 
+        }
+
+        .tab.active {
+            background-color: #8b8989;
+            color: white;
+        }
+
+        .tab:hover {
+            background-color: #f2f2f2;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block; 
+        }
+        #videoUploadForm {
+            display: flex; 
+            align-items: center;
+            gap: 10px;     
+        }
+
+        #videoFile { 
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff; 
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">Restaurant</div>
+        <section class="search-bar">
+            <input type="text" placeholder="What food are you looking for?">
+            <button>Search</button>
+        </section>
+        <nav class="nav">
+            <a href="#">Menu</a>
+            <a href="#">Help</a>
+            <a href="#">Sign up</a>
+            <a href="#">Log in</a>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="sub-header">
+            <h1>Kitchen Insights Powered by Gemini</h1>
+        </div>
+        <div class="box left" style="text-align: center; justify-content: center;display: flex;">
+            <div class="sub-container">
+                <label class="box left" for="video_select" style="margin:10px">Select a video:</label> 
+                <select class="box right" id="video_select" style="border-radius: 20px;"> 
+                    {% for video_file in video_files %}
+                        <option value="gs://nozoyoshida-restaurant-analysis/{{ video_file }}">{{ video_file }}</option>
+                    {% endfor %}
+                </select> 
+                <button class="button-generate" onclick="generateTimestamps()">Analyze Video</button>
+                <button class="button-generate-2" onclick="location.href='/sample.html'">sample page</button>
+                <button class="button-generate-2" onclick="display_prompt()">View Prompt</button>
+            </div>
+        </div>
+        <div class="box right"  style="text-align: center;">
+            <video width="80%" id="preview_video" controls></video>
+        </div>
+        <br>
+        <div id="frames" class="listings">
+        </div> 
+    </div>
+    <div class="loader" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    <br>
+    <div class="tabs-container" style="margin-bottom: 200px;">
+        <div class="tabs">
+        </div>
+    </div>
+    <br>
+    <br>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeModal()">X</span>
+            <img id="modal-image" class="modal-image">
+            <section class="search-bar" style="justify-content: center;text-align: center;float:center;width:100%;height: 40px;display: flex;align-items: center;gap: 10px;padding:0px;">
+                <label for="retouch_select"  style="margin:10px">Magic Retouch</label> 
+                <select  class="box right" id="retouch_select" style="border-radius: 20px;"> 
+                    <option value="176">Car</option>
+                    <option value="85">Mirror</option>
+                    <option value="28">Toilet</option>
+                    <option value="125">Person</option>
+                    <option value=" 106">Vase</option>
+                </select> 
+                <input type="text" id="prompt_edition" placeholder="paste somethin you want to do with the selected item"/>
+                <button onclick="improve_image()">Edit Image</button>
+            </section>
+        </div>
+    </div>
+    <div id="responseModal" class="modal">
+        <div class="modal-content" style="height: 450px;">
+            <span class="modal-close-btn" onclick="closeResponse()">X</span>
+            <label  style="margin:10px">Model version: gemini-1.5-pro-preview-0409 - Response</label>
+            <br>
+            <br>
+            <textarea id = "responseData" style="height: 80%;overflow: scroll; width: 100%;">
+            </textarea>
+        </div>
+    </div>   
+    <div id="promptModal" class="modal">
+        <div class="modal-content" style="height: 450px;">
+            <span class="modal-close-btn" onclick="closePrompt()">X</span>
+            
+            <textarea style="height: 80%;overflow: scroll; width: 100%;">
+                {{text_prompt}}
+            </textarea>
+        </div>
+    </div>
+
+
+    <script>
+        // Function to handle video selection and loading
+        async function handleVideoSelectLoad() {
+            const videoSelect = document.getElementById('video_select');
+            const defaultGsUrl = videoSelect.value; 
+            await getVideoBlobAndDisplay(defaultGsUrl);
+        }
+        // Event listener for video selection change
+        document.getElementById('video_select').addEventListener('change', function() {
+            const videoUrl = this.value;
+            const videoElement = document.getElementById("preview_video"); 
+            getVideoBlobAndDisplay(videoUrl);
+        });
+        // Call the function to load the default video on page load
+        handleVideoSelectLoad(); 
+
+        // Function to generate timestamps from the video
+        function generateTimestamps() {
+            document.querySelector('.loader').style.display = 'flex';
+            window.location.href = '/generate_timestamps';
+        }
+
+        function generateCachedTimestamps() {
+            document.querySelector('.loader').style.display = 'flex';
+            window.location.href = '/cached_results';
+        }
+
+        // Function to process the video and extract frames
+        function processVideo(videoUrl) {
+            let frames = [];
+            fetch('/process_video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({video_url: videoUrl})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                frames.push(...data);
+                renderFrames(frames);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Function to create tabs and their content dynamically
+        function createTabsAndContent(timestampsData) {
+            const tabsContainer = document.querySelector('.tabs');
+            const contentContainer = document.querySelector('.tabs-container'); 
+
+            const uniqueLocations = [...new Set(timestampsData.map(item => item.location))]; 
+
+            uniqueLocations.forEach((location, index) => {
+                const tab = document.createElement('button');
+                tab.classList.add('tab');
+                tab.textContent = location;
+                tab.setAttribute('onclick', `openTab(event, '${location}')`); 
+                tabsContainer.appendChild(tab);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.id = location;
+                contentDiv.classList.add('tabcontent');
+
+                const listingsDiv = document.createElement('div');
+                listingsDiv.id = `${location}-frames`;
+                listingsDiv.classList.add('listings');
+
+                contentDiv.appendChild(listingsDiv);
+                contentContainer.appendChild(contentDiv); 
+
+                if (index === 0) {
+                    tab.classList.add('active');
+                    contentDiv.style.display = 'block';
+                } else {
+                    contentDiv.style.display = 'none';
+                }
+            });
+        }
+        // Function to display the prompt modal
+        function display_prompt(){
+            let modal = document.getElementById('promptModal');
+            modal.style.display = 'block';
+        }
+        // Function to display the response modal
+        function display_response(){
+            let modal = document.getElementById('responseModal');
+            modal.style.display = 'block';
+        }
+        // Function to render the extracted frames in the UI
+        function renderFrames(frames) {
+            let framesDiv = document.getElementById('frames');
+            framesDiv.innerHTML = ''; 
+
+            frames.forEach((frame, index) => {
+                let img = document.createElement('img');
+                img.src = `data:image/jpeg;base64,${frame.image_base64}`;
+                img.alt = frame.location;
+                img.style = "border-radius: 20px;"
+                framesDiv = document.getElementById(frame.location+'-frames');
+
+                let checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `frame-checkbox-${index}`; 
+                checkbox.value = index; 
+
+                let label = document.createElement('label');
+                label.htmlFor = `frame-checkbox-${index}`;
+                label.appendChild(document.createTextNode(`Select ${frame.location}`));
+
+                let div = document.createElement('div');
+                div.className = 'listing-card';
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                div.appendChild(img);
+                framesDiv.appendChild(div);
+                
+                img.addEventListener('click', function() {
+                    let modal = document.getElementById('myModal');
+                    let imgSrc = img.src;
+                    document.getElementById('modal-image').src = imgSrc;
+                    modal.style.display = 'block';
+                });
+            });
+        }
+
+        // Function to close the prompt modal
+        function closePrompt() {
+            let modal = document.getElementById('promptModal');
+            modal.style.display = 'none';
+        }
+        // Function to close the response modal
+        function closeResponse() {
+            let modal = document.getElementById('responseModal');
+            modal.style.display = 'none';
+        }
+        // Function to close the image modal
+        function closeModal() {
+            let modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+        }
+        // Function to open a specific tab
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            tablinks = document.getElementsByClassName("tab");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        // Function to get a signed URL for uploading
+        async function getSignedUrl() {
+            const filename = document.getElementById("videoFile").files[0].name; 
+
+            try {
+                const response = await fetch(`/get_signed_url?filename=${filename}`, {
+                    method: 'GET',
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.url; 
+                } else {
+                    throw new Error("Failed to get signed URL.");
+                }
+            } catch (error) {
+                console.error("Error getting signed URL:", error);
+                throw error; 
+            }
+        }
+        // Function to handle video upload
+        async function handleVideoUpload(files) {
+            const file = files[0];
+            document.querySelector('.loader').style.display = 'flex';
+
+            if (file) {
+                const CHUNK_SIZE = 1024 * 1024 * 10; 
+                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+                let currentChunk = 0;
+
+                async function uploadChunk(start, end) {
+                    const chunk = file.slice(start, end);
+                    const formData = new FormData();
+                    formData.append('video_chunk', chunk);
+                    formData.append('filename', file.name);
+                    formData.append('chunk', currentChunk);
+                    formData.append('totalChunks', totalChunks);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000000)
+                    try {
+                        const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal 
+                        });
+
+                        if (response.ok) {
+                            currentChunk++;
+                            if (currentChunk < totalChunks) {
+                                uploadChunk(currentChunk * CHUNK_SIZE, (currentChunk + 1) * CHUNK_SIZE);
+                            } else {
+                                document.querySelector('.loader').style.display = 'none';
+                                getVideoBlobAndDisplay("");
+                            }
+                        } else {
+                            const errorData = await response.json();
+                            alert(`Error: ${errorData.error}`);
+                        }
+                    } catch (error) {
+                        console.error('Error uploading chunk:', error);
+                        alert('An error occurred during upload.');
+                    }
+                }
+                uploadChunk(0, CHUNK_SIZE);
+            }
+        }
+        // Function to improve the selected image
+        async function improve_image() {
+            document.querySelector('.loader').style.display = 'flex';
+            const imgElement = document.getElementById("modal-image");
+            const imageUrl = imgElement.src; 
+
+            const selectedValue = document.getElementById('retouch_select').value;
+            const prompt = document.getElementById('prompt_edition').value;
+            console.log(selectedValue)
+            try {
+                const response = await fetch('/improve_image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: imageUrl,
+                        classValue: selectedValue,
+                        prompt: prompt
+                    })
+                });
+
+                if (response.ok) {
+                    const imageData = await response.json();
+                    imgElement.src = imageData.image;
+                    document.querySelector('.loader').style.display = 'none';
+                } else {
+                    const errorData = await response.json();
+                    console.error('Error improving image:', errorData.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        // Function to get video blob and display it
+        async function getVideoBlobAndDisplay(gsUrl) {
+            const response = await fetch('/get_video_blob', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gsUrl })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+
+                const videoElement = document.getElementById("preview_video"); 
+                videoElement.src = videoUrl; 
+                videoElement.load(); 
+            } else {
+                const errorData = await response.json();
+                console.error('Failed to get video:', errorData.error);
+            }
+        }
+    </script>
+</body>
+</html>
