@@ -86,11 +86,17 @@ analysis_report_schema = {
 }
 
 
-# Google Cloudプロジェクトとバケット情報を初期化
-GOOGLE_CLOUD_PROJECT = "nozoyoshida-playground" if not sys.argv[1:] else sys.argv[1]
-GOOGLE_CLOUD_LOCATION = "global"
-bucket_name = "nozoyoshida-restaurant-analysis" if not sys.argv[2:] else sys.argv[2]
+# Google Cloudプロジェクトとバケット情報を環境変数から初期化
+GOOGLE_CLOUD_PROJECT = os.getenv('PROJECT_ID')
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+GOOGLE_CLOUD_LOCATION = ('asia-northeast1')
 
+# 必須の環境変数が設定されているかチェック
+if not GOOGLE_CLOUD_PROJECT or not BUCKET_NAME:
+    raise ValueError("必須の環境変数 GOOGLE_CLOUD_PROJECT と BUCKET_NAME が設定されていません。")
+
+# bucket_name 変数も更新
+bucket_name = BUCKET_NAME
 
 # ビデオから料理準備データを抽出するためのメインプロンプト（日本語化）
 main_prompt = """
@@ -204,7 +210,7 @@ def get_video_blob():
             return jsonify({'error': 'Invalid or missing GS URL'}), 400
             
         bucket_name_from_url, object_name = gs_url[5:].split('/', 1)
-        storage_client = storage.Client()
+        storage_client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
         bucket = storage_client.bucket(bucket_name_from_url)
         blob = bucket.blob(object_name)
         video_data = io.BytesIO()
@@ -218,7 +224,7 @@ def get_video_blob():
 
 def list_mp4_files(bucket_name: str) -> list[str]:
     try:
-        storage_client = storage.Client()
+        storage_client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
         bucket = storage_client.bucket(bucket_name)
         blobs = bucket.list_blobs()
         return [blob.name for blob in blobs if blob.name.endswith('.mp4')]
@@ -230,7 +236,7 @@ def list_mp4_files(bucket_name: str) -> list[str]:
 @app.route('/')
 def index():
     video_files = list_mp4_files(bucket_name)
-    return render_template('index.html', video_files=video_files, text_prompt=text_prompt)
+    return render_template('index.html', video_files=video_files, text_prompt=text_prompt, bucket_name=bucket_name)
 
 
 @app.route('/sample.html')
@@ -387,7 +393,7 @@ def create_video_clip(start: str, end: str, output_file: str, input_video_url: s
         print(f"Skipping video clip creation due to invalid input URL: {input_video_url}")
         return
     try:
-        storage_client = storage.Client()
+        storage_client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
         bucket_name_gcs, object_name = input_video_url[5:].split('/', 1)
         bucket = storage_client.bucket(bucket_name_gcs)
         blob = bucket.blob(object_name)
@@ -419,12 +425,6 @@ def create_video_clip(start: str, end: str, output_file: str, input_video_url: s
             except OSError as e:
                 print(f"Error removing temporary file {temp_video_file_path}: {e}")
 
-if __name__ == '__main__':
-    # コマンドライン引数のチェックをより安全に
-    if len(sys.argv) > 1:
-        GOOGLE_CLOUD_PROJECT = sys.argv[1]
-    if len(sys.argv) > 2:
-        bucket_name = sys.argv[2]
-    
+if __name__ == '__main__':  
     print(f"Starting Flask app for project: {GOOGLE_CLOUD_PROJECT}, bucket: {bucket_name}")
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8082)))

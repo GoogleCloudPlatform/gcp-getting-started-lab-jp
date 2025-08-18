@@ -316,7 +316,7 @@
                 <label class="box left" for="video_select" style="margin:10px">Select a video:</label> 
                 <select class="box right" id="video_select" style="border-radius: 20px;"> 
                     {% for video_file in video_files %}
-                        <option value="gs://nozoyoshida-restaurant-analysis/{{ video_file }}">{{ video_file }}</option>
+                        <option value="gs://{{ bucket_name }}/{{ video_file }}">{{ video_file }}</option>
                     {% endfor %}
                 </select> 
                 <button class="button-generate" onclick="generateTimestamps()">Analyze Video</button>
