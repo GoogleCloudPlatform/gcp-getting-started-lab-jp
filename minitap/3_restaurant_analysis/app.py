@@ -80,7 +80,10 @@ analysis_report_schema = {
                 },
                 "required": ["suggestion"]
             }
-        }
+        },
+        # === ↓ ハンズオン箇所 ↓ (一行上も "}" → "}," に変更する) ====
+
+        # === ↑ ハンズオン箇所 ↑ ====
     },
     "required": ["inventory", "safety", "issue", "suggestions"]
 }
@@ -114,7 +117,7 @@ main_prompt = """
 # ビデオコンテンツを分析し、洞察を提供するためのプロンプト（日本語化・日本語出力指定）
 persona = "キッチンの観察者" # ← ハンズオン演習箇所
 text_prompt = f"""
-あなたはプロの{persona}です。このビデオを分析し、詳細なレポートを日本語で作成してください。
+あなたは{persona}です。このビデオを分析し、詳細なレポートを日本語で作成してください。
 スキーマに基づき、以下の情報を提供してください。
 - inventory (在庫): キッチンにある機器や備品の在庫数を悲観的に見積もってください。
 - safety (安全性): 安全面での良い点(positive)と悪い点(negative)を挙げてください。
@@ -270,7 +273,6 @@ def generate_timestamps_route_get():
         positive_moments = [m.get('moment', '') for m in analysis_data.get('safety', []) if m.get('type') == 'positive']
         negative_moments = [m.get('moment', '') for m in analysis_data.get('safety', []) if m.get('type') == 'negative']
         
-        # スキーマで issue -> issues に変更したため .get('issue', [])
         issues_list = analysis_data.get('issue', [])
         suggestions_list = analysis_data.get('suggestions', [])
 
