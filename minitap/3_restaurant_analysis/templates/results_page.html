@@ -80,41 +80,6 @@
       font-size: 14px;
     }
 
-    .left-image {
-      width: 50%;
-    }
-
-    .left-image img {
-      width: 100%;
-    }
-
-    .right-images {
-      width: 50%;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 5px;
-      /* Small gap between smaller images */
-    }
-
-    .right-images img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .large-image {
-      grid-column: 1 / 2;
-      max-height: 50vh;
-    }
-
-    .small-images {
-      grid-column: 2 / 3;
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      gap: 10px;
-      max-height: 50vh;
-    }
 
     .row {
       display: grid;
@@ -123,15 +88,6 @@
       max-height: 25vh;
     }
 
-    .grid-title {
-      margin-right: auto;
-    }
-
-    .grid-buttons {
-      grid-column: 1 / 3;
-      /* Span the title across both columns */
-      text-align: right;
-    }
 
     .listing-card {
       grid-column: 1 / 3;
@@ -189,23 +145,6 @@
     }
 
 
-    /* Left Column */
-    .left-column {
-      /* Use flexbox for vertical layout within left column */
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-
-    /* Right Column */
-    .booking-box {
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-
     .collapsible {
       background-color: #777;
       color: white;
@@ -233,11 +172,6 @@
     }
 
 
-    input {
-      border-radius: 8px;
-    }
-
-
     .title {
       font-size: 30px;
       font-weight: 400 !important;
@@ -249,18 +183,6 @@
       /* Make background transparent */
       cursor: pointer;
       /* Change cursor to indicate it's clickable */
-    }
-
-
-    /* Style the input when it's being edited */
-    .title.editing {
-      border: 1px solid #ccc;
-      outline: none;
-    }
-
-
-    .price-item {
-      margin: 20px;
     }
 
 
@@ -523,15 +445,6 @@
     <div class="chart-container">
       <div id="inventoryChartContainer" style="height: 500px; margin: 0 auto;"></div>
     </div>
-
-
-    <!-- <div class="listing-container"> -->
-    <!-- <label style="text-align: right;">language:</label> -->
-    <!-- <select style="border-radius: 20px;" id="languageSelect" onchange="changeLanguage()"> -->
-      <!-- <option value="japanese">Japanese</option> -->
-      <!-- <option value="english">English</option> -->
-      <!-- <option value="spanish">Spanish</option> -->
-    <!-- </select> -->
 
 
     <script type="text/javascript">

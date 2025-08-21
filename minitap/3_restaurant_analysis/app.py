@@ -144,17 +144,6 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 CORS(app)
 
 
-def _extract_json(text: str) -> str:
-    text = text.strip()
-    match = re.search(r"```json\s*([\s\S]*?)\s*```", text)
-    if match:
-        return match.group(1).strip()
-    match = re.search(r"```\s*([\s\S]*?)\s*```", text)
-    if match:
-        return match.group(1).strip()
-    return text
-
-
 def call_gemini(prompt: str, video_link: str, response_schema: Optional[Dict] = None) -> str:
     """
     辞書ベースのスキーマを使用してGeminiモデルを呼び出します。
@@ -312,7 +301,7 @@ def delete_mp4_files(folder_path: str):
 
 def parse_meal_data(json_string: str, video_url: str) -> Dict[str, Dict[str, Any]]:
     try:
-        data = json.loads(_extract_json(json_string))
+        data = json.loads(json_string)
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON string: {e}\nString: {json_string}")
         return {}

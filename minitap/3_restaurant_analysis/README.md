@@ -3,7 +3,8 @@
 | | |
 | --- | --- |
 | 日本版更新者 | [Nozomu Yoshida](https://gitlab.com/nozoyoshida)|
-| 日本版作成者 | [Kanoko Suzuki](https://moma.corp.google.com/person/kanoko?q=kanoko)|
+| 日本版作成者 | Kanoko Suzuki |
+| 日本版レビュワー | [Etsuji Nakai](https://gitlab.com/enakai)|
 | US版作成者 | [Alejandro Ballesta](https://gitlab.com/alejandrobr1) |
 
 # Google Gemini による動画分析

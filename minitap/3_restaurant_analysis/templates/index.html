@@ -70,40 +70,6 @@
             cursor: pointer;
         }
 
-        /* Listing Cards Section */
-        .listings {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            grid-gap: 20px;
-            padding: 20px;
-            overflow: auto;
-        }
-
-        .listing-card {
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .listing-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 20px; 
-        }
-
-        .listing-card .content {
-            padding: 15px;
-        }
-
-        .listing-card h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .listing-card p {
-            color: #666;
-            font-size: 14px;
-        }
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr; 
@@ -111,6 +77,7 @@
             gap: 10px;   
             height: 100%;
         }
+
         .sub-container {
             margin: 40px;
             display: grid;             
@@ -119,34 +86,34 @@
             gap: 10px;          
             grid-template-rows: 100px 50px 30px;       
         }
+
         .sub-header {
             grid-column: 1 / 3;      
             padding: 20px;
             text-align: center;
         }
+
         .button-generate{
             grid-column: 1 / 3;  
             width: 100%;
             height: 40px;
         }
+
         .button-generate-2{
             grid-column: 1 / 3;  
             width: 100%;
             height: 30px;
         }
+
         .box {
             padding: 20px;
         }
+
         img {
             width: 100%;
             height: 100% !important;
             height: auto;
             display: block;
-        }
-        .grid-header {
-            grid-column: 1 / 3;
-            display: flex;
-            align-items: center;
         }
 
         /* Modal Styles */
@@ -160,6 +127,7 @@
             z-index: 100;
             display: none;
         }
+
         .modal-content {
             position: relative;
             top: 50%;
@@ -184,14 +152,6 @@
             cursor: pointer;
         }
 
-        .modal-image {
-            width: 80%;
-            height: auto;
-            border-radius: 20px;
-            width: 50%!important;
-            height: 50% !important;
-        }
-
         .loader {
             display: flex;
             justify-content: center;
@@ -204,11 +164,13 @@
             left: 0;
             z-index: 9999;
         }
+
         video {
             border: 5px solid white; 
             box-sizing: border-box; 
             border-radius: 30px;
         }
+
         .spinner {
             width: 50px;
             height: 50px;
@@ -225,62 +187,6 @@
             100% {
                 transform: rotate(360deg);
             }
-        }
-
-        #preview-video {
-            width: 100%;
-            height: auto;
-        }
-        .tabs-container { 
-            width: 80%; 
-            margin: 0 auto; 
-        }
-
-        .tabs {
-            display: flex;
-            overflow-x: auto; 
-            border-bottom: 1px solid #ddd;
-        }
-
-        .tab {
-            padding: 15px 25px;
-            background-color: transparent;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #555;
-            transition: background-color 0.3s ease; 
-            white-space: nowrap; 
-        }
-
-        .tab.active {
-            background-color: #8b8989;
-            color: white;
-        }
-
-        .tab:hover {
-            background-color: #f2f2f2;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 20px;
-        }
-
-        .tab-content.active {
-            display: block; 
-        }
-        #videoUploadForm {
-            display: flex; 
-            align-items: center;
-            gap: 10px;     
-        }
-
-        #videoFile { 
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
         }
 
         button[type="submit"] {
@@ -327,38 +233,11 @@
         <div class="box right"  style="text-align: center;">
             <video width="80%" id="preview_video" controls></video>
         </div>
-        <br>
-        <div id="frames" class="listings">
-        </div> 
     </div>
     <div class="loader" style="display: none;">
         <div class="spinner"></div>
     </div>
     <br>
-    <div class="tabs-container" style="margin-bottom: 200px;">
-        <div class="tabs">
-        </div>
-    </div>
-    <br>
-    <br>
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-btn" onclick="closeModal()">X</span>
-            <img id="modal-image" class="modal-image">
-            <section class="search-bar" style="justify-content: center;text-align: center;float:center;width:100%;height: 40px;display: flex;align-items: center;gap: 10px;padding:0px;">
-                <label for="retouch_select"  style="margin:10px">Magic Retouch</label> 
-                <select  class="box right" id="retouch_select" style="border-radius: 20px;"> 
-                    <option value="176">Car</option>
-                    <option value="85">Mirror</option>
-                    <option value="28">Toilet</option>
-                    <option value="125">Person</option>
-                    <option value=" 106">Vase</option>
-                </select> 
-                <input type="text" id="prompt_edition" placeholder="paste somethin you want to do with the selected item"/>
-                <button onclick="improve_image()">Edit Image</button>
-            </section>
-        </div>
-    </div>
     <div id="responseModal" class="modal">
         <div class="modal-content" style="height: 450px;">
             <span class="modal-close-btn" onclick="closeResponse()">X</span>
@@ -378,7 +257,6 @@
             </textarea>
         </div>
     </div>
-
 
     <script>
         // Function to handle video selection and loading
@@ -407,58 +285,6 @@
             window.location.href = '/cached_results';
         }
 
-        // Function to process the video and extract frames
-        function processVideo(videoUrl) {
-            let frames = [];
-            fetch('/process_video', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({video_url: videoUrl})
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                frames.push(...data);
-                renderFrames(frames);
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        // Function to create tabs and their content dynamically
-        function createTabsAndContent(timestampsData) {
-            const tabsContainer = document.querySelector('.tabs');
-            const contentContainer = document.querySelector('.tabs-container'); 
-
-            const uniqueLocations = [...new Set(timestampsData.map(item => item.location))]; 
-
-            uniqueLocations.forEach((location, index) => {
-                const tab = document.createElement('button');
-                tab.classList.add('tab');
-                tab.textContent = location;
-                tab.setAttribute('onclick', `openTab(event, '${location}')`); 
-                tabsContainer.appendChild(tab);
-
-                const contentDiv = document.createElement('div');
-                contentDiv.id = location;
-                contentDiv.classList.add('tabcontent');
-
-                const listingsDiv = document.createElement('div');
-                listingsDiv.id = `${location}-frames`;
-                listingsDiv.classList.add('listings');
-
-                contentDiv.appendChild(listingsDiv);
-                contentContainer.appendChild(contentDiv); 
-
-                if (index === 0) {
-                    tab.classList.add('active');
-                    contentDiv.style.display = 'block';
-                } else {
-                    contentDiv.style.display = 'none';
-                }
-            });
-        }
         // Function to display the prompt modal
         function display_prompt(){
             let modal = document.getElementById('promptModal');
@@ -469,43 +295,6 @@
             let modal = document.getElementById('responseModal');
             modal.style.display = 'block';
         }
-        // Function to render the extracted frames in the UI
-        function renderFrames(frames) {
-            let framesDiv = document.getElementById('frames');
-            framesDiv.innerHTML = ''; 
-
-            frames.forEach((frame, index) => {
-                let img = document.createElement('img');
-                img.src = `data:image/jpeg;base64,${frame.image_base64}`;
-                img.alt = frame.location;
-                img.style = "border-radius: 20px;"
-                framesDiv = document.getElementById(frame.location+'-frames');
-
-                let checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `frame-checkbox-${index}`; 
-                checkbox.value = index; 
-
-                let label = document.createElement('label');
-                label.htmlFor = `frame-checkbox-${index}`;
-                label.appendChild(document.createTextNode(`Select ${frame.location}`));
-
-                let div = document.createElement('div');
-                div.className = 'listing-card';
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                div.appendChild(img);
-                framesDiv.appendChild(div);
-                
-                img.addEventListener('click', function() {
-                    let modal = document.getElementById('myModal');
-                    let imgSrc = img.src;
-                    document.getElementById('modal-image').src = imgSrc;
-                    modal.style.display = 'block';
-                });
-            });
-        }
-
         // Function to close the prompt modal
         function closePrompt() {
             let modal = document.getElementById('promptModal');
@@ -515,127 +304,6 @@
         function closeResponse() {
             let modal = document.getElementById('responseModal');
             modal.style.display = 'none';
-        }
-        // Function to close the image modal
-        function closeModal() {
-            let modal = document.getElementById('myModal');
-            modal.style.display = 'none';
-        }
-        // Function to open a specific tab
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-
-            tablinks = document.getElementsByClassName("tab");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-        // Function to get a signed URL for uploading
-        async function getSignedUrl() {
-            const filename = document.getElementById("videoFile").files[0].name; 
-
-            try {
-                const response = await fetch(`/get_signed_url?filename=${filename}`, {
-                    method: 'GET',
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.url; 
-                } else {
-                    throw new Error("Failed to get signed URL.");
-                }
-            } catch (error) {
-                console.error("Error getting signed URL:", error);
-                throw error; 
-            }
-        }
-        // Function to handle video upload
-        async function handleVideoUpload(files) {
-            const file = files[0];
-            document.querySelector('.loader').style.display = 'flex';
-
-            if (file) {
-                const CHUNK_SIZE = 1024 * 1024 * 10; 
-                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-                let currentChunk = 0;
-
-                async function uploadChunk(start, end) {
-                    const chunk = file.slice(start, end);
-                    const formData = new FormData();
-                    formData.append('video_chunk', chunk);
-                    formData.append('filename', file.name);
-                    formData.append('chunk', currentChunk);
-                    formData.append('totalChunks', totalChunks);
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000000)
-                    try {
-                        const response = await fetch('/upload', {
-                        method: 'POST',
-                        body: formData,
-                        signal: controller.signal 
-                        });
-
-                        if (response.ok) {
-                            currentChunk++;
-                            if (currentChunk < totalChunks) {
-                                uploadChunk(currentChunk * CHUNK_SIZE, (currentChunk + 1) * CHUNK_SIZE);
-                            } else {
-                                document.querySelector('.loader').style.display = 'none';
-                                getVideoBlobAndDisplay("");
-                            }
-                        } else {
-                            const errorData = await response.json();
-                            alert(`Error: ${errorData.error}`);
-                        }
-                    } catch (error) {
-                        console.error('Error uploading chunk:', error);
-                        alert('An error occurred during upload.');
-                    }
-                }
-                uploadChunk(0, CHUNK_SIZE);
-            }
-        }
-        // Function to improve the selected image
-        async function improve_image() {
-            document.querySelector('.loader').style.display = 'flex';
-            const imgElement = document.getElementById("modal-image");
-            const imageUrl = imgElement.src; 
-
-            const selectedValue = document.getElementById('retouch_select').value;
-            const prompt = document.getElementById('prompt_edition').value;
-            console.log(selectedValue)
-            try {
-                const response = await fetch('/improve_image', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        image: imageUrl,
-                        classValue: selectedValue,
-                        prompt: prompt
-                    })
-                });
-
-                if (response.ok) {
-                    const imageData = await response.json();
-                    imgElement.src = imageData.image;
-                    document.querySelector('.loader').style.display = 'none';
-                } else {
-                    const errorData = await response.json();
-                    console.error('Error improving image:', errorData.error);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
         }
         // Function to get video blob and display it
         async function getVideoBlobAndDisplay(gsUrl) {
