@@ -154,7 +154,7 @@ def call_gemini(prompt: str, video_link: str, response_schema: Optional[Dict] = 
     video_part = types.Part.from_uri(mime_type="video/mp4", file_uri=video_link)
 
     config_dict = {
-        "temperature": 0,
+        "temperature": 0, # temperature は出力のランダム性を制御するパラメータです。0 に設定することで、毎回ほぼ同じ、最も確からしい応答を生成させ、結果の安定性を高めています。
         "max_output_tokens": 8192,
         "safety_settings": [
             types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE),
