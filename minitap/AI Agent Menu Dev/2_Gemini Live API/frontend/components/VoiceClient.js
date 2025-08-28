@@ -425,7 +425,7 @@ export default function VoiceClient() {
               <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <h3 className="text-sm font-semibold text-amber-800 mb-2">💡 操作方法</h3>
                 <ul className="text-xs text-gray-700 space-y-1">
-                  <li>• 接続後、マイクは自動的にONになります</li>
+                  <li>• 「🟢 マイクをON」ボタンをクリックして音声入力を開始してください</li>
                   <li>• Patrickが応答するまで少しお待ちください</li>
                   <li>• 必要に応じて「マイクをミュート」ボタンで音声入力を停止できます</li>
                 </ul>
