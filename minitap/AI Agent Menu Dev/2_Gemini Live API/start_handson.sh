@@ -23,7 +23,8 @@ sleep 5
 echo "🎨 フロントエンドを準備中..."
 cd frontend
 
-# Cloud Shellの環境変数からバックエンドの公開URLを自動生成
+echo "🌐 Cloud Shell APIにホスト名を問い合わせています..."
+WEB_HOST=$(curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" https://cloudshell.googleapis.com/v1/users/me/environments/default | jq -r '.webHost')
 BACKEND_URL="wss://8081-${WEB_HOST}/ws"
 echo "✅ バックエンドURLを自動設定しました: ${BACKEND_URL}"
 

@@ -1,10 +1,17 @@
 #!/bin/bash
+ACCOUNT_SUFFIX=$(gcloud config get-value account | cut -d '@' -f 1)
+echo "$ACCOUNT_SUFFIX, welcome to Gemini Live API hands-on!"
 
 PROJECT_ID=$(gcloud config list --format "value(core.project)")
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 REGION=us-central1
 REPO_NAME=cafe-agent-repo
 REPO=${REGION}-docker.pkg.dev/$PROJECT_ID/$REPO_NAME
+
+BACKEND_SERVICE_NAME="cafe-agent-backend-${ACCOUNT_SUFFIX}"
+FRONTEND_SERVICE_NAME="cafe-agent-app-${ACCOUNT_SUFFIX}"
+BACKEND_SA_NAME="cafe-agent-sa-${ACCOUNT_SUFFIX}"
+FRONTEND_SA_NAME="cafe-agent-app-sa-${ACCOUNT_SUFFIX}"
 
 DEPLOY_BACKEND=true
 DEPLOY_FRONTEND=true
@@ -75,18 +82,19 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 # Wait for permissions to propagate
 echo "Waiting 30 seconds for permissions to propagate..."
-sleep 30
+sleep 10
 
 if [[ $DEPLOY_BACKEND ]]; then
   echo ""
   echo "## Setting up backend service account..."
 
-  SERVICE_ACCOUNT=cafe-agent-sa@${PROJECT_ID}.iam.gserviceaccount.com
+  SERVICE_ACCOUNT_NAME=$BACKEND_SA_NAME
+  SERVICE_ACCOUNT="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
   
   # Check if service account exists
   if ! gcloud iam service-accounts describe $SERVICE_ACCOUNT >/dev/null 2>&1; then
     echo "Creating backend service account..."
-    gcloud iam service-accounts create cafe-agent-sa \
+    gcloud iam service-accounts create $SERVICE_ACCOUNT_NAME \
       --display-name "Service Account for Cafe Agent Backend"
     sleep 10
 
@@ -106,7 +114,7 @@ if $DEPLOY_BACKEND; then
   cd backend
   
   echo "Starting Cloud Run deployment for backend..."
-  gcloud run deploy cafe-agent-backend --source . \
+  gcloud run deploy $BACKEND_SERVICE_NAME --source . \
     --region $REGION \
     --allow-unauthenticated \
     --service-account $SERVICE_ACCOUNT \
@@ -130,7 +138,7 @@ if $DEPLOY_BACKEND; then
   cd ..
   
   # Get backend URL
-  BACKEND_URL=$(gcloud run services describe cafe-agent-backend --region=$REGION --format="value(status.url)")
+  BACKEND_URL=$(gcloud run services describe $BACKEND_SERVICE_NAME --region=$REGION --format="value(status.url)")
   echo "Backend URL: $BACKEND_URL"
 fi
 
@@ -138,12 +146,13 @@ if $DEPLOY_FRONTEND; then
   echo ""
   echo "## Setting up frontend service account..."
   
-  FRONTEND_SERVICE_ACCOUNT=cafe-agent-app-sa@${PROJECT_ID}.iam.gserviceaccount.com
+  FRONTEND_SERVICE_ACCOUNT_NAME=$FRONTEND_SA_NAME
+  FRONTEND_SERVICE_ACCOUNT="${FRONTEND_SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
   
   # Check if service account exists
   if ! gcloud iam service-accounts describe $FRONTEND_SERVICE_ACCOUNT >/dev/null 2>&1; then
     echo "Creating frontend service account..."
-    gcloud iam service-accounts create cafe-agent-app-sa \
+    gcloud iam service-accounts create $FRONTEND_SERVICE_ACCOUNT_NAME \
       --display-name "Service Account for Cafe App Frontend"
     sleep 10
   fi
@@ -162,7 +171,7 @@ if $DEPLOY_FRONTEND; then
   fi
   
   echo "Starting Cloud Run deployment for frontend..."
-  gcloud run deploy cafe-agent-app --source . \
+  gcloud run deploy $FRONTEND_SERVICE_NAME --source . \
     --region $REGION \
     --allow-unauthenticated \
     --service-account $FRONTEND_SERVICE_ACCOUNT \
@@ -184,7 +193,7 @@ if $DEPLOY_FRONTEND; then
   cd ..
   
   # Get frontend URL
-  APP_URL=$(gcloud run services describe cafe-agent-app --region=$REGION --format="value(status.url)")
+  APP_URL=$(gcloud run services describe $FRONTEND_SERVICE_NAME --region=$REGION --format="value(status.url)")
   echo "Frontend URL: $APP_URL"
 fi
 
