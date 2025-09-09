@@ -3,11 +3,11 @@
 ![Static Badge](https://img.shields.io/badge/Version-1.0-blue)
 ![Static Badge](https://img.shields.io/badge/Gemini-Live%20API-green?logo=googlegemini&logoColor=f5f5f5)
 
-**Google Cloud Gemini Live APIを活用したリアルタイム音声対話ハンズオンアプリ**
+**Google Cloud Gemini Live API を活用したリアルタイム音声対話ハンズオンアプリ**
 
-このアプリは、架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AIエージェント「Patrick」との音声通話Webアプリです。 Gemini Live APIのリアルタイム音声対話能力と、Function Callingによるタスク実行能力を体験できます。
+このアプリは、架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AI エージェント「Patrick」との音声通話 Web アプリです。 Gemini Live API のリアルタイム音声対話能力と、Function Calling によるタスク実行能力を体験できます。
 
-このアプリは[Etsujiさんのvideo-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson)のsample02アプリをベースに作成したものです。
+このアプリは[Etsuji さんの video-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson) の sample02 アプリをベースに作成したものです。
 
 ## 📋 全体像
 
@@ -15,15 +15,15 @@
 - **テーマ**: 架空のカフェ「Starlight Cafe」の電話対応システム
 - **AI エージェント**: Patrick（パトリック）- 親切な電話対応スタッフ
 - **コア技術**: 
-  - **フロントエンド ↔ バックエンド**: WebSocket通信
+  - **フロントエンド ↔ バックエンド**: WebSocket 通信
   - **バックエンド ↔ Google Cloud**: Gemini Live API
   - **Function Calling**: 注文確認の自動化
 - **体験内容**: リアルタイム双方向音声ストリーミング + インテリジェント注文管理
 
 ### 🏗️ アーキテクチャ
-ユーザーの音声はブラウザを通じてFastAPIのバックエンドに送信され、そこからGemini Live APIにストリーミングされます。  AIからの音声応答は逆の経路でユーザーに返されます。
+ユーザーの音声はブラウザを通じて FastAPI のバックエンドに送信され、そこから Gemini Live API にストリーミングされます。AI からの音声応答は逆の経路でユーザーに返されます。
 - **モデル**: gemini-live-2.5-flash
-- **通信**: フロントエンド ↔ バックエンド間はWebSocketで接続
+- **通信**: フロントエンド ↔ バックエンド間は WebSocket で接続
 
 ```mermaid
 graph LR
@@ -40,123 +40,135 @@ graph LR
 ```
 Cafe-Agent-Gemini/
 ├── README.md                    # このファイル
-├── deploy.sh                    # Cloud Runへのデプロイスクリプト
-├── start_handson.sh             # Cloud Shellでハンズオン開始スクリプト
-├── requirements.txt             # Python依存関係
+├── deploy.sh                    # Cloud Run へのデプロイスクリプト
+├── start_handson.sh             # Cloud Shell でハンズオン開始スクリプト
+├── cleanup.sh                   # リソースを削除・クリーンアップスクリプト
+├── requirements.txt             # Python 依存関係
 ├── backend/                     # バックエンド (FastAPI + Gemini Live API)
 │   ├── main.py                 # メインアプリケーション
 │   ├── system_instruction.py   # 🎯 ハンズオン・カスタマイズ設定ファイル
-│   ├── requirements.txt        # Python依存関係
-│   └── Dockerfile             # バックエンド用Dockerイメージ
+│   ├── requirements.txt        # Python 依存関係
+│   └── Dockerfile             # バックエンド用 Docker イメージ
 └── frontend/                   # フロントエンド (Next.js)
-    ├── pages/                  # Next.jsページ
+    ├── pages/                  # Next.js ページ
     │   └── index.js           # メインページ
-    ├── components/            # Reactコンポーネント
+    ├── components/            # React コンポーネント
     │   └── VoiceClient.js     # 音声通話コンポーネント
     ├── lib/                   # ライブラリ
-    │   ├── voicecall-backend.js    # バックエンドAPI接続
+    │   ├── voicecall-backend.js    # バックエンド API 接続
     │   └── live-audio-manager.js   # 音声入出力管理
-    ├── package.json           # Node.js依存関係
-    └── Dockerfile            # フロントエンド用Dockerイメージ
+    ├── package.json           # Node.js 依存関係
+    └── Dockerfile            # フロントエンド用 Docker イメージ
 ```
 
+### 🚀 ハンズオン手順
 
-### 1. **環境要件**
-- **Node.js**: 22.15.0以上
-- **Python**: 3.9以上
-- **Google Cloud Platform**: アカウントとプロジェクト
+#### 【前半】Cloud Run へのデプロイと完成形の体験
 
-### 2. **Google Cloud設定**
+1. 環境準備
 
-#### 📋 プロジェクト作成と課金設定
-1. [Google Cloud Console](https://console.cloud.google.com/)でプロジェクトを作成
-2. 課金アカウントを有効化（Gemini Live API使用に必要）
+   まず、Google Cloud コンソール右上の「**Cloud Shell をアクティブにする**」ボタンをクリックして、Cloud Shell を起動します。
+   
+   表示されたターミナルで、以下のコマンドをコピー＆ペーストして実行し、ソースコードをダウンロードしてディレクトリに移動します。
+    ```bash
+    git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git
+    cd "gcp-getting-started-lab-jp/minitap/AI Agent Menu Dev/2_Gemini Live API"
+    ```
+   認証設定を行い、今回使用するプロジェクトを指定します。
+    ```bash
+    gcloud auth application-default login
+    gcloud config set project YOUR_PROJECT_ID
+    ```
 
-#### 🔑 認証設定（2つの方法から選択）
+3. アプリケーションのデプロイ
+   
+   以下のコマンドを実行して、デプロイ用のスクリプトに実行権限を与えます。
 
-**Google Cloud SDK使用**
-```bash
-# 1. Google Cloud SDKをインストール
-# https://cloud.google.com/sdk/docs/install
+   ```bash
+   chmod +x deploy.sh
+   ```
+   次に、以下のコマンドでデプロイを実行します。完了までには 5-10 分 ほどかかります。
+   
+   途中で `Do you want to continue (Y/n)?` と聞かれたら、Y を入力して Enter キーを押してください。
+   ```bash
+   ./deploy.sh
+   ```
+4. 完成形の体験
+   
+   デプロイが完了すると、ターミナルに `Application URL: https://....run.app` が表示されます。
+   
+   その URL にアクセスし、AI 店員「Patrick」との会話を自由に体験してみましょう。
+    
+   「☕ **カフェに電話をかける**」ボタンをクリックします。（最初の接続に少し時間がかかる場合があります）
+    
+   ブラウザからマイクの使用許可を求められたら「**許可**」してください。
+    
+   Patrick から挨拶が聞こえたら、マイクに向かって話しかけてみましょう。
 
-# 2. 認証設定
-gcloud auth login
-gcloud auth application-default login
-gcloud config set project YOUR_PROJECT_ID
-```
+#### 【後半】Cloud Shell での AI カスタマイズ体験
 
-#### 🚀 APIの有効化
-```bash
-# Vertex AI APIを有効化
-gcloud services enable aiplatform.googleapis.com
-```
+1. 開発環境の起動
 
-### 3. **ローカル環境設定**
+   Cloud Shell のターミナルで、以下のコマンドを実行して、開発環境の自動起動スクリプトに実行権限を与えます。
+    ```bash
+    chmod +x start_handson.sh
+    ```
+    以下のコマンドで開発環境を起動します。バックエンドとフロントエンドの準備がすべて自動的に行われます。
+    ```bash
+    ./start_handson.sh
+    ```
+    スクリプトが完了メッセージを表示したら、Cloud Shell 右上の「**ウェブでプレビュー**」ボタンをクリックし、
+   
+   「**ポート 3001 でプレビュー**」を選択します。新しいブラウザタブで開発用のアプリが開きます。
 
-#### バックエンド
-```bash
-cd backend
+2. 【メイン演習】オリジナル AI エージェントを作ろう！
+   
+   AI の応答を定義している「システムプロンプト」を編集して、あなただけのオリジナルエージェントを作成します。
 
-# Python仮想環境作成
-python -m venv venv
+   1.　`./start_handson.sh` を実行しているターミナルで、`Ctrl+C` を押して一度サーバーを停止します。
+    
+   2.　Cloud Shell のエディタで、ファイルツリーから `backend/system_instruction.py` ファイルを開きます。
+    
+   3.　`SYSTEM_INSTRUCTION` や `VOICE_NAME` などを自由に編集してみましょう。
+    
+     - カフェの名前やメニューを変える
+     - AI の話し方を丁寧語からカジュアルなものに変える
+     - 全く違う業種（例: たこ焼き店、ペットショップ）のスタッフにしてみる
+    
+   4.　編集が終わったら、ターミナルに戻り、再度、**起動コマンド**を実行します。
+   ```bash
+   ./start_handson.sh
+   ```
+   5.　「ウェブでプレビュー」で開いているブラウザタブを **リロード（再読み込み）** すると、あなたの変更が AI の応答に反映されています。AI との会話を試してみましょう！
 
-# 仮想環境有効化
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+#### 【応用編】注文確認ツールの体験 (時間がある方向け)
+AI が会話内容を理解し、タスク（注文の要約）を自律的に実行する **Function Calling** 機能を有効にします。
 
-# 依存関係インストール
-pip install -r requirements.txt
-```
+1. `./start_handson.sh` を実行しているターミナルで、`Ctrl+C` を押してサーバーを停止します。
 
-#### フロントエンド
-```bash
-cd frontend
+2. Cloud Shell のエディタで `start_handson.sh` ファイルを開きます。
 
-# Node.js依存関係インストール
-npm install
+3. スクリプトの 2 行目に、以下の 1 行を追加して保存します。
+    ```bash
+    export USE_ORDER_TOOL=True
+    ```
+4. ターミナルに戻り、**再度、起動コマンド**を実行します。
+    ```bash
+    ./start_handson.sh
+    ```
+プレビュー画面でカフェの注文を最後まで完了させてみてください。
 
-# 環境変数ファイル作成
-echo "NEXT_PUBLIC_BACKEND_URL=ws://localhost:8081/ws" > .env.local
-```
-
-## 🎮 使用方法
-
-### 🚀 アプリケーション起動
-
-**ターミナル1: バックエンド起動**
-```bash
-cd backend
-python main.py
-# → http://localhost:8081 で起動
-```
-
-**ターミナル2: フロントエンド起動**
-```bash
-cd frontend
-npm run dev
-# → http://localhost:3000 で起動
-```
-
-### 🎙️ 音声対話の流れ
-
-1. **🌐 ブラウザアクセス**: 
-2. **☕ 接続**: 「カフェに電話をかける」ボタンをクリックすると、AIエージェントのPatrickから挨拶があります。
-3. **🎤 音声入力**: 話しかける
-4. **🤖 AI応答**: Patrickがリアルタイムで応答し、会話から注文内容を理解します
-5. **🔄 会話継続**: 自然な対話を楽しむ。注文が完了すると、PatrickはFunction Callingを自律的に実行し、画面に注文内容の要約を表示します
-6. **📞 終了**: 「通話を終了」ボタンで切断
+AI が注文内容を理解すると、自動的に画面に注文確認が表示されるようになります。
 
 ### 💬 会話例
 
 **📞 基本的な問い合わせ**
 ```
 👤 ユーザー: 「メニューを教えてください」
-🤖 Patrick: 「承知いたしました。コーヒー類ではドリップコーヒーが450円、カフェラテが550円...」
+🤖 Patrick: 「承知いたしました。コーヒー類ではドリップコーヒーが 450 円、カフェラテが 550 円...」
 
 👤 ユーザー: 「おすすめはありますか？」
-🤖 Patrick: 「当店の人気No.1はカフェラテです。まろやかな味わいで...」
+🤖 Patrick: 「当店の人気 No.1 はカフェラテです。まろやかな味わいで...」
 ```
 
 **🛒 注文から確認まで**
@@ -169,112 +181,30 @@ npm run dev
 
 💻 【画面に自動表示される注文確認UI】← 注文確認ツールを有効にした場合のみ
 📋 ご注文内容の確認
-🍽️ カフェラテ × 1      550円
-🍽️ アップルパイ × 1    520円
-合計: 1,070円
-お受け取り予定: 15分後
+🍽️ カフェラテ × 1      550 円
+🍽️ アップルパイ × 1    520 円
+合計: 1,070 円
+お受け取り予定: 15 分後
 
 👤 ユーザー: 間違いないです。お願いします。
-🤖 Patrick: 「ありがとうございます。15分後にご用意いたします」
+🤖 Patrick: 「ありがとうございます。15 分後にご用意いたします」
 ```
 
-## 🧑‍💻 コードの説明
+### 🧹 ハンズオン終了後のクリーンアップ手順
 
-### 📱 フロントエンド (`frontend/components/VoiceClient.js`)
+【**重要**】 ハンズオンで作成したリソースを削除しない限り、継続的に料金が発生します。
 
-#### 🔧 主要機能
-- **WebSocket接続管理**: バックエンドとの双方向通信
-- **音声入出力制御**: マイクアクセスとスピーカー出力
-- **UI状態管理**: 接続状態、マイク状態の表示
+以下のスクリプトを実行して、リソースを削除してください。
 
-### 🖥️ バックエンド (`backend/main.py`)
-
-#### 🔧 主要機能
-- **Gemini Live API連携**: リアルタイム音声AI処理
-- **音声ストリーミング**: PCM音声データの双方向転送
-- **WebSocketサーバー**: フロントエンドとの接続管理
-- **Function Calling**: 注文確認ツールの自動実行
-- **構造化データ生成**: 音声会話から注文データを抽出
-
-#### 📝 プロンプト設定
-
-**🎯 ハンズオン・カスタマイズ専用ファイル: `backend/system_instruction.py`**
-
-ハンズオン時にカスタマイズする設定は、すべて`system_instruction.py`に分離されています。  
-`main.py`を直接編集する必要がなく、安全にカスタマイズできます。
-
-**1. 音声設定**
-```python
-# 音声の種類を選択
-VOICE_NAME = 'Puck'     # ["Aoede", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
-LANGUAGE = 'Japanese'   # English, Japanese, Korean
-```
-
-**2. システムプロンプト**
-```python
-SYSTEM_INSTRUCTION = '''
-あなたは「Starlight Cafe」のPatrickです。
-# 🎯 ここを編集してオリジナルエージェントを作成！
-'''
-```
-
-**3. AI応答設定**
-```python
-AI_TEMPERATURE = 0.6  # ランダム性・創造性レベル (0.0-1.0)
-AI_TOP_P = 0.6        # 応答の多様性 (0.0-1.0)
-```
-
-**📝 編集手順:**
-1. `backend/system_instruction.py`を開く
-2. `SYSTEM_INSTRUCTION`変数を編集
-3. 音声設定（`VOICE_NAME`、`LANGUAGE`）も必要に応じて調整
-
-## ⚙️ 環境変数による機能制御
-
-### 🔧 Function Calling（注文確認ツール）の切り替え
-
-このアプリは環境変数によってFunction Calling機能の有効/無効を切り替えることができます。
-
-**環境変数設定:**
-```bash
-# Function Calling有効化（デフォルト: 無効）
-export USE_ORDER_TOOL=true
-```
-
-**切り替え手順:**
-
-**1. 🔍 ローカル開発環境の場合**
-```bash
-# ツールを有効にする
-export USE_ORDER_TOOL=true
-python backend/main.py
-
-# ツールを無効にする（デフォルト）
-export USE_ORDER_TOOL=false
-python backend/main.py
-```
-
-**2. ☁️ Cloud Runデプロイの場合**
-```bash
-# デプロイ時に環境変数を設定
-gcloud run deploy starlight-cafe-backend \
-  --source backend/ \
-  --set-env-vars USE_ORDER_TOOL=true \
-  --region us-central1
-```
-
-**機能の違い:**
-
-| 設定 | Function Calling | 動作内容 |
-|------|------------------|----------|
-| `USE_ORDER_TOOL=true` | ✅ 有効 | 注文内容の自動確認・構造化データ生成 |
-| `USE_ORDER_TOOL=false` | ❌ 無効 | 通常の音声対話のみ（注文確認UI非表示） |
-
-**📋 ツール有効時の追加機能:**
-- 自動注文内容確認
-- 画面への注文サマリー表示
-- 構造化された注文データ生成
-- より詳細な接客プロンプト適用
+1. Cloud Shell のターミナルで、以下のコマンドを実行して、クリーンアップスクリプトに実行権限を与えます。
+   ```bash
+   chmod +x cleanup.sh
+   ```
+2. 以下のコマンドでスクリプトを実行します。
+作成したサービスアカウントとデプロイしたアプリケーションがすべて自動的に削除されます。
+   ```bash
+   ./cleanup.sh
+   ```
 
 ## 🐛 トラブルシューティング
 
@@ -284,7 +214,7 @@ gcloud run deploy starlight-cafe-backend \
 ```
 google.auth.exceptions.DefaultCredentialsError
 ```
-→ Google Cloud認証を再実行: `gcloud auth application-default login`
+→ Google Cloud 認証を再実行: `gcloud auth application-default login`
 
 **❌ 接続エラー**
 ```
@@ -292,17 +222,11 @@ WebSocket connection failed
 ```
 → `.env.local`ファイルの`NEXT_PUBLIC_BACKEND_URL`を確認
 
-**❌ system_instruction.pyが見つからない**
-```
-ModuleNotFoundError: No module named 'system_instruction'
-```
-→ `backend/`ディレクトリに`system_instruction.py`ファイルが存在するか確認
-
 **❌ 音声が聞こえない**
 → ブラウザのマイク・スピーカー許可を確認
 
 **❌ AIが応答しない**
-→ `system_instruction.py`のシステムプロンプトの内容とGemini Live APIの制限を確認
+→ `system_instruction.py` のシステムプロンプトの内容とGemini Live APIの制限を確認
 
 **❌ カスタマイズが反映されない**
 → バックエンドを再起動してください（`python main.py`）
