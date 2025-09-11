@@ -264,6 +264,7 @@ def generate_timestamps_route_get():
         
         issues_list = analysis_data.get('issue', [])
         suggestions_list = analysis_data.get('suggestions', [])
+        # ここに演習のコードを追加する
 
         return render_template('results_page.html',
                             data=meal_times,
@@ -278,6 +279,7 @@ def generate_timestamps_route_get():
                             negative_moments=negative_moments,
                             issues=issues_list,
                             suggestions=suggestions_list,
+                            # ここに演習のコードを追加する
                             api_data=analysis_data,
                             gemini_response=pretty_analysis_json_str,
                             )
