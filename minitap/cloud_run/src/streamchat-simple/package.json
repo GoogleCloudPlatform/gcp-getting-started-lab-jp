@@ -14,7 +14,7 @@
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.6",
     "autoprefixer": "10.4.14",
-    "axios": "1.6.0",
+    "axios": "1.12.0",
     "clsx": "1.2.1",
     "csstype": "3.1.2",
     "edge-csrf": "1.0.4",
