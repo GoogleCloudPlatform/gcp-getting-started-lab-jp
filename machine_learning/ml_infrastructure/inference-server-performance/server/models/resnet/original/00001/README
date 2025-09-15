@@ -1,1 +1,0 @@
-This model is created based on Cloud TPU Resnet-50 example. One difference from Cloud TPU Resnet-50 example is we change input_tensor signature from tf.string to Tensor shape [None, 224, 224, 3] with tf.float32.
