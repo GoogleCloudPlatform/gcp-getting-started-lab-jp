@@ -1,6 +1,0 @@
-google-cloud-discoveryengine==0.13.3
-google-cloud-aiplatform==1.70.0
-google-cloud-storage==2.18.2 
-google-auth==2.36.0
-fastapi[standard]==0.115.4
-uvicorn==0.32.0
