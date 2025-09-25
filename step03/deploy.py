@@ -3,8 +3,7 @@ import os
 from dotenv import load_dotenv
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
-
-from step03.agent import root_agent
+from agent import root_agent as agent
 
 load_dotenv()
 
@@ -19,7 +18,7 @@ vertexai.init(
 )
 
 app = AdkApp(
-    agent=root_agent,
+    agent=agent,
     enable_tracing=True,
 )
 
