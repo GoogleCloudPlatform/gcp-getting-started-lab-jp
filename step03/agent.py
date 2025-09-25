@@ -1,12 +1,30 @@
 from google.adk.agents.llm_agent import LlmAgent
+from google.adk.tools import google_search
+from google.adk.tools.agent_tool import AgentTool
 from google.adk.tools.tool_context import ToolContext
 
-def get_weather_stateful(city: str, tool_context: ToolContext) -> dict:
-    """指定された都市の現在の天気予報を取得します、セッションの状態に基づいて温度の単位を変換します。
+def append_to_state(
+        tool_context: ToolContext, field: str, response: str
+) -> dict[str, str]:
+    """Append new output to an existing state key.
 
     Args:
-        city (str): 日本語での都市名（例：「ニューヨーク」、「ロンドン」、「東京」）。
-        tool_context (ToolContext): ツール呼び出しのコンテキストを提供し、呼び出しコンテキスト、関数呼び出しID、イベントアクション、認証レスポンスへのアクセスを含みます。
+        field (str): a field name to append to
+        response (str): a string to append to the field
+
+    Returns:
+        dict[str, str]: {"status": "success"}
+    """
+    existing_state = tool_context.state.get(field, [])
+    tool_context.state[field] = existing_state + [response]
+    return {"status": "success"}
+
+
+def get_weather(city: str) -> dict:
+    """指定された都市の現在の天気予報を取得します。
+
+    Args:
+        city (str): 都市名（例：「ニューヨーク」、「ロンドン」、「東京」）。
 
     Returns:
         dict: 天気情報を含む辞書。
@@ -15,73 +33,58 @@ def get_weather_stateful(city: str, tool_context: ToolContext) -> dict:
               'error' の場合、'error_message' キーを含みます。
     """
 
-    print(f"--- ツール: get_weather_stateful が {city} のために呼び出されました ---")
-
-    # --- 状態から設定を読み込み ---
-    preferred_unit = tool_context.state.get("user_preference_temperature_unit", "Celsius")
-    print(f"--- ツール: 状態 'user_preference_temperature_unit' を読み込み中: {preferred_unit} ---")
-
-
-    # モックの天気データ（内部では常に摂氏で保存）
     mock_weather_db = {
-        "ニューヨーク": {"temp_c": 25, "condition": "晴れ"},
-        "ロンドン": {"temp_c": 15, "condition": "曇り"},
-        "東京": {"temp_c": 18, "condition": "雨"},
+        "ニューヨーク": {"status": "success", "report": "ニューヨークの天気は晴れ、気温は25℃です。"},
+        "ロンドン": {"status": "success", "report": "ロンドンは曇り、気温は15℃です。"},
+        "東京": {"status": "success", "report": "東京は小雨、気温は18℃です。"},
     }
 
     if city in mock_weather_db:
-        data = mock_weather_db[city]
-        temp_c = data["temp_c"]
-        condition = data["condition"]
-
-        if preferred_unit == "Fahrenheit":
-            temp_value = (temp_c * 9/5) + 32
-            temp_unit = "°F"
-        else:
-            temp_value = temp_c
-            temp_unit = "°C"
-
-        report = f"{city.capitalize()}の天気は{condition}で、気温は{temp_value:.0f}{temp_unit}です。"
-        result = {"status": "success", "report": report}
-        print(f"--- ツール: {preferred_unit}でレポートを生成しました。結果: {result} ---")
-        return result
+        return mock_weather_db[city]
     else:
-        # 都市が見つからない場合の処理
-        error_msg = f"申し訳ありませんが、'{city}'の天気情報はありません。"
-        print(f"--- ツール: 都市 '{city}' が見つかりませんでした。 ---")
-        return {"status": "error", "error_message": error_msg}
+        return {"status": "error", "error_message": f"申し訳ありませんが、「{city}」の天気情報はありません。"}
 
-def set_temperature_preference(unit: str, tool_context: ToolContext) -> dict:
-    """Sets the user's preferred temperature unit (Celsius or Fahrenheit).
-
-    Args:
-        unit (str): The preferred temperature unit ("Celsius" or "Fahrenheit").
-        tool_context (ToolContext): The ADK tool context providing access to session state.
-
-    Returns:
-        dict: A dictionary confirming the action or reporting an error.
-    """
-    print(f"--- Tool: set_temperature_preference called with unit: {unit} ---")
-    normalized_unit = unit.strip().capitalize()
-
-    if normalized_unit in ["Celsius", "Fahrenheit"]:
-        tool_context.state["user_preference_temperature_unit"] = normalized_unit
-        print(f"--- Tool: Updated state 'user_preference_temperature_unit': {normalized_unit} ---")
-        return {"status": "success", "message": f"Temperature preference set to {normalized_unit}."}
-    else:
-        error_msg = f"Invalid temperature unit '{unit}'. Please specify 'Celsius' or 'Fahrenheit'."
-        print(f"--- Tool: Invalid unit provided: {unit} ---")
-        return {"status": "error", "error_message": error_msg}
-
-# ルートエージェントを作成する前に前提条件を確認
-root_agent_stateful = LlmAgent(
-    name="weather_agent_v3_stateful", # 新しいバージョン名
+weather_agent = LlmAgent(
+    name="weather_agent",
     model="gemini-2.5-flash",
-    description="メインエージェント: 天気情報を提供し（状態認識ユニット）、挨拶/別れを委任し、レポートを状態に保存します。",
-    instruction="あなたはメインの天気エージェントです。あなたの仕事は 'get_weather_stateful' を使って天気情報を提供することです。"
-                "このツールは、状態に保存されているユーザーの好みに基づいて温度の形式を設定します。"
-                "簡単な挨拶は 'greeting_agent' に、別れの挨拶は 'farewell_agent' に委任してください。"
-                "天気に関するリクエスト、挨拶、別れの挨拶のみを処理してください。",
-    tools=[get_weather_stateful,set_temperature_preference],
-    output_key="last_weather_report" # <<< エージェントの最終的な天気応答を自動保存
+    description="特定の都市の天気情報を提供するエージェント",
+    instruction="ユーザの問い合わせの都市の天気または現在住んでいる都市の情報 {{current_city? }}　の情報があれば教えてください",
+    tools=[get_weather],
+)
+
+search_agent = LlmAgent(
+    name="search_agent",
+    model="gemini-2.5-flash",
+    description="""
+    検索エージェント
+    """,
+    instruction="""
+    Google 検索を使って問い合わせのトピックに関してのニュースを教えてください。
+    """,
+    tools=[google_search]
+)
+
+news_tool = AgentTool(agent=search_agent)
+
+news_agent = LlmAgent(
+    name="news_agent",
+    model="gemini-2.5-flash",
+    description="最近のニュースを提供するエージェント",
+    instruction="最近のニュースを教えてください。関心のニュース {{ favorite_topic? }} があれば、それのみ教えてください。",
+    tools=[news_tool],
+)
+
+root_agent = LlmAgent(
+    name="root_agent",
+    model="gemini-2.5-flash",
+    description="メインコーディネーターエージェント",
+    instruction="""
+    あなたは親切なニュースキャスターのエージェントです。
+    ユーザに必ずどんなニュースに興味あるか聞いてみてください。
+    ユーザの興味あるニュースは favorite_topic の field に保存してください。
+    ユーザの現在いる街は current_city の field に保存してください。
+    ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
+    """,
+    sub_agents=[news_agent, weather_agent],
+    tools=[append_to_state]
 )

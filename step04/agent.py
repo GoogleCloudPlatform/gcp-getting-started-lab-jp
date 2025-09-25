@@ -7,12 +7,14 @@ from google.adk.agents.llm_agent import LlmAgent
 import vertexai
 from vertexai import agent_engines
 
-load_dotenv('.env')
-PROJECT_ID = os.environ['PROJECT_ID']
-AGENT_ID = os.environ['AGENT_ID']
-LOCATION = 'us-central1'
+# load_dotenv('.env')
+load_dotenv()
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+LOCATION = os.getenv("LOCATION")
 
-vertexai.init(project=PROJECT_ID, location=LOCATION)
+AGENT_ID = "4811133029659443200"
+
+vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=LOCATION)
 remote_agent = agent_engines.get(AGENT_ID)
 
 async def call_remote_agent(
