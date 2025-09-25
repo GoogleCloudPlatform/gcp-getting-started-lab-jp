@@ -28,6 +28,7 @@ def get_weather(city: str) -> dict:
     else:
         return {"status": "error", "error_message": f"申し訳ありませんが、「{city}」の天気情報はありません。"}
 
+
 weather_agent = LlmAgent(
     name="weather_agent",
     model="gemini-2.5-flash",
@@ -61,7 +62,11 @@ news_agent = LlmAgent(
 root_agent = LlmAgent(
     name="root_agent",
     model="gemini-2.5-flash",
-    description="特定の都市の天気情報を提供するエージェント",
-    instruction="あなたは親切なニュースキャスターです。ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。",
+    description="メインコーディネーターエージェント",
+    instruction="""
+    あなたは親切なニュースキャスターです。
+    ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
+    ユーザにあなたのチームがどんなお手伝いできるのかを教えてください。
+    """,
     sub_agents=[news_agent, weather_agent]
 )
