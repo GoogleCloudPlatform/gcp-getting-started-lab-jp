@@ -7,7 +7,6 @@ from google.adk.agents.llm_agent import LlmAgent
 import vertexai
 from vertexai import agent_engines
 
-# load_dotenv('.env')
 load_dotenv()
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION = os.getenv("LOCATION")
