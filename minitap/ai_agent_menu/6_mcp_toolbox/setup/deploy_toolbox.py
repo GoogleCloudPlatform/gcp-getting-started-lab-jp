@@ -335,6 +335,7 @@ CMD ["toolbox", \\
                 "execute_sql_tool": "BigQueryクエリ実行",
                 "bigquery_get_dataset_info": "BigQueryデータセット情報取得",
                 "bigquery_get_table_info": "BigQueryテーブル情報取得",
+                "get_japan_trends": "日本のトレンド取得"
             },
             "toolsets": {
                 "google-trends-analysis": "Google Trends分析ツールセット"
