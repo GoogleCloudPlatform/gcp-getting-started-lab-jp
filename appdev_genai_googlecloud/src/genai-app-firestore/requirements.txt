@@ -7,6 +7,6 @@ google-cloud-storage==2.18.2
 tenacity==8.3.0
 langchain-community==0.2.16
 langchain-google-community==1.0.8
-langchain-text-splitters==0.2.4
+langchain-text-splitters==1.0.0a1
 pypdf==4.3.1
 nanoid==2.0.0
