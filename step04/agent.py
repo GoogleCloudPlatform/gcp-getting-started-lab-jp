@@ -11,7 +11,7 @@ load_dotenv()
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION = os.getenv("LOCATION")
 
-AGENT_ID = "7776190434329493504"
+AGENT_ID = "8369891528956444672"
 
 vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=LOCATION)
 remote_agent = agent_engines.get(AGENT_ID)
