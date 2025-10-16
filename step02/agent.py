@@ -82,7 +82,7 @@ def calculate_shipping_fee(
 shipping_support_agent = LlmAgent(
     name="shipping_specialist",
     model="gemini-2.5-flash",
-    description="出品・配送関連の問い合わせ対応エージェント",
+    description="配送関連の問い合わせ対応エージェント",
     instruction="""
     あなたはYahoo!フリマの出品・配送関連エキスパートです。
     ヤフー！フリマに出品したい方をサポートします。
