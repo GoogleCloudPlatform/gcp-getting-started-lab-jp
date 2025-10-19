@@ -127,12 +127,12 @@ root_agent = LlmAgent(
 ### ローカル環境で Agent を動かしてみる
 
 ```bash
-adk web
+adk web . --port 8080
 ```
 
 Cloud Shell の Web Preview 機能を使ってアクセスします:
 1. 上部メニューの「ウェブでプレビュー」をクリック
-2. ポート 8000 を選択
+2. ポート 8080 を選択
 3. ブラウザで UI が開きます
 4. Agent 一覧で **step00** を選んでください
 
