@@ -238,21 +238,35 @@ ADK Web インターフェース (http://localhost:8000) で **step01** を選�
 
 <walkthrough-editor-open-file filePath="./step02/agent.py">step02/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な部分を確認しましょう：
 
-1. **AgentTool の使用**：
+1. **News Agent の定義**：
 ```python
-from google.adk.tools.agent_tool import AgentTool
-
-# search_agent を他の Agent のツールとして使えるようにラップ
-news_tool = AgentTool(agent=search_agent)
-```
-
-2. **Sub-agents の設定**：
-```python
-root_agent = LlmAgent(
-    name="root_agent",
-    sub_agents=[news_agent, weather_agent]  # ← サブエージェントを指定
+news_agent = LlmAgent(
+    name="news_agent",
+    model="gemini-2.5-flash",
+    description="最近のニュースを提供するエージェント",
+    instruction="最近のニュースを教えてください。関心のニュース {{ favorite_topic? }} があれば、それのみ教えてください。",
+    tools=[search_tool],
 )
 ```
+
+### Agent 間の動的ルーティングの仕組み
+
+LlmAgent は階層内の他の適切なエージェントにタスクを動的にルーティングする能力を持っています。
+
+**メカニズム**:
+- エージェントの LLM が特定の関数呼び出しを生成：`transfer_to_agent(agent_name='target_agent_name')`
+- Root Agent が自動的にユーザーの要求を解釈して、適切なサブエージェントに転送
+
+**必要な要素**:
+- 呼び出し元の LlmAgent には、いつ転送するかについての明確な `instruction` が必要
+- 各エージェントには、LLM が判断できるように明確な `description` が必要
+- 転送スコープ（親、サブエージェント、兄弟）は LlmAgent で設定可能
+
+**特性**:
+- LLM の解釈に基づく動的で柔軟なルーティング
+- ユーザーが「天気を教えて」と言えば weather_agent へ
+- ユーザーが「ニュースを見せて」と言えば news_agent へ
+- 自動的に適切なエージェントが選択される
 
 ### 実習：news_agent を追加しよう
 
@@ -340,7 +354,7 @@ ADK Web インターフェースで **step03** を選択して、以下の会話
 1. "こんにちは"
 2. "私は東京に住んでいて、AIのニュースに興味があります"
 3. "今日のニュースを教えて"（AIニュースが優先的に表示される）
-4. "天気を教えて"（東京の天気が表示される
+4. "天気を教えて"（東京の天気が表示される)
 
 ### 🎯 このステップで学んだこと
 - ToolContext を使った状態管理
@@ -371,20 +385,15 @@ gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_C
 
 ### Agent のデプロイ
 
-<walkthrough-editor-open-file filePath="./step03/deploy.py">step03/deploy.py</walkthrough-editor-open-file> を確認して、デプロイスクリプトの構造を理解しましょう。
+1. ターミナルをもう一つ新しく開きます (ターミナルの開き方は Cloud Shell Editor 操作方法一覧をご参照ください)
 
-**デプロイを実行**：
+2. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
+
 ```bash
-cd step03
-uv run python deploy.py
+uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging step03/
 ```
 
-または、プロジェクトルートから:
-```bash
-uv run python -m step03.deploy
-```
-
-デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：
+3. 少し待つとターミナルにデプロイが開始されたとのメッセージが表示されます。デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：
 ```
 Creating agent engine...
 Agent created with ID: 7776190434329493504
@@ -397,28 +406,6 @@ Cleaning up the temp folder: /tmp/agent_engine〜
 
 ```python
 AGENT_ID = "YOUR_DEPLOYED_AGENT_ID"  # ← デプロイ時に表示された ID に変更
-```
-
-### デプロイした Agent のテスト
-
-1. **基本的な問い合わせ**：
-```bash
-uv run python query.py "あなたは何ができますか？"
-```
-
-2. **天気の問い合わせ**：
-```bash
-uv run python query.py "東京の天気を教えて"
-```
-
-3. **ニュースの取得**：
-```bash
-uv run python query.py "最新のAIニュースを教えて"
-```
-
-4. **複合的な質問**：
-```bash
-uv run python query.py "今日の東京の天気と最新のテクノロジーニュースを教えて"
 ```
 
 ### Remote Agent Proxy パターン
@@ -437,6 +424,16 @@ async def call_remote_agent(
         message=str(llm_request.contents)
     )
     # ...
+```
+
+### デプロイした Agent のテスト
+
+以下のプロンプトを試してください。
+""
+```
+あなたは何ができますか？
+東京の天気を教えて
+最新のAIニュースを教えて
 ```
 
 これにより、ローカルの ADK Web インターフェースから、クラウドにデプロイした Agent を利用できます。
