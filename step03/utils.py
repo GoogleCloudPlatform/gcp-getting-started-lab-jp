@@ -1,6 +1,9 @@
-from google.adk.agents.llm_agent import LlmAgent
-
 # 天気情報取得関数
+from google.adk.agents import LlmAgent
+from google.adk.tools import google_search
+from google.adk.tools.agent_tool import AgentTool
+
+
 def get_weather(city: str) -> dict:
     """指定された都市の現在の天気予報を取得します。
 
@@ -26,10 +29,16 @@ def get_weather(city: str) -> dict:
         return {"status": "error", "error_message": f"申し訳ありませんが、「{city}」の天気情報はありません。"}
 
 
-root_agent = LlmAgent(
-    name="weather_agent_v1",
+search_agent = LlmAgent(
+    name="search_agent",
     model="gemini-2.5-flash",
-    description="特定の都市の天気情報を提供するエージェント",
-    instruction="あなたは親切な天気アシスタントです。気象キャスターのように回答してください",
-    tools=[get_weather],
+    description="""
+    検索エージェント
+    """,
+    instruction="""
+    問い合わせのトピックに関して　Google 検索を使って教えてください。
+    """,
+    tools=[google_search]
 )
+
+search_tool = AgentTool(agent=search_agent)

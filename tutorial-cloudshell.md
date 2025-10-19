@@ -365,10 +365,7 @@ ADK Web インターフェースで **step03** を選択して、以下の会話
 1. **環境変数の追加設定**：
 ```bash
 # LOCATION とSTAGING_BUCKET を .env に追加
-cat >> .env <<EOF
-LOCATION=${GOOGLE_CLOUD_LOCATION}
-STAGING_BUCKET=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging
-EOF
+STAGING_BUCKET=gs://
 ```
 
 2. **ステージングバケットの作成**（必要な場合）：
@@ -384,6 +381,11 @@ gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_C
 ```bash
 cd step03
 uv run python deploy.py
+```
+
+または、プロジェクトルートから:
+```bash
+uv run python -m step03.deploy
 ```
 
 デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：
