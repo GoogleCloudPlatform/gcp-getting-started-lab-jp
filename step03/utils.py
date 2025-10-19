@@ -1,9 +1,26 @@
-# 天気情報取得関数
 from google.adk.agents import LlmAgent
-from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
+from google.adk.tools import google_search
+from google.adk.tools.tool_context import ToolContext
 
 
+def append_to_state(
+        tool_context: ToolContext, field: str, response: str
+) -> dict[str, str]:
+    """Append new output to an existing state key.
+
+    Args:
+        field (str): a field name to append to
+        response (str): a string to append to the field
+
+    Returns:
+        dict[str, str]: {"status": "success"}
+    """
+    existing_state = tool_context.state.get(field, [])
+    tool_context.state[field] = existing_state + [response]
+    return {"status": "success"}
+
+# 天気情報取得関数
 def get_weather(city: str) -> dict:
     """指定された都市の現在の天気予報を取得します。
 

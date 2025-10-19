@@ -1,9 +1,8 @@
-# 天気情報取得関数
 from google.adk.agents import LlmAgent
 from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
 
-
+# 天気情報取得関数
 def get_weather(city: str) -> dict:
     """指定された都市の現在の天気予報を取得します。
 
@@ -27,7 +26,6 @@ def get_weather(city: str) -> dict:
         return mock_weather_db[city]
     else:
         return {"status": "error", "error_message": f"申し訳ありませんが、「{city}」の天気情報はありません。"}
-
 
 search_agent = LlmAgent(
     name="search_agent",

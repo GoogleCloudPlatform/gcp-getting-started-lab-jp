@@ -312,7 +312,7 @@ ADK Web インターフェースで **step02** を選択して、以下を試し
 
 ### 状態管理の仕組み
 
-<walkthrough-editor-open-file filePath="./step03/agent.py">step03/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な機能を確認しましょう：
+<walkthrough-editor-open-file filePath="./step03/utils.py">step03/utils.py</walkthrough-editor-open-file> と <walkthrough-editor-open-file filePath="./step03/agent.py">step03/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な機能を確認しましょう：
 
 1. **状態保存関数**：
 ```python
