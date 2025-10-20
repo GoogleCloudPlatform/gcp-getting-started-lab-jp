@@ -94,7 +94,7 @@ source .venv/bin/activate
 
 `.env` ファイルにプロジェクト情報を設定します。
 
-```bash
+```python
 cat > .env <<EOF
 GOOGLE_GENAI_USE_VERTEXAI=1
 GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
