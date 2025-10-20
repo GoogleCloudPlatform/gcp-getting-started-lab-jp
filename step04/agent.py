@@ -1,40 +1,37 @@
-import os
-from dotenv import load_dotenv
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.models import LlmResponse, LlmRequest
 from google.adk.agents.llm_agent import LlmAgent
+from .utils import get_weather, search_tool, append_to_state
 
-import vertexai
-from vertexai import agent_engines
+weather_agent = LlmAgent(
+    name="weather_agent",
+    model="gemini-2.5-flash",
+    description="特定の都市の天気情報を提供するエージェント",
+    instruction="ユーザの問い合わせの都市の天気または現在住んでいる都市の情報 {{ current_city? }}　の情報があれば教えてください",
+    tools=[get_weather],
+)
 
-load_dotenv()
-GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-LOCATION = os.getenv("LOCATION")
-
-AGENT_ID = "7776190434329493504"
-
-vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=LOCATION)
-remote_agent = agent_engines.get(AGENT_ID)
-
-async def call_remote_agent(
-    callback_context: CallbackContext, llm_request: LlmRequest
-) -> LlmResponse:
-    session = remote_agent.create_session(user_id='default_user')
-    events = remote_agent.stream_query(
-                user_id='default_user',
-                session_id=session['id'],
-                message=str(llm_request.contents)
-             )
-    content = list(events)[-1]['content']
-    remote_agent.delete_session(
-        user_id='default_user',
-        session_id=session['id'],
-    )
-    return LlmResponse(content=content)
+news_agent = LlmAgent(
+    name="news_agent",
+    model="gemini-2.5-flash",
+    description="最近のニュースを提供するエージェント",
+    instruction="最近のニュースを教えてください。関心のニュース {{ favorite_topic? }} があれば、それのみ教えてください。",
+    tools=[search_tool],
+)
 
 root_agent = LlmAgent(
-    name='remote_agent_proxy',
-    model='gemini-2.5-flash', # not used
-    description='Interactive agent',
-    before_model_callback=call_remote_agent,
+    name="root_agent",
+    model="gemini-2.5-flash",
+    description="メインコーディネーターエージェント",
+    instruction="""
+    あなたは親切なニュースキャスターのエージェントです。
+    ユーザにどんなニュースに興味あるか聞いてみてください。
+    
+    単刀直入じゃなくて自然な会話の流れで聞いてください。
+    ユーザの興味あるニュースは favorite_topic の field に保存してください。
+    ユーザの現在いる街は current_city の field に保存してください
+    
+    ユーザにあなたのチームがどんなお手伝いできるのかを教えてください。
+    ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
+    """,
+    sub_agents=[news_agent, weather_agent],
+    tools=[append_to_state]
 )

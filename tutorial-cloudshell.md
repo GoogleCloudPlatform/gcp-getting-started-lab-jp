@@ -103,7 +103,7 @@ EOF
 ```
 <walkthrough-editor-open-file filePath="./.env">ここをクリック</walkthrough-editor-open-file>して、フィアルを確認してみてください。
 
-## Step 00. Hello World Agent - 初めての Agent
+## Step 01. Hello World Agent - 初めての Agent
 
 ### Agent とは？
 
@@ -111,7 +111,7 @@ AI Agent は、ユーザーの指示を理解し、自律的にタスクを実�
 
 ### コードを見てみよう
 
-<walkthrough-editor-open-file filePath="./step00/agent.py">step00/agent.py</walkthrough-editor-open-file> を開いて、最初の Agent の構造を確認しましょう：
+<walkthrough-editor-open-file filePath="./step01/agent.py">step01/agent.py</walkthrough-editor-open-file> を開いて、最初の Agent の構造を確認しましょう：
 
 ```python
 from google.adk.agents.llm_agent import LlmAgent
@@ -151,7 +151,7 @@ Cloud Shell の Web Preview 機能を使ってアクセスします:
 
 ---
 
-## Step 01. 単体 Agentを作ってみよう！
+## Step 02. 単体 Agentを作ってみよう！
 
 ### ツール（関数）を持つ Agent の作成
 
@@ -159,7 +159,7 @@ Agent に特定の機能を持たせるには、Python 関数を「ツール」�
 
 ### コードの確認
 
-<walkthrough-editor-open-file filePath="./step01/agent.py">step01/agent.py</walkthrough-editor-open-file> を開いて確認しましょう：
+<walkthrough-editor-open-file filePath="./step02/agent.py">step02/agent.py</walkthrough-editor-open-file> を開いて確認しましょう：
 
 ```python
 # 天気情報取得関数（ツール）
@@ -214,7 +214,7 @@ ADK Web インターフェース (http://localhost:8000) で **step01** を選�
 
 ---
 
-## Step 02. Agentチームを作ってみよう！
+## Step 03. Agentチームを作ってみよう！
 
 ### Multi-Agent アーキテクチャの理解
 
@@ -236,7 +236,7 @@ ADK Web インターフェース (http://localhost:8000) で **step01** を選�
 
 ### コードの構造を理解しよう
 
-<walkthrough-editor-open-file filePath="./step02/agent.py">step02/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な部分を確認しましょう：
+<walkthrough-editor-open-file filePath="./step03/agent.py">step03/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な部分を確認しましょう：
 
 1. **News Agent の定義**：
 ```python
@@ -304,7 +304,7 @@ ADK Web インターフェースで **step02** を選択して、以下を試し
 
 ---
 
-## Step 03. Agent に記憶を持たせる
+## Step 04. Agent に記憶を持たせる
 
 ### 状態管理でよりスマートな Agent へ
 
@@ -312,7 +312,7 @@ ADK Web インターフェースで **step02** を選択して、以下を試し
 
 ### 状態管理の仕組み
 
-<walkthrough-editor-open-file filePath="./step03/utils.py">step03/utils.py</walkthrough-editor-open-file> と <walkthrough-editor-open-file filePath="./step03/agent.py">step03/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な機能を確認しましょう：
+<walkthrough-editor-open-file filePath="./step04/utils.py">step04/utils.py</walkthrough-editor-open-file> と <walkthrough-editor-open-file filePath="./step04/agent.py">step04/agent.py</walkthrough-editor-open-file> を開いて、以下の重要な機能を確認しましょう：
 
 1. **状態保存関数**：
 ```python
@@ -348,7 +348,7 @@ root_agent = LlmAgent(
 
 ### 動作確認
 
-ADK Web インターフェースで **step03** を選択して、以下の会話を試してください：
+ADK Web インターフェースで **step04** を選択して、以下の会話を試してください：
 
 #### セッション 1（情報を記憶させる）：
 1. "こんにちは"
@@ -364,7 +364,7 @@ ADK Web インターフェースで **step03** を選択して、以下の会話
 
 ---
 
-## Step 04. AgentEngine に Deploy
+## Step 05. AgentEngine に Deploy
 
 ### プロダクション環境へのデプロイ
 
@@ -390,7 +390,7 @@ gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_C
 2. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
 
 ```bash
-uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging step03/
+uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging step04/
 ```
 
 3. 少し待つとターミナルにデプロイが開始されたとのメッセージが表示されます。デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：

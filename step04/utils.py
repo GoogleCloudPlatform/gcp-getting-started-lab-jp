@@ -1,6 +1,24 @@
 from google.adk.agents import LlmAgent
-from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
+from google.adk.tools import google_search
+from google.adk.tools.tool_context import ToolContext
+
+
+def append_to_state(
+        tool_context: ToolContext, field: str, response: str
+) -> dict[str, str]:
+    """Append new output to an existing state key.
+
+    Args:
+        field (str): a field name to append to
+        response (str): a string to append to the field
+
+    Returns:
+        dict[str, str]: {"status": "success"}
+    """
+    existing_state = tool_context.state.get(field, [])
+    tool_context.state[field] = existing_state + [response]
+    return {"status": "success"}
 
 # 天気情報取得関数
 def get_weather(city: str) -> dict:
@@ -27,6 +45,7 @@ def get_weather(city: str) -> dict:
     else:
         return {"status": "error", "error_message": f"申し訳ありませんが、「{city}」の天気情報はありません。"}
 
+
 search_agent = LlmAgent(
     name="search_agent",
     model="gemini-2.5-flash",
@@ -40,5 +59,3 @@ search_agent = LlmAgent(
 )
 
 search_tool = AgentTool(agent=search_agent)
-
-
