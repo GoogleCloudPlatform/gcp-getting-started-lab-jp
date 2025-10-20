@@ -284,6 +284,12 @@ sub_agents=[news_agent, weather_agent]
 
 ### 動作確認
 
+Windows の方は Ctrl + C , Mac の方は Cmd + C を押して ADK ウェブを停止して再起動してください。
+
+```bash
+adk web . --port 8080
+```
+
 ADK Web インターフェースで **step03** を選択して、以下を試してください：
 
 #### Agent の役割分担を確認：
