@@ -373,16 +373,18 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 
 ### デプロイの準備
 
-1. **環境変数の追加設定**：
+Staging Bucket の URL をラボの画面で確認してください。
+
+**ステージングバケットの作成**（必要な場合）：
 ```bash
-# LOCATION とSTAGING_BUCKET を .env に追加
-STAGING_BUCKET=gs://
+gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} <URL>
 ```
 
-2. **ステージングバケットの作成**（必要な場合）：
-```bash
+例:
+```python
 gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_CLOUD_PROJECT}-agent-staging
 ```
+
 
 ### Agent のデプロイ
 
