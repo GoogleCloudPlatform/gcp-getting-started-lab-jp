@@ -270,7 +270,7 @@ LlmAgent は階層内の他の適切なエージェントにタスクを動的�
 
 ### 実習：news_agent を追加しよう
 
-<walkthrough-editor-select-line filePath="./step02/agent.py" startLine=70 endLine=71 startCharacterOffset=4 endCharacterOffset=41>step02/agent.py の 71行目</walkthrough-editor-select-line> を以下のように修正してください：
+<walkthrough-editor-select-line filePath="./step03/agent.py" startLine=70 endLine=71 startCharacterOffset=4 endCharacterOffset=41>step03/agent.py の 71行目</walkthrough-editor-select-line> を以下のように修正してください：
 
 **修正前：**
 ```python
