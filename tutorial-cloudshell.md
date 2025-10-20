@@ -397,7 +397,7 @@ Cleaning up the temp folder: /tmp/agent_engine〜
 
 ### デプロイした Agent への接続
 
-<walkthrough-editor-open-file filePath="./step04/agent.py">step04/agent.py</walkthrough-editor-open-file> を開いて、デプロイした Agent ID を更新します：
+<walkthrough-editor-open-file filePath="./step05/agent.py">step05/agent.py</walkthrough-editor-open-file> を開いて、デプロイした Agent ID を更新します：
 
 ```python
 AGENT_ID = "YOUR_DEPLOYED_AGENT_ID"  # ← デプロイ時に表示された ID に変更
