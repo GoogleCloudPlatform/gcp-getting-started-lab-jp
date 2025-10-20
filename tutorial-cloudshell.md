@@ -134,7 +134,7 @@ Cloud Shell の Web Preview 機能を使ってアクセスします:
 1. 上部メニューの「ウェブでプレビュー」をクリック
 2. ポート 8080 を選択
 3. ブラウザで UI が開きます
-4. Agent 一覧で **step00** を選んでください
+4. Agent 一覧で **step01** を選んでください
 
 ### プロンプトの入力例
 
@@ -196,7 +196,7 @@ root_agent = LlmAgent(
 
 ### 動作確認
 
-ADK Web インターフェース (http://localhost:8000) で **step01** を選択して、以下を試してください：
+ADK Web インターフェース (http://localhost:8000) で **step02** を選択して、以下を試してください：
 
 #### 成功パターン：
 - "東京の天気を教えて"
@@ -284,7 +284,7 @@ sub_agents=[news_agent, weather_agent]
 
 ### 動作確認
 
-ADK Web インターフェースで **step02** を選択して、以下を試してください：
+ADK Web インターフェースで **step03** を選択して、以下を試してください：
 
 #### 複合的な質問：
 - "今日の東京の天気とニュースを教えて"
@@ -410,7 +410,7 @@ AGENT_ID = "YOUR_DEPLOYED_AGENT_ID"  # ← デプロイ時に表示された ID 
 
 ### Remote Agent Proxy パターン
 
-Step04 の agent.py は「Remote Agent Proxy」パターンを実装しています：
+Step05 の agent.py は「Remote Agent Proxy」パターンを実装しています：
 
 ```python
 async def call_remote_agent(
