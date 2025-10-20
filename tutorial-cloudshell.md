@@ -196,7 +196,7 @@ root_agent = LlmAgent(
 
 ### 動作確認
 
-ADK Web インターフェース (http://localhost:8000) で **step02** を選択して、以下を試してください：
+ADK Web インターフェース (http://localhost:8080) で **step02** を選択して、以下を試してください：
 
 #### 成功パターン：
 - "東京の天気を教えて"
