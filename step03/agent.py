@@ -28,5 +28,5 @@ root_agent = LlmAgent(
     ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
     ユーザにあなたのチームがどんなお手伝いできるのかを教えてください。
     """,
-    sub_agents=[news_agent, weather_agent]
+    sub_agents=[weather_agent]
 )
