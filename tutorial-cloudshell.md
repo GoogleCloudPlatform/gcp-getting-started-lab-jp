@@ -371,30 +371,28 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 
 これまでローカルで開発した Agent を、Google Cloud の Agent Engine にデプロイして、本番環境で利用できるようにします。
 
-### デプロイの準備
-
-Staging Bucket の URL をラボの画面で確認してください。
-
-**ステージングバケットの作成**（必要な場合）：
-```bash
-gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} <URL>
-```
-
-例:
-```python
-gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_CLOUD_PROJECT}-agent-staging
-```
-
 
 ### Agent のデプロイ
 
 1. ターミナルをもう一つ新しく開きます (ターミナルの開き方は Cloud Shell Editor 操作方法一覧をご参照ください)
+2. Staging Bucket の URL をラボの画面で確認してください。
+3. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
 
-2. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
+```bash
+uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=URL step04/
+```
+
+例:
 
 ```bash
 uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging step04/
 ```
+
+**ステージングバケットの作成が必要な場合例**：
+```bash
+gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_CLOUD_PROJECT}-agent-staging
+```
+
 
 3. 少し待つとターミナルにデプロイが開始されたとのメッセージが表示されます。デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：
 ```
