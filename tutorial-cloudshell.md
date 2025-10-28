@@ -379,13 +379,13 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 3. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
 
 ```bash
-uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=URL step04/
+uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://staging-${GOOGLE_CLOUD_PROJECT} step04/
 ```
 
 例:
 
 ```bash
-uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://${GOOGLE_CLOUD_PROJECT}-agent-staging step04/
+uv run adk deploy agent_engine --project=qwiklabs-gcp-03-a00597994e4f --region=us-central1 --staging_bucket=gs://staging-qwiklabs-gcp-03-a00597994e4f step04/
 ```
 
 **ステージングバケットの作成が必要な場合例**：
@@ -396,10 +396,11 @@ gsutil mb -p ${GOOGLE_CLOUD_PROJECT} -l ${GOOGLE_CLOUD_LOCATION} gs://${GOOGLE_C
 
 3. 少し待つとターミナルにデプロイが開始されたとのメッセージが表示されます。デプロイには約 5-10 分かかります。完了すると以下のようなメッセージが表示されます：
 ```
-Creating agent engine...
-Agent created with ID: 7776190434329493504
-Cleaning up the temp folder: /tmp/agent_engine〜
+AgentEngine created. Resource name: projects/773452093761/locations/us-central1/reasoningEngines/7876430710410575872
+To use this AgentEngine in another session:
+agent_engine = vertexai.agent_engines.get('projects/773452093761/locations/us-central1/reasoningEngines/7876430710410575872')
 ```
+ここで表示された出力は projects/<Project_Number>/locations/us-central1/reasoningEngines/<Agent_Engine_ID>　で組み合わせになっており、 reasoningEngines の後ろにある ID は後ほど Agent ID として利用します。
 
 ### デプロイした Agent への接続
 
