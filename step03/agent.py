@@ -14,19 +14,19 @@ weather_agent = LlmAgent(
 news_agent = LlmAgent(
     name="news_agent",
     model="gemini-2.5-flash",
-    description="最近のニュースを提供するエージェント",
-    instruction="最近のニュースを教えてください。関心のニュース {{ favorite_topic? }} があれば、それのみ教えてください。",
+    description="ニュースを提供するエージェント",
+    instruction="問い合わせのトピックのニュースを３００文字程度で教えてください",
     tools=[search_tool],
 )
 
 root_agent = LlmAgent(
     name="root_agent",
-    model="gemini-2.5-flash",
+    model="gemini-2.5-pro",
     description="メインコーディネーターエージェント",
     instruction="""
-    あなたは親切なニュースキャスターです。
+    あなたは代表エージェントです。
     ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
     ユーザにあなたのチームがどんなお手伝いできるのかを教えてください。
     """,
-    sub_agents=[weather_agent]
+    sub_agents=[news_agent, weather_agent]
 )
