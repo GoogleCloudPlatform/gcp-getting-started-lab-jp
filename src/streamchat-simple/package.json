@@ -1,0 +1,40 @@
+{
+  "name": "streamchat-simple",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "3.7.1",
+    "@types/node": "20.3.1",
+    "@types/react": "18.2.14",
+    "@types/react-dom": "18.2.6",
+    "autoprefixer": "10.4.14",
+    "axios": "1.6.0",
+    "clsx": "1.2.1",
+    "csstype": "3.1.2",
+    "edge-csrf": "1.0.4",
+    "encoding": "0.1.13",
+    "eslint": "8.43.0",
+    "eslint-config-next": "13.4.7",
+    "firebase": "^9.23.0",
+    "firebase-admin": "11.9.0",
+    "next": "13.5.6",
+    "postcss": "8.4.31",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-firebase-hooks": "5.1.1",
+    "react-hot-toast": "2.4.1",
+    "react-icons": "4.10.1",
+    "react-spinners": "0.13.8",
+    "request": "2.88.2",
+    "retry-request": "5.0.2",
+    "sharp": "0.32.6",
+    "tailwindcss": "3.3.2",
+    "typescript": "5.1.3"
+  }
+}
