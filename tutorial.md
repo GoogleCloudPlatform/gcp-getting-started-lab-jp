@@ -268,8 +268,7 @@ git switch darkmode
 
 ```bash
 gcloud builds submit ./src/streamchat-simple \
-  --tag us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
-  --machine-type e2-highcpu-8 && \
+  --tag us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat && \
 gcloud run deploy streamchat \
   --image us-central1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/chat-repo/streamchat \
   --service-account streamchat@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
