@@ -36,12 +36,10 @@ gcloud コマンドライン インターフェースは、Google Cloud でメ�
 **ヒント**: gcloud コマンドラインツールについての詳細は[こちら](https://cloud.google.com/sdk/gcloud?hl=ja)をご参照ください。
 
 ### **2. プロジェクト ID を設定する**
-`test-project` を実際のプロジェクト ID に更新して実行してください。
-
-⚠️ Cloud Shellの場合はこのステップをスキップしても大丈夫です。
+`your-project-id` を実際のプロジェクト ID に更新して実行してください。
 
 ```bash
-export GOOGLE_CLOUD_PROJECT=test-project
+export GOOGLE_CLOUD_PROJECT=your-project-id
 ```
 
 ### **3. gcloud のデフォルト設定**
