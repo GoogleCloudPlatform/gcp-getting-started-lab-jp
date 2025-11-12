@@ -59,17 +59,21 @@ Cafe-Agent-Gemini/
 1. 環境準備
 
    まず、Google Cloud コンソール右上の「**Cloud Shell をアクティブにする**」ボタンをクリックして、Cloud Shell を起動します。
+   もしくは、こちらのボタンをクリックします。
+   [![Open in Cloud Shell](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&cloudshell_git_branch=master&cloudshell_working_dir=minitap/ai_agent_menu/2_gemini_live_api&cloudshell_tutorial=README.md&cloudshell_open_in_editor=README.md)
    
-   表示されたターミナルで、以下のコマンドをコピー＆ペーストして実行し、ソースコードをダウンロードしてディレクトリに移動します。
-    ```bash
-    git clone https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp.git
-    cd "gcp-getting-started-lab-jp/minitap/AI Agent Menu Dev/2_Gemini Live API"
-    ```
    認証設定を行い、今回使用するプロジェクトを指定します。
     ```bash
     gcloud auth application-default login
     gcloud config set project YOUR_PROJECT_ID
     ```
+
+2. Python の仮装環境を準備
+
+   ```bash
+   uv sync
+   source .venv/bin/activate
+   ```
 
 3. アプリケーションのデプロイ
    
