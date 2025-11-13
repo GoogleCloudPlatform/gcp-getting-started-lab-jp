@@ -60,7 +60,8 @@ Cafe-Agent-Gemini/
 
    まず、Google Cloud コンソール右上の「**Cloud Shell をアクティブにする**」ボタンをクリックして、Cloud Shell を起動します。
    もしくは、こちらのボタンをクリックします。
-   [![Open in Cloud Shell](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&cloudshell_git_branch=master&cloudshell_working_dir=minitap/ai_agent_menu/2_gemini_live_api&cloudshell_tutorial=README.md&cloudshell_open_in_editor=README.md)
+   
+   [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp&cloudshell_git_branch=master&cloudshell_working_dir=minitap/ai_agent_menu/2_gemini_live_api&cloudshell_tutorial=README.md&cloudshell_open_in_editor=README.md)
    
    認証設定を行い、今回使用するプロジェクトを指定します。
     ```bash
@@ -68,14 +69,14 @@ Cafe-Agent-Gemini/
     gcloud config set project YOUR_PROJECT_ID
     ```
 
-2. Python の仮装環境を準備
+3. Python の仮装環境を準備
 
    ```bash
    uv sync
    source .venv/bin/activate
    ```
 
-3. アプリケーションのデプロイ
+4. アプリケーションのデプロイ
    
    以下のコマンドを実行して、デプロイ用のスクリプトに実行権限を与えます。
 
@@ -88,7 +89,7 @@ Cafe-Agent-Gemini/
    ```bash
    ./deploy.sh
    ```
-4. 完成形の体験
+5. 完成形の体験
    
    デプロイが完了すると、ターミナルに `Application URL: https://....run.app` が表示されます。
    
