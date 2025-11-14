@@ -125,7 +125,7 @@ if $DEPLOY_BACKEND; then
     --max-instances=10 \
     --concurrency=80 \
     --port=8081 \
-    --set-env-vars="GOOGLE_CLOUD_LOCATION=us-central1,VOICE_NAME=Puck,LANGUAGE=Japanese"
+    --set-env-vars="GOOGLE_CLOUD_LOCATION=us-central1,VOICE_NAME=Puck,LANGUAGE=Japanese, USE_ORDER_TOOL=True"
   
   if [ $? -eq 0 ]; then
     echo "Backend deployment successful!"

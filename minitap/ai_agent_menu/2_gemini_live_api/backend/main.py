@@ -241,7 +241,7 @@ class VoicecallBackend:
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
             name='starlight_cafe_agent',
-            model='gemini-live-2.5-flash',
+            model='gemini-live-2.5-flash-preview-native-audio-09-2025',
             description='Starlight Cafeの電話対応スタッフPatrickとして、お客様と親切で丁寧な音声対話を行うエージェント',
             instruction=instruction,  # システムプロンプトを適用
             generate_content_config=generate_content_config,
