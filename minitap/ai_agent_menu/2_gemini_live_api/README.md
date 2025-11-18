@@ -89,6 +89,18 @@ Cafe-Agent-Gemini/
    ```bash
    ./deploy.sh
    ```
+
+#### コードを見てみよう
+
+<walkthrough-editor-open-file filePath="./backend/system_instruction.py">backend/system_instruction.py</walkthrough-editor-open-file> を開いて、Agent に与えるシステム指示を確認しましょう。
+
+<walkthrough-editor-open-file filePath="./backend/main.py">backend/main.py</walkthrough-editor-open-file> を開いて、Agent の構造を確認しましょう。
+
+この二つのファイルが、AI の性格や知識を定義し、Google の Gemini Live API と通信する核となる処理を担当します。
+
+
+
+
 5. 完成形の体験
    
    デプロイが完了すると、ターミナルに `Application URL: https://....run.app` が表示されます。
@@ -124,7 +136,7 @@ Cafe-Agent-Gemini/
 
    1.　`./start_handson.sh` を実行しているターミナルで、`Ctrl+C` を押して一度サーバーを停止します。
     
-   2.　Cloud Shell のエディタで、ファイルツリーから `backend/system_instruction.py` ファイルを開きます。
+   2.　<walkthrough-editor-open-file filePath="./backend/system_instruction.py">ここをクリックして</walkthrough-editor-open-file>プロンプトの設定ファイルを開きます。
     
    3.　`SYSTEM_INSTRUCTION` や `VOICE_NAME` などを自由に編集してみましょう。
     
@@ -189,7 +201,7 @@ AI が会話内容を理解し、タスク（注文の要約）を自律的に�
 
 1. `./start_handson.sh` を実行しているターミナルで、`Ctrl+C` を押してサーバーを停止します。
 
-2. Cloud Shell のエディタで `start_handson.sh` ファイルを開きます。
+2. <walkthrough-editor-open-file filePath="./start_handson.sh">ここをクリックして</walkthrough-editor-open-file> スクリプトを編集します。
 
 3. スクリプトの 3 行目に、以下の 1 行を追加します。今はコメントアウトされているため、「＃」を削除してください。
     ```bash
