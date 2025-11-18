@@ -80,7 +80,7 @@ def update_tools_yaml(project_id):
 
 def update_notebook_config(project_id):
     """Notebook用の.envファイルを作成"""
-    env_file_path = "../.env"
+    env_file_path = ".env"
     with open(env_file_path, 'w', encoding='utf-8') as f:
         f.write(f"GOOGLE_CLOUD_PROJECT={project_id}\n")
     print(f"✅ {env_file_path} を作成し、Notebook用のプロジェクトIDを設定しました。")

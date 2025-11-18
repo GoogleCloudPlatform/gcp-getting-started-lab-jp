@@ -154,7 +154,7 @@ print(f"👁️ ビュー: {{VIEW_ID}}")
 '''
         
         # 設定ファイルの出力
-        with open("../bigquery_config.py", "w", encoding="utf-8") as f:
+        with open("bigquery_config.py", "w", encoding="utf-8") as f:
             f.write(setup_code)
         
         logger.info("📝 設定ファイル生成: bigquery_config.py")

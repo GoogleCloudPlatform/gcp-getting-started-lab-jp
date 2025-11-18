@@ -245,9 +245,7 @@ CMD ["toolbox", \\
           --set-secrets "/etc/secrets/tools.yaml={self.secret_name}:latest" \
           --allow-unauthenticated \
           --memory 2Gi \
-          --cpu 2 \
           --min-instances 1 \
-          --max-instances 10 \
           --timeout 300 \
           --port 8080
         """
