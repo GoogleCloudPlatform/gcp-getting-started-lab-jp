@@ -5,7 +5,7 @@ FROM us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
 
 # Cloud Run環境変数
 ENV PORT=8080
-ENV GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-02-a9e6c031e09c
+ENV GOOGLE_CLOUD_PROJECT=able-keep-309711
 
 # tools.yamlファイルパス（Secret Managerからマウント）
 ENV TOOLS_FILE=/etc/secrets/tools.yaml

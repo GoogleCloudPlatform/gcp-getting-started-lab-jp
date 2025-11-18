@@ -17,26 +17,26 @@
 - ✅ **リアルタイム分析**: 最新のトレンドデータによる洞察生成
 
 ### 1. 環境セットアップ
+Google Cloud認証
 ```bash
-# Google Cloud認証
 gcloud auth application-default login
 gcloud config set project YOUR_PROJECT_ID
 ```
 
 ### 2. 自動プロジェクトセットアップ
 
+プロジェクトIDの自動検出と設定
 ```bash
-# プロジェクトIDの自動検出と設定
 python setup/setup_project.py
-
-# BigQuery環境の準備
+```
+BigQuery環境の準備
+```bash
 python setup/bigquery_setup.py
 ```
 
 ### 3. MCP Toolbox デプロイ
-
+MCP Toolbox for DatabasesをCloud Runにデプロイ
 ```bash
-# MCP Toolbox for DatabasesをCloud Runにデプロイ
 python setup/deploy_toolbox.py
 ```
 

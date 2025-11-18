@@ -5,7 +5,7 @@
 sources:
   google-trends-bigquery:
     kind: bigquery
-    project: qwiklabs-gcp-02-a9e6c031e09c
+    project: able-keep-309711
     location: us
 
 # ツール定義

@@ -6,8 +6,8 @@ toolbox-core>=0.5.0
 
 # Google Cloud プラットフォーム
 google-cloud-aiplatform==1.97.0
-google-adk==1.4.1
-google-genai==1.20.0
+google-adk>=1.14.0
+google-genai>=1.20.0
 google-cloud-bigquery
 google-auth
 google-auth-oauthlib
