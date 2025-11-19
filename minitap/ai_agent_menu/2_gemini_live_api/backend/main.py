@@ -147,68 +147,87 @@ class VoicecallBackend:
         )
 
 
-    def get_order_tools(self):
+    def get_tech_support_tools(self):
         """
-        注文確認用のFunction Callingツールを返す
+        テクニカルサポート用のFunction Callingツールを返す
         """
-        async def summarize_and_confirm_order(items: list, total_price: int, pickup_time: str = "15分後") -> str:
+        async def search_knowledge_base(query: str) -> str:
             """
-            Tool to summarize and confirm customer's order
+            Search internal knowledge base for technical documents.
+            Use this tool when the user asks about specific procedures, error codes, or internal systems (VPN, Wi-Fi, etc.).
             
             Args:
-                items: List of ordered items [{"name": "商品名", "quantity": 1, "price": 550}]
-                total_price: Total price in yen
-                pickup_time: Estimated pickup time (default: "15分後")
+                query: Search keywords (e.g., "VPN error", "Wi-Fi password")
             
             Returns:
-                Confirmation message
+                Relevant document content or "No information found."
             """
-            import json
-            from datetime import datetime
+            logger.info(f"🔍 ナレッジベース検索: {query}")
+            kb_dir = os.path.join(os.path.dirname(__file__), 'knowledge_base')
             
-            # 注文確認データを準備
-            order_summary = {
-                "type": "order_confirmation",
-                "timestamp": datetime.now().isoformat(),
-                "items": items,
-                "total_price": total_price,
-                "pickup_time": pickup_time,
-                "status": "confirmation_needed"
-            }
+            results = []
+            try:
+                if not os.path.exists(kb_dir):
+                    return "Knowledge base directory not found."
+
+                for filename in os.listdir(kb_dir):
+                    if filename.endswith(".md") or filename.endswith(".txt"):
+                        filepath = os.path.join(kb_dir, filename)
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            # Keyword matching (AND condition)
+                            keywords = query.lower().split()
+                            target_text = (filename + " " + content).lower()
+                            
+                            if all(keyword in target_text for keyword in keywords):
+                                results.append(f"--- Document: {filename} ---\n{content}\n")
+                
+                if not results:
+                    return "No relevant documents found in the knowledge base."
+                
+                return "\n".join(results)[:5000] # Limit content length
+            except Exception as e:
+                logger.error(f"Search error: {e}")
+                return f"Error searching knowledge base: {str(e)}"
+
+        async def create_support_ticket(title: str, issue_summary: str, priority: str = "Normal") -> str:
+            """
+            Create a support ticket for the user.
+            Use this tool when the issue cannot be resolved immediately or the user requests a ticket.
             
-            # フロントエンドに注文確認データを送信
+            Args:
+                title: Ticket title.
+                issue_summary: Brief description of the issue.
+                priority: Priority level ("Low", "Normal", "High", "Urgent").
+            
+            Returns:
+                Ticket creation confirmation with Ticket ID.
+            """
+            ticket_id = f"TKT-{uuid.uuid4().hex[:6].upper()}"
+            logger.info(f"🎫 チケット作成: ID={ticket_id}, Title={title}, Summary={issue_summary}, Priority={priority}")
+            
+            # フロントエンドにチケット作成イベントを送信
             try:
                 if self.client_ws:
+                    import json
                     message = {
-                        "type": "order_confirmation",
-                        "data": order_summary
+                        "type": "ticket_created",
+                        "data": {
+                            "ticket_id": ticket_id,
+                            "title": title,
+                            "summary": issue_summary,
+                            "priority": priority
+                        }
                     }
-                    
-                    # 非同期でWebSocketメッセージを送信
                     await self.client_ws.send_text(json.dumps(message))
-                    
-                    logger.info(f"📋 注文確認データを送信: {order_summary}")
-                
             except Exception as e:
-                logger.error(f"❌ 注文確認データ送信エラー: {e}")
+                logger.error(f"❌ チケット作成イベント送信エラー: {e}")
             
-            # AIエージェントへの応答メッセージ
-            items_text = "\n".join([f"- {item['name']} x {item['quantity']}" for item in items])
-            confirmation_message = f"""
-かしこまりました。ご注文内容を復唱いたします。
-
-【ご注文内容】
-{items_text}
-
-合計: {total_price:,}円
-お受け取り予定: {pickup_time}
-
-上記の内容でよろしいでしょうか？
-            """.strip()
+            # In a real app, this would save to a database or call an API (Jira, ServiceNow, etc.)
             
-            return confirmation_message
+            return f"Ticket created successfully. Ticket ID: {ticket_id}. A support representative will contact you shortly."
         
-        return [summarize_and_confirm_order]
+        return [search_knowledge_base, create_support_ticket]
 
     async def create_runner(self):
         """
@@ -229,20 +248,16 @@ class VoicecallBackend:
         )
         
         # ★USE_TOOLフラグに応じて、プロンプトとToolを切り替える
-        if USE_TOOL:
-            logger.info("✅ Function Callingツールを有効にしてエージェントを作成します。")
-            instruction = SYSTEM_INSTRUCTION + SYSTEM_INSTRUCTION_TOOL_EXTENSION
-            tools = self.get_order_tools()
-        else:
-            logger.info("ℹ️ Function Callingツールを無効にしてエージェントを作成します。")
-            instruction = SYSTEM_INSTRUCTION
-            tools = []
+        # 今回は常にツールを有効にする（ハンズオン簡略化のため）
+        logger.info("✅ Function Callingツールを有効にしてエージェントを作成します。")
+        instruction = SYSTEM_INSTRUCTION + SYSTEM_INSTRUCTION_TOOL_EXTENSION
+        tools = self.get_tech_support_tools()
 
         # ===== AIエージェントの作成 =====
         voicecall_agent = LlmAgent(
-            name='starlight_cafe_agent',
+            name='tech_support_agent',
             model='gemini-live-2.5-flash-preview-native-audio-09-2025',
-            description='Starlight Cafeの電話対応スタッフPatrickとして、お客様と親切で丁寧な音声対話を行うエージェント',
+            description='テクニカルサポートのAlexとして、お客様と親切で丁寧な音声対話を行うエージェント',
             instruction=instruction,  # システムプロンプトを適用
             generate_content_config=generate_content_config,
             tools=tools,  # Function Callingツールを追加
@@ -333,7 +348,7 @@ class VoicecallBackend:
             try:
                 message = json.loads(message)
                 
-                # 音声メッセージの場合のみ処理
+                # 音声メッセージの場合
                 if message['type'] == 'audio':
                     # PCM形式の音声データかチェック
                     if not('mime_type' in message.keys() and
@@ -346,7 +361,27 @@ class VoicecallBackend:
                         Blob(data=decoded_data,
                              mime_type=f'audio/pcm;rate=16000')
                     )
-                    logger.debug("🎤 クライアントから音声データを受信")
+                    # logger.debug("🎤 クライアントから音声データを受信")
+
+                # 画像メッセージの場合
+                elif message['type'] == 'image':
+                    logger.info("🖼️ 画像データを受信")
+                    if 'data' in message:
+                        image_data = base64.b64decode(message['data'])
+                        mime_type = message.get('mime_type', 'image/jpeg')
+                        self.live_request_queue.send_realtime(
+                            Blob(data=image_data, mime_type=mime_type)
+                        )
+
+                # 動画メッセージの場合
+                elif message['type'] == 'video':
+                    logger.info("🎥 動画データを受信")
+                    if 'data' in message:
+                        video_data = base64.b64decode(message['data'])
+                        mime_type = message.get('mime_type', 'video/mp4')
+                        self.live_request_queue.send_realtime(
+                            Blob(data=video_data, mime_type=mime_type)
+                        )
                     
             except Exception as e:
                 logger.error(f"❌ メッセージ処理エラー: {e}")

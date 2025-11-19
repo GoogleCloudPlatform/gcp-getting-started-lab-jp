@@ -5,13 +5,13 @@ echo "$ACCOUNT_SUFFIX, welcome to Gemini Live API hands-on!"
 PROJECT_ID=$(gcloud config list --format "value(core.project)")
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 REGION=us-central1
-REPO_NAME=cafe-agent-repo
+REPO_NAME=support-agent-repo
 REPO=${REGION}-docker.pkg.dev/$PROJECT_ID/$REPO_NAME
 
-BACKEND_SERVICE_NAME="cafe-agent-backend-${ACCOUNT_SUFFIX}"
-FRONTEND_SERVICE_NAME="cafe-agent-app-${ACCOUNT_SUFFIX}"
-BACKEND_SA_NAME="cafe-agent-sa-${ACCOUNT_SUFFIX}"
-FRONTEND_SA_NAME="cafe-agent-app-sa-${ACCOUNT_SUFFIX}"
+BACKEND_SERVICE_NAME="support-agent-backend-${ACCOUNT_SUFFIX}"
+FRONTEND_SERVICE_NAME="support-agent-app-${ACCOUNT_SUFFIX}"
+BACKEND_SA_NAME="support-agent-sa-${ACCOUNT_SUFFIX}"
+FRONTEND_SA_NAME="support-agent-app-sa-${ACCOUNT_SUFFIX}"
 
 DEPLOY_BACKEND=true
 DEPLOY_FRONTEND=true
@@ -201,7 +201,7 @@ echo ""
 echo "=== Deployment Complete ==="
 echo "Application URL: $APP_URL"
 echo ""
-echo "🎉 Starlight Cafe is now deployed!"
+echo "🎉 The App is now deployed!"
 echo "Visit the URL above to start talking to Patrick!"
 echo ""
 echo "📋 Deployment Summary:"

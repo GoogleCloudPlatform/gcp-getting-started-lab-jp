@@ -68,4 +68,22 @@ export class VoicecallBackendAPI {
     };
     this.sendMessage(message);
   }
+
+  sendImageMessage(base64Image, mimeType = 'image/jpeg') {
+    const message = {
+      type: 'image',
+      data: base64Image,
+      mime_type: mimeType,
+    };
+    this.sendMessage(message);
+  }
+
+  sendVideoMessage(base64Video, mimeType = 'video/mp4') {
+    const message = {
+      type: 'video',
+      data: base64Video,
+      mime_type: mimeType,
+    };
+    this.sendMessage(message);
+  }
 }
