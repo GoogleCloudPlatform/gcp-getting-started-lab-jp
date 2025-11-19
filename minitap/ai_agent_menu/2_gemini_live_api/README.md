@@ -1,11 +1,13 @@
-# ☕ Starlight Cafe - Gemini Live API 音声対話
+# 🤖 テクニカルサポーターエージェント - Gemini Live API 音声対話
 
 ![Static Badge](https://img.shields.io/badge/Version-1.0-blue)
 ![Static Badge](https://img.shields.io/badge/Gemini-Live%20API-green?logo=googlegemini&logoColor=f5f5f5)
 
 ## **Google Cloud Gemini Live API を活用したリアルタイム音声対話ハンズオンアプリ**
 
-このアプリは、架空のカフェ「Starlight Cafe」の電話対応をシミュレーションする、AI エージェント「Patrick」との音声通話 Web アプリです。 Gemini Live API のリアルタイム音声対話能力と、Function Calling によるタスク実行能力を体験できます。
+このアプリは、テクニカルサポーターエージェントの電話対応をシミュレーションする、AI エージェントとの音声通話 Web アプリです。 Gemini Live API のリアルタイム音声対話能力と、Function Calling によるタスク実行能力を体験できます。
+
+画像や動画のアップロードをサポートしています。
 
 このアプリは[Etsuji さんの video-monitoring-handson](https://github.com/google-cloud-japan/sa-ml-workshop/tree/main/video-monitoring-handson) の sample02 アプリをベースに作成したものです。
 
