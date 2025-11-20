@@ -1,5 +1,5 @@
 flask[async]==2.3.2
-gunicorn==20.1.0
+gunicorn==23.0.0
 cloudevents==1.9.0
 pypdf==3.16.1
 google-cloud-aiplatform==1.30.1
