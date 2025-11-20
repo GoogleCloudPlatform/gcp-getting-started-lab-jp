@@ -80,7 +80,7 @@ export GOOGLE_CLOUD_LOCATION=us-central1
 今回利用する API の一覧です
 
 ```bash
-gcloud services enable aiplatform.googleapis.com
+gcloud services enable aiplatform.googleapis.com cloudtrace.googleapis.com logging.googleapis.com telemetry.googleapis.com
 ```
 
 ### Python の仮装環境を準備
@@ -375,17 +375,11 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 ### Agent のデプロイ
 
 1. ターミナルをもう一つ新しく開きます (ターミナルの開き方は Cloud Shell Editor 操作方法一覧をご参照ください)
-2. Staging Bucket の URL をラボの画面で確認してください。
+2. Staging Bucket の URL をラボの画面で確認して .env ファイルを更新してください。
 3. ターミナルの新しいセッションから以下のコマンドを入力し、デプロイを開始します
 
 ```bash
-uv run adk deploy agent_engine --project=${GOOGLE_CLOUD_PROJECT} --region=us-central1 --staging_bucket=gs://staging-${GOOGLE_CLOUD_PROJECT} step04/
-```
-
-例:
-
-```bash
-uv run adk deploy agent_engine --project=qwiklabs-gcp-03-a00597994e4f --region=us-central1 --staging_bucket=gs://staging-qwiklabs-gcp-03-a00597994e4f step04/
+uv run adk deploy agent_engine --env_file .env step04/
 ```
 
 **ステージングバケットの作成が必要な場合例**：
