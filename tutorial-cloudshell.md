@@ -371,6 +371,8 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 
 これまでローカルで開発した Agent を、Google Cloud の Agent Engine にデプロイして、本番環境で利用できるようにします。
 
+Step 05 では Agent Engine にデプロイした Agent を簡単なウェブアプリケーション (streamlit)から利用してみます。
+
 
 ### Agent のデプロイ
 
@@ -398,28 +400,20 @@ agent_engine = vertexai.agent_engines.get('projects/773452093761/locations/us-ce
 
 ### デプロイした Agent への接続
 
-<walkthrough-editor-open-file filePath="./step05/agent.py">step05/agent.py</walkthrough-editor-open-file> を開いて、デプロイした Agent ID を更新します：
+<walkthrough-editor-open-file filePath="./.env">.env</walkthrough-editor-open-file>を開いて
+AGENT_RESOURCE_NAMEをデプロイした Agent Resource Name に更新します。
 
-```python
-AGENT_ID = "YOUR_DEPLOYED_AGENT_ID"  # ← デプロイ時に表示された ID に変更
+例: 
+```dotenv
+AGENT_RESOURCE_NAME = "projects/1017461389635/locations/us-central1/reasoningEngines/7454666846088724480"  # ← デプロイ時に表示された ID に変更
 ```
 
-### Remote Agent Proxy パターン
+### ウェブアプリケーションを起動
 
-Step05 の agent.py は「Remote Agent Proxy」パターンを実装しています：
+以下のコマンドを実行してウェブアプリケーションを起動してください。
 
-```python
-async def call_remote_agent(
-    callback_context: CallbackContext, llm_request: LlmRequest
-) -> LlmResponse:
-    """デプロイされた Agent を呼び出すプロキシ関数"""
-    session = remote_agent.create_session(user_id='default_user')
-    events = remote_agent.stream_query(
-        user_id='default_user',
-        session_id=session['id'],
-        message=str(llm_request.contents)
-    )
-    # ...
+```shell
+uv run streamlit run step05/app.py
 ```
 
 ### デプロイした Agent のテスト

@@ -10,4 +10,5 @@ dependencies = [
     "google-genai>=1.51.0",
     "pydantic>=2.12.3",
     "python-dotenv>=1.1.1",
+    "streamlit>=1.32.0",
 ]
