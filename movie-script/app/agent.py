@@ -164,11 +164,52 @@ file_writer = Agent(
 )
 
 
+
+
+box_office_researcher = Agent(
+    name="box_office_researcher",
+    model=model_name,
+    description="Considers the box office potential of this film",
+    instruction="""
+    PLOT_OUTLINE:
+    {{ PLOT_OUTLINE? }}
+
+    INSTRUCTIONS:
+    Write a report on the box office potential of a movie like that described in PLOT_OUTLINE based on the reported box office performance of other recent films.
+    """,
+    output_key="box_office_report"
+)
+
+casting_agent = Agent(
+    name="casting_agent",
+    model=model_name,
+    description="Generates casting ideas for this film",
+    instruction="""
+    PLOT_OUTLINE:
+    {{ PLOT_OUTLINE? }}
+
+    INSTRUCTIONS:
+    Generate ideas for casting for the characters described in PLOT_OUTLINE
+    by suggesting actors who have received positive feedback from critics and/or
+    fans when they have played similar roles.
+    """,
+    output_key="casting_report"
+)
+
+preproduction_team = ParallelAgent(
+    name="preproduction_team",
+    sub_agents=[
+        box_office_researcher,
+        casting_agent
+    ]
+)
+
 film_concept_team = SequentialAgent(
     name="film_concept_team",
     description="Write a film plot outline and save it as a text file.",
     sub_agents=[
         writers_room,
+        preproduction_team,
         file_writer
     ],
 )
