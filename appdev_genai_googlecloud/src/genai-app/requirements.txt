@@ -1,7 +1,7 @@
 flask[async]==3.0.3
 gunicorn==22.0.0
 cloudevents==1.10.1
-pypdf==4.2.0
+pypdf==6.4.0
 google-cloud-aiplatform==1.49.0
 vertexai==1.49.0
 langchain==0.2.3
