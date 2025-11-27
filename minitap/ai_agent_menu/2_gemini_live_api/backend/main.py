@@ -257,7 +257,7 @@ class VoicecallBackend:
         voicecall_agent = LlmAgent(
             name='tech_support_agent',
             model='gemini-live-2.5-flash-preview-native-audio-09-2025',
-            description='テクニカルサポートのAlexとして、お客様と親切で丁寧な音声対話を行うエージェント',
+            description='テクニカルサポートのSarahとして、お客様と親切で丁寧な音声対話を行うエージェント',
             instruction=instruction,  # システムプロンプトを適用
             generate_content_config=generate_content_config,
             tools=tools,  # Function Callingツールを追加

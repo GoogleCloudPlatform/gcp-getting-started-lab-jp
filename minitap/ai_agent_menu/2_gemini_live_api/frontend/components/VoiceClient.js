@@ -11,17 +11,21 @@ import {
 const ToastNotification = ({ message, type, isVisible, onClose }) => {
   if (!isVisible) return null;
 
-  const bgColor = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500';
+  const bgGradient = type === 'error'
+    ? 'bg-gradient-to-r from-red-500 to-red-600'
+    : type === 'success'
+      ? 'bg-gradient-to-r from-green-500 to-emerald-600'
+      : 'bg-gradient-to-r from-blue-500 to-indigo-600';
   const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-slide-in">
-      <div className={`${bgColor} text-white px-6 py-4 rounded-lg shadow-2xl flex items-center space-x-3 max-w-md`}>
+    <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
+      <div className={`${bgGradient} text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 max-w-md transform hover:scale-105 transition-all duration-300`}>
         <span className="text-2xl">{icon}</span>
         <p className="text-sm font-medium flex-1">{message}</p>
         <button
           onClick={onClose}
-          className="text-white/80 hover:text-white transition-colors ml-2"
+          className="text-white/80 hover:text-white transition-colors ml-2 hover:rotate-90 transform duration-200"
         >
           ✕
         </button>
@@ -35,11 +39,39 @@ const LoadingIndicator = ({ message, isVisible }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-slate-700 font-medium">{message}</p>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-40 animate-fade-in">
+      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 flex flex-col items-center space-y-5 border border-white/20 transform animate-scale-in">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-600 absolute top-0 left-0"></div>
+        </div>
+        <p className="text-slate-700 font-semibold text-lg">{message}</p>
       </div>
+    </div>
+  );
+};
+
+// ===== Image Zoom Modal Component =====
+const ImageZoomModal = ({ imageUrl, onClose }) => {
+  if (!imageUrl) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/80 hover:text-white text-4xl font-light transition-colors hover:rotate-90 transform duration-300"
+      >
+        ✕
+      </button>
+      <img
+        src={imageUrl}
+        alt="Zoomed"
+        className="max-w-[90%] max-h-[90%] object-contain rounded-lg shadow-2xl animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      />
     </div>
   );
 };
@@ -154,6 +186,9 @@ export default function VoiceClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
 
+  // Image Zoom Modal State
+  const [zoomImage, setZoomImage] = useState(null);
+
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("info"); // "info" | "error" | "success"
@@ -215,7 +250,7 @@ export default function VoiceClient() {
     }
 
     const content = transcriptions.map(t => {
-      const speaker = t.type === 'input' ? 'User' : t.type === 'output' ? 'Alex' : 'System';
+      const speaker = t.type === 'input' ? 'User' : t.type === 'output' ? 'Sarah' : 'System';
       return `[${t.timestamp.toLocaleString()}] ${speaker}:\n${t.text}\n`;
     }).join('\n---\n\n');
 
@@ -267,7 +302,7 @@ export default function VoiceClient() {
     if (transcriptionsEndRef.current) {
       transcriptionsEndRef.current.scrollIntoView({
         behavior: 'smooth',
-        block: 'end'
+        block: 'nearest'
       });
     }
   }, [transcriptions]);
@@ -310,7 +345,7 @@ export default function VoiceClient() {
   const connectToBackend = async () => {
     setButtonDisabled(true);
     setIsLoading(true);
-    setLoadingMessage("Alexに接続中...");
+    setLoadingMessage("Sarahに接続中...");
 
     try {
       voicecallApi.connect();
@@ -327,7 +362,7 @@ export default function VoiceClient() {
 
       setButtonDisabled(false);
       setConnectionStatus("connected");
-      showToastNotification("Alexに接続しました", "success");
+      showToastNotification("Sarahに接続しました", "success");
     } catch (error) {
       console.error("接続エラー:", error);
       showToastNotification("接続エラーが発生しました", "error");
@@ -432,7 +467,9 @@ export default function VoiceClient() {
           id: generateUniqueId(),
           text: `[画像送信] ${file.name}`,
           timestamp: new Date(),
-          type: 'input'
+          type: 'input',
+          mediaType: 'image',
+          mediaData: e.target.result // data:image/jpeg;base64,...
         }]);
         showToastNotification("画像を送信しました", "success");
       } else if (mimeType.startsWith('video/')) {
@@ -442,7 +479,9 @@ export default function VoiceClient() {
           id: generateUniqueId(),
           text: `[動画送信] ${file.name}`,
           timestamp: new Date(),
-          type: 'input'
+          type: 'input',
+          mediaType: 'video',
+          mediaData: e.target.result // data:video/mp4;base64,...
         }]);
         showToastNotification("動画を送信しました", "success");
       } else {
@@ -471,14 +510,14 @@ export default function VoiceClient() {
   const renderConnectionButton = () => {
     if (buttonDisabled) {
       return (
-        <button className="w-full bg-gray-400 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 text-lg">
+        <button className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white font-bold py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 text-lg cursor-not-allowed">
           {(connectionStatus == "connected") ? "接続を切断中..." : "接続中..."}
         </button>
       );
     } else if (connectionStatus == "connected") {
       return (
         <button
-          className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 text-lg"
+          className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-lg"
           onClick={disconnectFromBackend}
         >
           🔌 サポート終了
@@ -487,10 +526,11 @@ export default function VoiceClient() {
     } else {
       return (
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 text-lg animate-pulse"
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-lg relative overflow-hidden group"
           onClick={connectToBackend}
         >
-          📞 サポートに連絡する
+          <span className="relative z-10">📞 サポートに連絡する</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
         </button>
       );
     }
@@ -503,7 +543,7 @@ export default function VoiceClient() {
     if (micStatus == "on") {
       return (
         <button
-          className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
+          className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("off")}
         >
           <span className="text-2xl animate-pulse">🔇</span>
@@ -513,7 +553,7 @@ export default function VoiceClient() {
     } else {
       return (
         <button
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("on")}
         >
           <span className="text-2xl">🔊</span>
@@ -525,15 +565,23 @@ export default function VoiceClient() {
 
   // 接続状態インジケーター
   const renderStatusIndicator = () => (
-    <div className="flex items-center justify-center space-x-3 mb-6 p-4 bg-white rounded-xl shadow-md border border-slate-200">
-      <div className={`w-4 h-4 rounded-full ${connectionStatus === "connected" ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}></div>
-      <span className="text-lg font-medium text-gray-700">
-        {connectionStatus === "connected" ? "📞 Alexと通話中" : "📞 未接続"}
+    <div className="flex items-center justify-center space-x-4 mb-6 p-5 bg-gradient-to-r from-white to-slate-50 rounded-2xl shadow-lg border border-slate-200/60">
+      <div className="relative">
+        <div className={`w-5 h-5 rounded-full ${connectionStatus === "connected" ? "bg-green-500" : "bg-gray-400"}`}></div>
+        {connectionStatus === "connected" && (
+          <>
+            <div className="absolute inset-0 w-5 h-5 rounded-full bg-green-400 animate-ping opacity-75"></div>
+            <div className="absolute inset-0 w-5 h-5 rounded-full bg-green-300 animate-pulse"></div>
+          </>
+        )}
+      </div>
+      <span className="text-lg font-semibold text-gray-800">
+        {connectionStatus === "connected" ? "📞 Sarahと通話中" : "📞 未接続"}
       </span>
       {connectionStatus === "connected" && (
-        <div className="flex items-center space-x-2 ml-4">
-          <div className={`w-3 h-3 rounded-full ${micStatus === "on" ? "bg-green-500" : "bg-red-500"}`}></div>
-          <span className="text-sm font-medium text-gray-600">
+        <div className="flex items-center space-x-2 ml-4 px-3 py-1 bg-white rounded-full shadow-sm">
+          <div className={`w-3 h-3 rounded-full ${micStatus === "on" ? "bg-green-500 animate-pulse" : "bg-red-500"}`}></div>
+          <span className="text-sm font-medium text-gray-700">
             {micStatus === "on" ? "🎤 マイクON" : "🔇 Muted"}
           </span>
         </div>
@@ -545,37 +593,73 @@ export default function VoiceClient() {
   const renderTranscriptions = () => {
     if (transcriptions.length === 0) {
       return (
-        <div className="text-center text-gray-500 text-sm py-8">
-          <div className="text-4xl mb-2">💬</div>
-          <p>会話履歴がここに表示されます</p>
+        <div className="text-center text-gray-400 text-sm py-12">
+          <div className="text-5xl mb-3 opacity-50">💬</div>
+          <p className="text-lg">会話履歴がここに表示されます</p>
         </div>
       );
     }
 
     return (
-      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-        {transcriptions.map((transcription, index) => (
-          <div key={transcription.id} className={`p-4 rounded-lg border-l-4 ${transcription.type === 'input' ? 'bg-slate-50 border-l-slate-400' :
-            transcription.type === 'output' ? 'bg-blue-50 border-l-blue-400' :
-              'bg-green-50 border-l-green-500' // system message
-            }`}>
-            <div className="flex justify-between items-start mb-2">
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${transcription.type === 'input' ? 'bg-slate-200 text-slate-700' :
-                transcription.type === 'output' ? 'bg-blue-200 text-blue-700' :
-                  'bg-green-200 text-green-800'
-                }`}>
-                {transcription.type === 'input' ? '👤 User' :
-                  transcription.type === 'output' ? '🤖 Alex' : '🎫 System'}
-              </span>
-              <span className="text-xs text-gray-500">
-                {transcription.timestamp.toLocaleTimeString()}
-              </span>
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+        {transcriptions.map((transcription, index) => {
+          const isUser = transcription.type === 'input';
+          const isSystem = transcription.type === 'system';
+
+          return (
+            <div
+              key={transcription.id}
+              className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+            >
+              <div className={`max-w-[80%] ${isUser
+                ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
+                : isSystem
+                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-900'
+                  : 'bg-white text-gray-800 shadow-md'
+                } rounded-2xl p-4 transform transition-all duration-200 hover:scale-[1.02]`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${isUser
+                    ? 'bg-white/20 text-white'
+                    : isSystem
+                      ? 'bg-green-200 text-green-900'
+                      : 'bg-blue-100 text-blue-700'
+                    }`}>
+                    {isUser ? '👤 User' : isSystem ? '🎫 System' : '🤖 Sarah'}
+                  </span>
+                  <span className={`text-xs ml-2 ${isUser ? 'text-white/80' : 'text-gray-500'
+                    }`}>
+                    {transcription.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className={`text-sm leading-relaxed prose prose-sm max-w-none ${isUser ? 'prose-invert' : ''
+                  }`}>
+                  <ReactMarkdown>{transcription.text}</ReactMarkdown>
+
+                  {/* メディアプレビュー */}
+                  {transcription.mediaData && (
+                    <div className="mt-3">
+                      {transcription.mediaType === 'image' ? (
+                        <img
+                          src={transcription.mediaData}
+                          alt="uploaded"
+                          className="max-w-xs rounded-lg shadow-md cursor-pointer hover:shadow-xl transition-shadow duration-200 border-2 border-white/20"
+                          onClick={() => setZoomImage(transcription.mediaData)}
+                        />
+                      ) : transcription.mediaType === 'video' ? (
+                        <video
+                          src={transcription.mediaData}
+                          controls
+                          className="max-w-xs rounded-lg shadow-md border-2 border-white/20"
+                        />
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-sm text-gray-800 leading-relaxed prose prose-sm max-w-none">
-              <ReactMarkdown>{transcription.text}</ReactMarkdown>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {/* 自動スクロール用の要素 */}
         <div ref={transcriptionsEndRef} />
       </div>
@@ -599,6 +683,12 @@ export default function VoiceClient() {
         isVisible={isLoading}
       />
 
+      {/* Image Zoom Modal */}
+      <ImageZoomModal
+        imageUrl={zoomImage}
+        onClose={() => setZoomImage(null)}
+      />
+
       {/* Ticket Modal */}
       <TicketModal
         isOpen={isModalOpen}
@@ -607,15 +697,15 @@ export default function VoiceClient() {
       />
 
       {/* ヘッダーセクション */}
-      <div className="text-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div className="flex items-center justify-center space-x-4 mb-2">
-          <div className="text-4xl">🛠️</div>
-          <h1 className="text-3xl font-bold text-slate-800">
+      <div className="text-center mb-8 bg-gradient-to-br from-white via-blue-50 to-purple-50 p-8 rounded-3xl shadow-xl border border-white/60">
+        <div className="flex items-center justify-center space-x-4 mb-3">
+          <div className="text-5xl">🛠️</div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
             テクニカルサポート AIエージェント
           </h1>
         </div>
-        <p className="text-slate-600 mb-4">
-          テクニカルサポート担当のAlexが、トラブルや操作方法についてサポートします。
+        <p className="text-slate-700 mb-5 text-lg">
+          テクニカルサポート担当のSarahが、トラブルや操作方法についてサポートします。
         </p>
 
         {/* 使い方ガイド */}
@@ -624,7 +714,7 @@ export default function VoiceClient() {
             <span className="mr-2">📖</span> デモの試し方
           </h3>
           <ul className="text-xs text-blue-900 space-y-1 list-disc list-inside">
-            <li><strong>接続:</strong> 「サポートに連絡する」ボタンを押してAlexと会話を開始します。</li>
+            <li><strong>接続:</strong> 「サポートに連絡する」ボタンを押してSarahと会話を開始します。</li>
             <li><strong>質問:</strong> 「VPNの接続方法を教えて」と聞いてみてください。例：エラーコード 1001</li>
             <li><strong>画像/動画:</strong> エラー画面のスクショなどをアップロードして「このエラーは何？」と聞いてみてください。</li>
             <li><strong>チケット:</strong> 「解決しないのでチケットを切って」と頼むと、サポートチケットが作成されます。</li>
@@ -667,16 +757,21 @@ export default function VoiceClient() {
               <span className="mr-2">📤</span> 資料の共有
             </h2>
             <p className="text-sm text-slate-600 mb-4">
-              エラー画面のスクリーンショットや、操作手順の動画をAlexに共有できます。
+              エラー画面のスクリーンショットや、操作手順の動画をSarahに共有できます。
             </p>
 
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 transition-colors relative">
               <input
                 type="file"
                 accept="image/*,video/*"
+                onClick={(e) => {
+                  if (connectionStatus !== "connected") {
+                    e.preventDefault();
+                    showToastNotification("先にエージェントに接続してください", "error");
+                  }
+                }}
                 onChange={handleFileUpload}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={connectionStatus !== "connected"}
               />
               <div className="text-4xl mb-2">📁</div>
               <p className="text-slate-600 font-medium">

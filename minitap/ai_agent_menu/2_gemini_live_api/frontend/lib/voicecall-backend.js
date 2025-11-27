@@ -5,7 +5,7 @@ export class VoicecallBackendAPI {
     this.onReceiveResponse = (message) => {  // callback setup later
       console.log("Default message received callback", message);
     };
-    this.onConnectionClosed = () => {};      // callback setup later
+    this.onConnectionClosed = () => { };      // callback setup later
 
     this.webSocket = null;
   }
