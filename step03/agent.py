@@ -24,8 +24,7 @@ root_agent = LlmAgent(
     model="gemini-2.5-pro",
     description="メインコーディネーターエージェント",
     instruction="""
-    あなたは代表エージェントです。
-    ユーザーの問い合わせに対して専門家のエージェントにタスクをアサインしてください。
+    あなたはチームを調整するメインエージェントです。
     ユーザにあなたのチームがどんなお手伝いできるのかを教えてください。
     """,
     sub_agents=[news_agent, weather_agent]
