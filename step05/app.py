@@ -5,7 +5,7 @@ Streamlitを使用したインタラクティブなチャットインターフ�
 
 import streamlit as st
 import vertexai
-from vertexai.preview import reasoning_engines
+from vertexai import reasoning_engines
 import os
 from dotenv import load_dotenv
 import uuid

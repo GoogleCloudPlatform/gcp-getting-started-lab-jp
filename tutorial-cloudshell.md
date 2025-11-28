@@ -151,7 +151,7 @@ Cloud Shell の Web Preview 機能を使ってアクセスします:
 
 ---
 
-## Step 02. 単体 Agentを作ってみよう！
+## Step 02. 単体エージェントを作ってみよう！
 
 ### ツール（関数）を持つ Agent の作成
 
@@ -214,7 +214,7 @@ ADK Web インターフェース (http://localhost:8080) で **step02** を選�
 
 ---
 
-## Step 03. Agentチームを作ってみよう！
+## Step 03. エージェントチームを作ってみよう！
 
 ### Multi-Agent アーキテクチャの理解
 
@@ -305,7 +305,7 @@ ADK Web インターフェースで **step03** を選択して、以下を試し
 
 ---
 
-## Step 04. Agent に記憶を持たせる
+## Step 04. エージェントに覚えてもらおう！
 
 ### 状態管理でよりスマートな Agent へ
 
@@ -365,7 +365,7 @@ ADK Web インターフェースで **step04** を選択して、以下の会話
 
 ---
 
-## Step 05. AgentEngine に Deploy
+## Step 05. Agent Engine にデプロイ
 
 ### プロダクション環境へのデプロイ
 
