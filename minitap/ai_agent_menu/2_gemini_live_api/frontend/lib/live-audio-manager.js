@@ -5,7 +5,7 @@ export class LiveAudioInputManager {
         this.pcmData = [];
         this.interval = null;
         this.stream = null;
-        this.onNewAudioRecordingChunk = (audioData) => {};
+        this.onNewAudioRecordingChunk = (audioData) => { };
     }
 
     async connectMicrophone() {
@@ -58,7 +58,7 @@ export class LiveAudioInputManager {
     disconnectMicrophone() {
         clearInterval(this.interval);
         if (this.stream) {
-            this.stream.getTracks().forEach(track => {track.stop()});
+            this.stream.getTracks().forEach(track => { track.stop() });
         }
         if (this.processor) {
             this.processor.disconnect();

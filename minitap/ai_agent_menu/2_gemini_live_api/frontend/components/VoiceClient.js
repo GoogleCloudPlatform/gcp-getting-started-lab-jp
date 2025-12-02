@@ -23,7 +23,7 @@ export default function VoiceClient() {
   // ===== 基本設定とユーティリティ =====
   const sleep = (time) => new Promise((r) => setTimeout(r, time));
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-  
+
   // ===== 状態管理 =====
   const [connectionStatus, setConnectionStatus] = useState("disconnected"); // "disconnected" | "connected"
   const [micStatus, setMicStatus] = useState("off"); // "on" | "off"
@@ -54,10 +54,10 @@ export default function VoiceClient() {
   useEffect(() => {
     _liveAudioInputManager.current = new LiveAudioInputManager();
     _liveAudioOutputManager.current = new LiveAudioOutputManager();
-  }, []); 
+  }, []);
 
   // ===== 音声入出力の制御 =====
-  
+
   // 接続状態変化時の音声入力制御
   useEffect(() => {
     if (connectionStatus == "connected") {
@@ -87,9 +87,9 @@ export default function VoiceClient() {
   // トランスクリプション追加時の自動スクロール
   useEffect(() => {
     if (transcriptionsEndRef.current) {
-      transcriptionsEndRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'end' 
+      transcriptionsEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
       });
     }
   }, [transcriptions]);
@@ -118,16 +118,16 @@ export default function VoiceClient() {
   // 音声データストリーミング停止
   const stopAudioStream = () => {
     if (!liveAudioInputManager) return;
-    liveAudioInputManager.onNewAudioRecordingChunk = () => {};
+    liveAudioInputManager.onNewAudioRecordingChunk = () => { };
   }
 
   // ===== WebSocket接続制御 =====
-  
+
   // バックエンドへの接続開始
   const connectToBackend = async () => {
     setButtonDisabled(true);
     voicecallApi.connect();
-    
+
     // 接続完了まで待機
     while (!voicecallApi.isConnected()) {
       await sleep(500);
@@ -136,7 +136,7 @@ export default function VoiceClient() {
         return;
       }
     }
-    
+
     setButtonDisabled(false);
     setConnectionStatus("connected");
   };
@@ -209,7 +209,7 @@ export default function VoiceClient() {
   ];
 
   // ===== UIコンポーネント生成 =====
-  
+
   // 接続ボタンの状態別表示
   const renderConnectionButton = () => {
     if (buttonDisabled) {
@@ -220,7 +220,7 @@ export default function VoiceClient() {
       );
     } else if (connectionStatus == "connected") {
       return (
-        <button 
+        <button
           className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 text-lg"
           onClick={disconnectFromBackend}
         >
@@ -229,7 +229,7 @@ export default function VoiceClient() {
       );
     } else {
       return (
-        <button 
+        <button
           className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105 text-lg animate-pulse"
           onClick={connectToBackend}
         >
@@ -245,7 +245,7 @@ export default function VoiceClient() {
 
     if (micStatus == "on") {
       return (
-        <button 
+        <button
           className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("off")}
         >
@@ -255,7 +255,7 @@ export default function VoiceClient() {
       );
     } else {
       return (
-        <button 
+        <button
           className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
           onClick={() => setMicStatus("on")}
         >
@@ -307,7 +307,7 @@ export default function VoiceClient() {
           <span className="text-3xl mr-3">📋</span>
           <h2 className="text-2xl font-bold text-amber-800">ご注文内容</h2>
         </div>
-        
+
         <div className="bg-white rounded-lg p-4 mb-4 shadow-inner">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
             <span className="text-xl mr-2">🍽️</span>
@@ -324,7 +324,7 @@ export default function VoiceClient() {
               </div>
             ))}
           </div>
-          
+
           <div className="border-t-2 border-amber-200 mt-4 pt-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold text-gray-800">合計金額</span>
@@ -362,17 +362,15 @@ export default function VoiceClient() {
     return (
       <div className="space-y-3 max-h-80 overflow-y-auto">
         {transcriptions.map((transcription, index) => (
-          <div key={transcription.id} className={`p-4 rounded-lg border-l-4 ${
-            transcription.type === 'input' 
-              ? 'bg-slate-50 border-l-slate-300' 
-              : 'bg-amber-50 border-l-amber-300'
-          }`}>
+          <div key={transcription.id} className={`p-4 rounded-lg border-l-4 ${transcription.type === 'input'
+            ? 'bg-slate-50 border-l-slate-300'
+            : 'bg-amber-50 border-l-amber-300'
+            }`}>
             <div className="flex justify-between items-start mb-2">
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                transcription.type === 'input' 
-                  ? 'bg-slate-200 text-slate-700' 
-                  : 'bg-amber-200 text-amber-700'
-              }`}>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${transcription.type === 'input'
+                ? 'bg-slate-200 text-slate-700'
+                : 'bg-amber-200 text-amber-700'
+                }`}>
                 {transcription.type === 'input' ? '🎤 音声入力' : '🗣️ 音声出力'}
               </span>
               <span className="text-xs text-gray-500">
@@ -407,12 +405,12 @@ export default function VoiceClient() {
 
       {/* メインコンテンツ - バランス調整された3カラムレイアウト */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* 左側: 通話コントロール + 質問ヒント */}
         <div className="space-y-6">
           {/* 通話ステータス */}
           {renderStatusIndicator()}
-          
+
           {/* 通話コントロールパネル */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-2xl font-bold text-amber-800 mb-6 text-center">通話コントロール</h2>
@@ -420,7 +418,7 @@ export default function VoiceClient() {
               {renderConnectionButton()}
               {connectionStatus === "connected" && renderMicrophoneButton()}
             </div>
-            
+
             {connectionStatus === "connected" && (
               <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <h3 className="text-sm font-semibold text-amber-800 mb-2">💡 操作方法</h3>
