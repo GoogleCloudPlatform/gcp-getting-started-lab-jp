@@ -93,10 +93,10 @@ source .venv/bin/activate
 ### 環境変数の設定
 
 `.env` ファイルにプロジェクト情報を設定します。
-以下をコピーして実行してください。
+<walkthrough-editor-open-file filePath="./.env">ここをクリック</walkthrough-editor-open-file>して、env フィアルを開いてください。
+.env ファイルの以下の項目記述してください。
 
 ```python
-cat > .env <<EOF
 GOOGLE_GENAI_USE_VERTEXAI=1
 GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
 GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
@@ -104,9 +104,7 @@ STAGING_BUCKET=gs://
 GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY=true
 OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true
 AGENT_RESOURCE_NAME=
-EOF
 ```
-<walkthrough-editor-open-file filePath="./.env">ここをクリック</walkthrough-editor-open-file>して、フィアルを確認してみてください。
 
 ## Step 01. Hello World Agent - 初めての Agent
 
