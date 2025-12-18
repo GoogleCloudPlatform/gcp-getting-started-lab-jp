@@ -451,6 +451,93 @@ gcloud logging read "resource.type=aiplatform.googleapis.com/Agent" --limit 50
 - Remote Agent Proxy パターンの実装
 - デプロイした Agent のテストとデバッグ
 
+## Step 06. Visual Agent Builder を試し
+
+### Visual Agent Builder とは？ 
+
+ADK には、コードを書かずに自然言語で Agent の構成を設計できる **Visual Agent Builder** 機能があります。これを使って、直感的に Agent を構築・編集してみましょう。
+
+### Visual Agent Builder を起動
+
+1. 左側メニューの `＋` ボタンをクリックします
+2. 新しいアプリの名前を入力します：`step06`
+3. `Create`をクリックします
+
+### 自然言語でエージェントを作成
+
+Visual Agent Builder の画面（キャンバス）が表示されます。
+1. 右側のチャット入力欄に以下の指示を出して、ベースとなる構造を作ってみましょう。
+
+```
+鉄道車両のトラブル対応を行うエージェントを作成してください。
+全てのモデルは `gemini-2.5-flash` を使用します。
+
+以下のアーキテクチャで、Sequentialと Parallelを組み合わせた高度なワークフローを構築してください。
+
+### 1. Root Agent (Project Manager)
+- ユーザーの窓口です。全体の進行管理を行います。
+- まず **Diagnosis Team Lead** に調査を依頼し、その結果を受け取ったら、次に **Report Specialist** に最終出力を依頼します（Sequential Flow）。
+
+### 2. Sub-Agent Group A: Diagnosis Team (Parallel Processing)
+**Diagnosis Team Lead** というエージェントを作成し、その下に以下の3つの専門サブエージェントを配置してください。Leadはこれらを並行して活用し、故障原因を特定します。
+  - **Manual Agent**: ツール `search_error_manual` を使用。仕様書を確認します。
+  - **History Agent**: ツール `search_ticket_history` を使用。過去事例を確認します。
+  - **Sensor Agent**: ツール `get_sensor_log` を使用。IoTログを確認します。
+
+### 3. Sub-Agent B: Report Specialist (Output Finalizer)
+- 診断チームの調査結果を入力として受け取ります。
+- ツール `save_maintenance_report` を使用して、規定のフォーマットで報告書を作成・保存します。
+- ユーザーには最終的なJSONデータのみを提示します。
+```
+
+2. 入力すると、ADK がアーキテクチャと生成されるファイル構成を提案してくれます。内容を確認し、問題なければチャット欄に `はい` または `Yes` と入力して確定させてください。 (_もし変更したい部分がありましたら、要求を述べます。_)
+3. 作成したエージェントノードをクリックし、それぞれの詳細を確認してください。
+4. 左下の`Save (保存)`ボタンをクッリクします。
+
+### エージェントとツールを確認、編集など
+
+Visual Agent Builder の強力な点は、会話を通して構成を変更できることです。以下のシナリオを順番に試してみてください。
+
+#### 1. エージェントの挙動を編集
+
+レポートの出力形式をチャットボットに指定してみましょう。
+
+```
+最終的なメンテナンスレポートをシステムに保存し、確定した内容を構造化データで返します。Report Specialist Agentのみが使用します。
+ニュースの出力フォーマットは、必ず以下のjson形式にしてください:
+
+report = { "status": "SAVED", "report_id": "RPT-2025-001", "content": { "error_code": error_code, "root_cause": root_cause, "action": action_plan, "parts": parts_required }}
+
+```
+
+#### 2. サブエージェントの詳細を確認
+
+メインエージェントとサブエージェントのノードをクリックし、それぞれの詳細を確認することができます。
+
+#### 3. ツールにダミーデータを追加する
+
+<walkthrough-editor-open-file filePath="./step06/tmp/step06/tools/manual_tool.py">step06/tools/manual_tool.py</walkthrough-editor-open-file> を開いて、以下の関数にダミーデータを追加しましょう：
+
+```python
+def search_error_manual(error_code: str) -> str: 
+    """指定されたエラーコードに基づいて技術マニュアルを検索します。""" 
+    manual_db = {"E-501": "ドア閉扉不良：ドアが完全に閉まりきらない状態を検知。主な原因は、異物挟まり、リミットスイッチ故障、またはドアエンジンの出力不足。", 
+                 "E-502": "ドア開扉異常：開放指令に対してドアが動作しない。電源系統または制御基板の通信タイムアウトの可能性。",
+                 "E-503": "戸挟み検知：閉扉動作中に定格以上の負荷を検知し、安全装置が作動して反転した。" }
+    return manual_db.get(error_code, "該当するエラーコードのマニュアルが見つかりませんでした。")
+```
+
+### 動作確認
+
+ADK Web インターフェース (http://localhost:8080) で **step06** を選択して、以下を試してください：
+
+"2025/12/18 15:00 車両 105 号車の第 3 ドア、閉まらない。エラーコード E-501。"
+
+### 🎯 このステップで学んだこと
+- Visual Agent Builder の基本操作
+- 自然言語（チャット）によるマルチエージェントの構築
+- 対話的なアーキテクチャの修正（編集・追加・削除）
+
 ## おめでとうございます!
 これで Tutorial が完了しました.
 
