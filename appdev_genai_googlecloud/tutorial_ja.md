@@ -208,7 +208,7 @@ Knowledge Drive は実際のファイルの保存に Cloud Storage を利用し�
 ### **1. バケットの作成**
 
 ```bash
-gsutil mb -l asia-northeast1 gs://$GOOGLE_CLOUD_PROJECT-knowledge-drive
+gcloud storage buckets create gs://$GOOGLE_CLOUD_PROJECT-knowledge-drive --location asia-northeast1
 ```
 
 ### **2. バケットへの CORS 設定**
@@ -479,7 +479,7 @@ gcloud run deploy genai-app \
 ### **1. 前準備**
 
 ```bash
-SERVICE_ACCOUNT="$(gsutil kms serviceaccount -p $GOOGLE_CLOUD_PROJECT)"
+SERVICE_ACCOUNT="$(gcloud storage service-agent --project $GOOGLE_CLOUD_PROJECT)"
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
   --member="serviceAccount:${SERVICE_ACCOUNT}" \
   --role='roles/pubsub.publisher'
