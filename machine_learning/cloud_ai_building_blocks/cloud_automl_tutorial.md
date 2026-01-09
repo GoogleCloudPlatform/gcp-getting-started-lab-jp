@@ -28,7 +28,7 @@ export BUCKET="${PROJECT_ID}-vcm"
 バケットを作成します。
 
 ```bash
-gsutil mb -p ${PROJECT_ID} -c regional -l us-central1 gs://${BUCKET}
+gcloud storage buckets create gs://${BUCKET} --project ${PROJECT_ID} --default-storage-class regional --location us-central1
 ```
 
 ## サンプル画像とラベルデータをコピーする
@@ -36,17 +36,17 @@ gsutil mb -p ${PROJECT_ID} -c regional -l us-central1 gs://${BUCKET}
 画像データをコピーします。このコマンドが完了するまでに 20 分程度かかります。
 
 ```bash
-gsutil -m cp -R gs://cloud-ml-data/img/flower_photos/ gs://${BUCKET}/img/
+gcloud storage cp --recursive gs://cloud-ml-data/img/flower_photos/ gs://${BUCKET}/img/
 ```
 
 ラベルデータを置換した結果をローカルファイルに保存します。
 
 ```bash
-gsutil cat gs://${BUCKET}/img/flower_photos/all_data.csv | sed "s:cloud-ml-data:${BUCKET}:" > all_data.csv
+gcloud storage cat gs://${BUCKET}/img/flower_photos/all_data.csv | sed "s:cloud-ml-data:${BUCKET}:" > all_data.csv
 ```
 
 前の手順で保存したファイルを Cloud AutoML Vision 用のバケットにアップロードします。
 
 ```bash
-gsutil cp all_data.csv gs://${BUCKET}/csv/
+gcloud storage cp all_data.csv gs://${BUCKET}/csv/
 ```
