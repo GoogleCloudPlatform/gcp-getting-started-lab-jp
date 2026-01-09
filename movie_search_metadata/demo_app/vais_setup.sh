@@ -23,13 +23,13 @@ fi
 
 echo ""
 echo "## Creating bucket..."
-gsutil mb -b on -l us-central1 $BUCKET
+gcloud storage buckets create --uniform-bucket-level-access --location us-central1 $BUCKET
 
 curl -OL https://github.com/GoogleCloudPlatform/gcp-getting-started-lab-jp/releases/download/v0.1.0/handson_resource.tgz
 tar -xvzf handson_resource.tgz
 pushd handson_resource
-  gsutil -m cp -r metadata $BUCKET/
-  gsutil -m cp -r mp4 $BUCKET/
+  gcloud storage cp --recursive metadata $BUCKET/
+  gcloud storage cp --recursive mp4 $BUCKET/
 popd
 
 python3 -m venv _setup_env
