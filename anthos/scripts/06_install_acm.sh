@@ -6,7 +6,7 @@ ARCHIVE_DIR="archives"
 REPO_URL="https://source.developers.google.com/p/${PROJECT_ID}/r/anthos-sample-deployment-config-repo"
 
 function download_operator_manifest {
-	gsutil cp gs://config-management-release/released/latest/config-management-operator.yaml ${ARCHIVE_DIR}/config-management-operator.yaml
+	gcloud storage cp gs://config-management-release/released/latest/config-management-operator.yaml ${ARCHIVE_DIR}/config-management-operator.yaml
 }
 
 function install_acm {
