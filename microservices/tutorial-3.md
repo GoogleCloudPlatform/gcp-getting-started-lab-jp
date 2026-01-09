@@ -118,7 +118,7 @@ gcloud builds submit . --config=cloudbuild.yaml
 次のコマンドを実行して、Cloud Shell のローカルディレクトリーにコピーします。
 
 ```
-gsutil -m cp -r gs://${PROJECT_ID}-web-frontend-example-assets/build ./web_frontend_example/
+gcloud storage cp --recursive gs://${PROJECT_ID}-web-frontend-example-assets/build ./web_frontend_example/
 ```
 
 Firebase hosting の管理操作を行うため、次のコマンドを実行して、Google アカウントの認証を行います。
