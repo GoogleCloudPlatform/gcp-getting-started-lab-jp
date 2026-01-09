@@ -8,5 +8,5 @@ tenacity==8.3.0
 langchain-community==0.2.16
 langchain-google-community==1.0.8
 langchain-text-splitters==0.2.4
-pypdf==4.3.1
+pypdf==6.6.0
 nanoid==2.0.0
