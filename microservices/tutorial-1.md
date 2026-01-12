@@ -566,7 +566,7 @@ Cloud Storage のバケットを作成して、ファイルがアップロード
 
 ```
 BUCKET=gs://${PROJECT_ID}-photostore
-gsutil mb -l us-central1 $BUCKET
+gcloud storage buckets create $BUCKET --location=us-central1
 ```
 
 *コマンドの出力例*
@@ -577,7 +577,7 @@ Creating gs://microservices-hands-on-photostore/...
 次のコマンドを実行して、トピック `storage-event` への通知設定を行います。ファイルのアップロードだけではなく、削除や更新などの際もイベントが発行されます。
 
 ```
-gsutil notification create -t storage-event -f json $BUCKET
+gcloud storage buckets notifications create $BUCKET --topic=storage-event --payload-format=json
 ```
 
 *コマンドの出力例*
@@ -589,7 +589,7 @@ Created notification config projects/_/buckets/microservices-hands-on-photostore
 
 ```
 curl -s -o /tmp/faulkner.jpg https://cloud.google.com/vision/docs/images/faulkner.jpg
-gsutil cp /tmp/faulkner.jpg $BUCKET/
+gcloud storage cp /tmp/faulkner.jpg $BUCKET/
 ```
 
 *コマンドの出力例*
