@@ -19,12 +19,6 @@ pandas
 numpy
 nest-asyncio
 
-# 可視化
-matplotlib
-seaborn
-plotly
-japanize-matplotlib
-
 # Jupyter Notebook サポート
 jupyter
 ipython
@@ -37,6 +31,3 @@ aiohttp
 pydantic
 python-dotenv
 structlog
-
-# セキュリティ
-cryptography
