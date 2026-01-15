@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 MCP Toolbox for Databases tools.yaml対応デプロイスクリプト
+Multi-User Support Enabled
 
 参考: GenAI Toolbox Deploy to Cloud Run
 - Secret Managerにtools.yamlを保存
@@ -16,6 +17,8 @@ import json
 import time
 import tempfile
 import argparse
+import hashlib
+import re
 
 # ログ設定
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -24,16 +27,55 @@ logger = logging.getLogger(__name__)
 class CustomToolboxDeployer:
     """MCP Toolbox デプロイヤー"""
     
-    def __init__(self, project_id, region="us-central1"):
+    def __init__(self, project_id, region="us-central1", suffix=None):
         if not project_id:
             raise ValueError("GCPプロジェクトIDが必要です。")
         self.project_id = project_id
         self.region = region
-        self.service_name = "mcp-trends-custom"
-        self.sa_name = "mcp-toolbox-sa"
-        self.sa_email = f"{self.sa_name}@{project_id}.iam.gserviceaccount.com"
-        self.secret_name = "mcp-toolbox-tools-yaml"
         
+        # サフィックス生成 (指定がない場合は自動生成)
+        self.suffix = suffix if suffix else self._generate_unique_suffix()
+        logger.info(f"🆔 使用するリソースサフィックス: {self.suffix}")
+
+        # リソース名設定 (サフィックス付与)
+        # Service Account max length: 30 chars. "mcp-sa-" is 7 chars. Usage: 7 + len(suffix). 
+        # Suffix is approx 15 chars (10 user + 1 + 4 hash). Total ~22-23 chars. Safe.
+        self.service_name = f"mcp-trends-{self.suffix}"
+        self.sa_name = f"mcp-sa-{self.suffix}"
+        self.sa_email = f"{self.sa_name}@{project_id}.iam.gserviceaccount.com"
+        self.secret_name = f"mcp-toolbox-tools-{self.suffix}"
+        
+    def _generate_unique_suffix(self):
+        """現在のユーザーIDに基づいてユニークなサフィックスを生成"""
+        try:
+            # gcloudから現在のアカウントを取得
+            cmd = "gcloud config get-value account"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            email = result.stdout.strip()
+            
+            if not email:
+                return "user-" + hashlib.sha1(str(time.time()).encode()).hexdigest()[:6]
+
+            # ユーザー名部分を抽出 (例: t.sakurai@test.jp -> t.sakurai)
+            username_part = email.split('@')[0]
+            
+            # サニタイズ: 英数字のみ残す (例: t.sakurai -> tsakurai)
+            sanitized_user = re.sub(r'[^a-z0-9]', '', username_part.lower())
+            
+            # ユーザー名部分を10文字に制限
+            short_user = sanitized_user[:10]
+            
+            # メールアドレス全体のハッシュ (衝突回避用)
+            email_hash = hashlib.sha1(email.encode()).hexdigest()[:4]
+            
+            # 結合 (例: tsakurai-a1b2)
+            suffix = f"{short_user}-{email_hash}"
+            return suffix
+            
+        except Exception as e:
+            logger.warning(f"サフィックス生成失敗: {e}")
+            return "user-" + hashlib.sha1(str(time.time()).encode()).hexdigest()[:6]
+
     def run_command(self, cmd, check=True, capture_output=True):
         """コマンド実行ヘルパー"""
         logger.info(f"実行中: {cmd}")
@@ -88,8 +130,8 @@ class CustomToolboxDeployer:
         try:
             self.run_command(f"""
             gcloud iam service-accounts create {self.sa_name} \
-              --display-name="MCP Toolbox Service Account" \
-              --description="Service account for MCP Toolbox for Databases"
+              --display-name="MCP Toolbox SA ({self.suffix})" \
+              --description="Service account for MCP Toolbox ({self.suffix})"
             """.strip())
             logger.info("✅ サービスアカウント作成完了")
         except:
@@ -115,8 +157,9 @@ class CustomToolboxDeployer:
                   --quiet
                 """.strip(), capture_output=False)
                 logger.info(f"✅ 権限付与完了: {role}")
-            except:
-                logger.warning(f"⚠️ 権限付与スキップ: {role}")
+            except Exception as e:
+                # 権限不足などで失敗しても続行する (ハンズオン環境などでの制限を考慮)
+                logger.warning(f"⚠️ 権限付与スキップ (権限不足の可能性): {role}. Error: {e}")
 
         # Cloud Buildのための権限設定
         logger.info("🔧 Cloud Buildのための権限設定")
@@ -185,12 +228,15 @@ class CustomToolboxDeployer:
             logger.info("✅ Secret Manager にtools.yaml保存完了")
             
             # サービスアカウントにアクセス権付与
-            self.run_command(f"""
-            gcloud secrets add-iam-policy-binding {self.secret_name} \
-              --member="serviceAccount:{self.sa_email}" \
-              --role="roles/secretmanager.secretAccessor"
-            """.strip())
-            logger.info("✅ サービスアカウントにシークレットアクセス権付与完了")
+            try:
+                self.run_command(f"""
+                gcloud secrets add-iam-policy-binding {self.secret_name} \
+                  --member="serviceAccount:{self.sa_email}" \
+                  --role="roles/secretmanager.secretAccessor"
+                """.strip())
+                logger.info("✅ サービスアカウントにシークレットアクセス権付与完了")
+            except Exception as e:
+                logger.warning(f"⚠️ シークレットアクセス権付与失敗: {e}")
             
         finally:
             # 一時ファイル削除
@@ -436,6 +482,10 @@ def main():
         default="us-central1",
         help="デプロイ先のリージョン"
     )
+    parser.add_argument(
+        "--suffix",
+        help="リソース名のサフィックス (指定しない場合はgcloudアカウントから自動生成)"
+    )
     
     args = parser.parse_args()
     
@@ -446,7 +496,7 @@ def main():
     logger.info(f"🚀 MCP Toolbox for Databases カスタムtools.yaml デプロイ開始 (Project: {args.project_id}, Region: {args.region})")
     
     try:
-        deployer = CustomToolboxDeployer(project_id=args.project_id, region=args.region)
+        deployer = CustomToolboxDeployer(project_id=args.project_id, region=args.region, suffix=args.suffix)
         config = deployer.deploy_complete_custom_system()
     except ValueError as e:
         logger.error(f"❌ 初期化エラー: {e}")

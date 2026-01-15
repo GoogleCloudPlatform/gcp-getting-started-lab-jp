@@ -42,11 +42,11 @@ tools:
       - name: days
         type: integer
         description: "Number of days to look back from current date"
-        default: 7
+        default: 28
       - name: limit
         type: integer
         description: "Maximum number of results to return"
-        default: 10
+        default: 30
     statement: |
       WITH RankedTerms AS (
         SELECT 

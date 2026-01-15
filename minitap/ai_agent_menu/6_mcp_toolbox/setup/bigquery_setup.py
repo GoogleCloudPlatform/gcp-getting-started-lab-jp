@@ -31,7 +31,7 @@ def setup_bigquery_for_minitap(project_id: str):
             MIN(week) as earliest_week,
             MAX(week) as latest_week
         FROM `bigquery-public-data.google_trends.international_top_terms`
-        WHERE week >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+        WHERE week >= DATE_SUB(CURRENT_DATE(), INTERVAL 28 DAY)
         """
         
         query_job = client.query(test_query)
@@ -40,7 +40,7 @@ def setup_bigquery_for_minitap(project_id: str):
         if results:
             result = results[0]
             logger.info("✅ パブリックデータセットアクセス成功!")
-            logger.info(f"   📊 直近7日間レコード数: {result.total_records}")
+            logger.info(f"   📊 直近28日間レコード数: {result.total_records}")
             logger.info(f"   🌍 対象国数: {result.countries}")
             logger.info(f"   📅 データ期間: {result.earliest_week} ～ {result.latest_week}")
         
