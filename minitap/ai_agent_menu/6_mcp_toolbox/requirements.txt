@@ -9,10 +9,6 @@ google-cloud-aiplatform==1.97.0
 google-adk>=1.14.0
 google-genai>=1.20.0
 google-cloud-bigquery
-google-auth
-google-auth-oauthlib
-google-auth-httplib2
-db-dtypes
 
 # データ処理・分析
 nest-asyncio
