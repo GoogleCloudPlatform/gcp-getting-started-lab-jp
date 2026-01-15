@@ -1,18 +1,18 @@
 # MCP Toolbox for Databases カスタムtools.yaml本番設定
 # Google Trends BigQuery専用ツール
-# 自動生成: 2025-11-18 14:03:41
+# 自動生成: 2026-01-15 11:04:21
 
 MCP_CONFIG = {
-    "server_url": "https://mcp-trends-custom-xykgdv6mua-uc.a.run.app",
-    "project_id": "able-keep-309711",
+    "server_url": "https://mcp-trends-linyuting-bdb4-babj3ulyaa-uc.a.run.app",
+    "project_id": "data-agent-bq",
     "region": "us-central1",
-    "service_name": "mcp-trends-custom",
-    "service_account": "mcp-toolbox-sa@able-keep-309711.iam.gserviceaccount.com",
+    "service_name": "mcp-trends-linyuting-bdb4",
+    "service_account": "mcp-sa-linyuting-bdb4@data-agent-bq.iam.gserviceaccount.com",
     "toolbox_type": "mcp-toolbox-for-databases-custom",
     "configuration": "custom-google-trends-tools",
-    "secret_name": "mcp-toolbox-tools-yaml",
+    "secret_name": "mcp-toolbox-tools-linyuting-bdb4",
     "status": "custom_production_ready",
-    "deployed_at": "2025-11-18 14:03:41",
+    "deployed_at": "2026-01-15 11:04:21",
     "tools": {
         "execute_sql_tool": "BigQueryクエリ実行",
         "bigquery_get_dataset_info": "BigQueryデータセット情報取得",

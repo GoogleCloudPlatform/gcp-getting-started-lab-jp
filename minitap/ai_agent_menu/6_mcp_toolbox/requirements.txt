@@ -12,6 +12,8 @@ google-cloud-bigquery
 
 # データ処理・分析
 nest-asyncio
+db-dtypes
+pandas
 
 # Jupyter Notebook サポート
 jupyter

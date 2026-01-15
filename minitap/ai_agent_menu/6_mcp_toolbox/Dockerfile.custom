@@ -5,7 +5,7 @@ FROM us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
 
 # Cloud Run環境変数
 ENV PORT=8080
-ENV GOOGLE_CLOUD_PROJECT=able-keep-309711
+ENV GOOGLE_CLOUD_PROJECT=data-agent-bq
 
 # tools.yamlファイルパス（Secret Managerからマウント）
 ENV TOOLS_FILE=/etc/secrets/tools.yaml
