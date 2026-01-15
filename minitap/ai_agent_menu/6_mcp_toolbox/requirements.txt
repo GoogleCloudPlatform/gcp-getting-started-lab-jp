@@ -15,8 +15,6 @@ google-auth-httplib2
 db-dtypes
 
 # データ処理・分析
-pandas
-numpy
 nest-asyncio
 
 # Jupyter Notebook サポート
