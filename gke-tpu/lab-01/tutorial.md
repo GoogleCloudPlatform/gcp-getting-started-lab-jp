@@ -29,10 +29,7 @@ qwiklabs-gcp-01-3c69409e1eb8
 
 `プロジェクト ID` は [ダッシュボード](https://console.cloud.google.com/home/dashboard) に進み、左上の **プロジェクト情報** から確認します。
 
-
 ## **環境準備**
-
-<walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
 
 最初に、ハンズオンを進めるための環境準備を行います。
 
@@ -79,7 +76,7 @@ gcloud services enable compute.googleapis.com tpu.googleapis.com
 
 **GUI**: [API ライブラリ](https://console.cloud.google.com/apis/library?project={{project-id}})
 
-## **4. gcloud コマンドラインツール設定 - リージョン、ゾーン**
+### **4. gcloud コマンドラインツール設定 - リージョン、ゾーン**
 
 コンピュートリソースを作成するデフォルトのリージョン、ゾーンを指定します。
 
@@ -92,12 +89,12 @@ gcloud config set compute/zone $ZONE
 
 ## **参考: Cloud Shell の接続が途切れてしまったときは?**
 
-一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` が切れてしまう、またはブラウザのリロードが必要になる場合があります。その場合は以下の対応を行い、チュートリアルを再開してください。
+この手順は今は実行不要です。一定時間非アクティブ状態になる、またはブラウザが固まってしまったなどで `Cloud Shell` が切れてしまう、またはブラウザのリロードが必要になる場合があります。その場合は以下の対応を行い、チュートリアルを再開してください。
 
 ### **1. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gcp-getting-started-lab-jp/tpu-sft
+cd ~/gcp-getting-started-lab-jp/gke-tpu/lab-01
 ```
 
 ### **2. チュートリアルを開く**
@@ -105,7 +102,9 @@ cd ~/gcp-getting-started-lab-jp/tpu-sft
 ```bash
 teachme tutorial.md
 ```
-### **3. google cloud への認証を設定する**
+※ `teachme: command not found` と表示される場合は `cloudshell launch-tutorial tutorial.md` を試してみてください。
+
+### **3. Google Cloud への認証を設定する**
 Cloud Shellのセッションが切れた場合、Google Cloudへの認証も切れていることがあります。その場合は、以下のコマンドを実行して再認証してください。
 
 ```Bash
@@ -123,7 +122,7 @@ Enable headless account? (Y/n)?
 
 その後、Cloud Shell に表示されたURLをコピーします。
 
-重要: **コピーした URL は現在作業しているシークレットウィンドウの新しいタブに貼り付けて開いてください。**
+**重要: コピーした URL は現在作業しているシークレットウィンドウの新しいタブに貼り付けて開いてください。**
 
 ブラウザで URL を開くと、Google アカウントのログイン画面が表示されます。
 
@@ -157,12 +156,10 @@ gcloud config set compute/zone $ZONE
 
 ### **1. TPU VM の作成と接続**
 
-<walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
-
 このラボでは、ハンズオンの基盤となる TPU を搭載した Compute Engine インスタンスを作成します。
 今回は TPU v5e を 8 枚搭載した仮想マシン インスタンスを 1 台作成し、そのインスタンスに SSH で接続した上で SFT (Supervised Fine-Tuning) を実施します。
 
-以下のコマンドを実行してモデル保存用のディスク、および TPU v5e を 8 枚搭載した仮想マシン インスタンスを作成します。クラスタ名は tpu-v5e-8 とします。
+以下のコマンドを実行してモデル保存用のディスク、および TPU v5e を 8 枚搭載した仮想マシン インスタンスを作成します。インスタンス名は `tpu-v5e-8` とします。
 
 ```bash
 gcloud compute disks create tpu-data-disk --size 256gb --type pd-balanced
@@ -172,11 +169,20 @@ gcloud compute tpus tpu-vm create tpu-v5e-8 \
     --version=v2-alpha-tpuv5-lite \
     --data-disk source=projects/$PROJECT_ID/zones/us-west1-c/disks/tpu-data-disk
 ```
+※ 仮想マシンがリソース不足などで起動エラーになる場合は `--spot` の引数を追加して再度インスタンス作成を試してみてください。
 
 仮想マシン インスタンスのデプロイには 5 分程度の時間がかかります。コマンドの実行が完了するまでしばらくお待ちください。コマンドが成功すると指定したリージョンに新しい TPU VM インスタンスが作成されます。インスタンスが作成されましたら以下のコマンドで SSH 接続します。
 
 ```bash
 gcloud compute tpus tpu-vm ssh tpu-v5e-8 --project $PROJECT_ID --zone us-west1-c
+```
+
+コマンドを実行すると以下のメッセージが表示される場合があります。表示されたら `Y` と入力し、その後の `Enter passphrase` は何も入力せずに Enter を 2 回押してください。
+
+```
+This tool needs to create the directory [/home/student_03_08cc7592871a/.ssh] before being able to generate SSH keys.
+
+Do you want to continue (Y/n)?  Y
 ```
 
 SSH 接続ができましたら以下のコマンドで事前に作成したディスクをフォーマットし、`/mnt/disks/checkpoints` ディレクトリにマウントします。
@@ -189,11 +195,10 @@ sudo chmod a+w /mnt/disks/checkpoints
 ```
 
 TPU を搭載した仮想マシン インスタンスへの SSH 接続、ディスクのマウントが完了したら、そのインスタンス上で言語モデルのファイン チューニングを実行します。
-なお、このラボでは Qwen3 4B モデルのファイン チューニングを行います。
 
-### **2. モデル (Qwen 3 4B) の準備**
+## **2. モデル (Qwen 3 4B) の準備**
 
-このハンズオンでは、Hugging Face Hub で公開されている Qwen/Qwen3-4B モデルをファイン チューニングします。まずはモデル名と Hugging Face アクセストークンを環境変数に設定します。
+このハンズオンでは、Hugging Face で公開されている Qwen/Qwen3-4B モデルをファイン チューニングします。まずはモデル名と Hugging Face アクセストークンを環境変数に設定します。
 
 HF_TOKEN の値は、ご自身の Hugging Face アクセス トークンに置き換えてください。アクセス トークンは Hugging Face のウェブサイトで取得できます（通常は Settings -> Access Tokens から）。講義スライドに利用方法が記載されていますので、そちらも参照してください。トークンは機密情報ですので、取り扱いには十分注意してください。
 
@@ -238,9 +243,11 @@ uv pip install -e .[tpu] --resolution=lowest
 bash tools/setup/setup_post_training_requirements.sh
 ```
 
-### **4. モデルのダウンロードと事前準備**
+## **4. モデルのダウンロードと事前準備**
 
-ここまでの手順で環境準備は完了です。続いては Qwen3 4B の事前学習済みモデルの下準備を行います。MaxText を利用して学習済みのモデルに対してファイン チューニングなどのさらなる学習を行う場合、モデルを MaxText が対応する形式で保存する必要があります。今回は Hugging Face からモデルをダウンロードして利用するため、モデルを Hugging Face 形式 (.safetensors) から MaxText が対応する形式に変換します。
+ここまでの手順で環境準備は完了です。続いては Qwen3 4B の事前学習済みモデルの下準備を行います。
+
+MaxText を利用して学習済みのモデルに対してファイン チューニングなどを行う場合、モデルを MaxText が対応する形式で保存する必要があります。今回は Hugging Face からモデルをダウンロードして利用するため、モデルを Hugging Face 形式 (.safetensors) から MaxText が対応する形式に変換します。
 
 以下のコマンドを実行し、MaxText で用意しているモデルの形式変換用のスクリプトを呼び出すことでモデルのダウンロードと形式変換を行います。
 
@@ -258,26 +265,26 @@ python3 -m MaxText.utils.ckpt_conversion.to_maxtext src/MaxText/configs/base.yml
     skip_jax_distributed_system=True
 ```
 
-以下のコマンドで `PRE_TRAINED_MODEL_CKPT_DIRECTORY` で指定したディレクトリ内の `0/items` ディレクトリに `_METADATA`、`d`、`manifest.ocdbt`、`ocdbt.process_0` が含まれることを確認します。
+以下のコマンドで `PRE_TRAINED_MODEL_CKPT_DIRECTORY` で指定したディレクトリ内の `0/items` ディレクトリに `_METADATA` と `manifest.ocdbt` のファイル、`d` と `ocdbt.process_0` のディレクトリが含まれることを確認します。
 
 ```
 ls ${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items
 ```
 
-### **5. Qwen3 4B モデルのファイン チューニング**
+## **5. Qwen3 4B モデルのファイン チューニング**
 
 いよいよ Qwen3 4B モデルをファインチューニングしましょう。今回は SFT (Supervised Fine-Tuning) と呼ばれる教師ありファイン チューニングを実施しますが、MaxText では SFT 用のスクリプトも用意されており、MaxText がサポートするモデルであればモデル名や学習後のモデルの出力先などを指定するのみで簡単にファイン チューニングが実施できます。
 
 まずは以下を実行し、モデルの Tokenizer やステップ数、SFT で利用する教師データ、前ステップでダウンロードした SFT の学習元になるモデルの保存先など、学習に必要なデータに関する環境変数を設定します。
 
 ```bash
-export PRE_TRAINED_MODEL_TOKENIZER='Qwen/Qwen3-4B'
-export STEPS=100
-export PER_DEVICE_BATCH_SIZE=1
-export DATASET_NAME=trl-lib/Capybara
-export TRAIN_SPLIT=train
-export TRAIN_DATA_COLUMNS=['messages']
-export PRE_TRAINED_MODEL_CKPT_PATH=${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items
+export PRE_TRAINED_MODEL_TOKENIZER='Qwen/Qwen3-4B' # Qwen/Qwen3-4B のトークナイザーの指定
+export STEPS=100 # 学習のステップ数
+export PER_DEVICE_BATCH_SIZE=1 # バッチサイズ
+export DATASET_NAME=llm-jp/Synthetic-JP-EN-Coding-Dataset # Hugging Face Datasets に保存されている教師データ名
+export TRAIN_SPLIT=train # 教師データのバージョン
+export TRAIN_DATA_COLUMNS=['messages'] # 学習に使う列名
+export PRE_TRAINED_MODEL_CKPT_PATH=${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items # 先の手順で保存したモデルの保存先
 ```
 
 念のため、以下のコマンドで環境変数が設定されているかを確認します。
@@ -338,13 +345,13 @@ python3 -m MaxText.utils.ckpt_conversion.to_huggingface src/MaxText/configs/base
 hf upload qwen3-4b-sft-test /mnt/disks/checkpoints/huggingface/qwen3-4b-sft --token $HF_TOKEN 
 ```
 
-### **6. ファイン チューニングしたモデルを利用した推論準備**
+## **6. ファイン チューニングしたモデルを利用した推論準備**
 
 ここまでで TPU を利用して Qwen3 4B モデルのファインチューニング (SFT) が完了したので最後にチューニングしたモデルを使った推論を実行してみます。プロダクション環境では GKE や Cloud Run、Vertex AI の利用がおすすめです。後続のラボでは GKE を利用した推論について扱いますがこのラボでは簡単のために CLI を利用した推論を行います。
 
 モデルの推論には推論用のエンジンが必要です。今回は多くの場面で広く利用されている [vLLM](https://docs.vllm.ai/en/latest/) を利用します。vLLM の TPU 対応も進んでおり、GPU で利用する場合と大きな手順の差異はなく簡単に利用できます。
 
-なお、推論にはモデルが稼働している vLLM サーバーの他にプロンプトを送るクライアントも必要になります。そのため、以下の手順は Shell を 2 つ利用します。
+**重要: 推論にはモデルが稼働している vLLM サーバーの他にプロンプトを送るクライアントも必要になります。そのため、以下の手順は Cloud Shell で 2 つのタブを利用します。**
 
 ここまで利用した Shell はサーバー用にそのまま利用し、`CLOUD SHELL ターミナル` と書かれたタブ表示部分の `+` を押下して新しいタブを開きます。(タブにはプロジェクト名が表示されているはずです)
 
@@ -362,7 +369,7 @@ cd maxtext
 source $VENV_NAME/bin/activate
 ```
 
-クライアント用の Shell の準備が完了したら今まで利用していたサーバー用の Shell に戻り、以下のコマンドを実行します。
+クライアント用の Cloud Shell タブの準備が完了したら今まで利用していたサーバー用の Cloud Shell タブに戻り、以下のコマンドを実行します。
 
 ``` bash
 vllm serve ${HF_USERNAME}/qwen3-4b-sft-test \
@@ -374,7 +381,7 @@ vllm serve ${HF_USERNAME}/qwen3-4b-sft-test \
 
 モデルを TPU 上にロードする必要があるので vLLM が Ready になるまで 5 分程度の時間がかかります。
 
-Ready になりましたら新しく開いた Shell に切り替え、以下のコマンドを実行してチャット用の CLI を実行します。
+Ready になりましたら新しく開いたクライアント用の Cloud Shell タブに切り替え、以下のコマンドを実行してチャット用の CLI を実行します。
 
 ``` bash
 export HF_USERNAME="[YOUR_HUGGINGFACE_USERNAME]"
@@ -383,6 +390,16 @@ vllm chat --model ${HF_USERNAME}/qwen3-4b-sft-test
 ```
 
 `>` が表示されて入力待ちになったらチャット画面が Ready なので `Hello` などを送信して挨拶をしてみてください。返答が返ってきたら無事に動作をしています。
+
+## **7. モデルの動作確認**
+
+最後に適切なファイン チューニングができているかを確認します。本来はチューニングに利用したデータセットの特性を鑑みてプロンプトを送信することが望ましいです。しかし、このラボでは計算資源や時間の都合で 100 ステップのみの学習を実行したのでデータセットに含まれるプロンプトに対して同じくデータセット内に含まれる回答が返るかを見てみます。
+
+今回利用した llm-jp/Synthetic-JP-EN-Coding-Dataset のデータセットの中身は Hugging Face の[こちら](https://huggingface.co/datasets/llm-jp/Synthetic-JP-EN-Coding-Dataset/viewer)よりご確認いただけます。
+
+任意のデータを選び、先の手順で起動したチャット画面に `"role": "user"` となっているデータの `content` 部分にかかれている文を入力ください。その返答として、`"role": "assistant"` となっているデータの `content` 内の内容に類似した文章が返ればチューニングは成功しています。
+
+なお、先の手順の `vllm serve` および `vllm chat` を `Qwen/Qwen3-4b` とすることでチューニング前のモデルも試せますので同じプロンプトを送信して結果を比較することもできます。(ただし、今回は 100 ステップのみの学習なので結果に差異が生じない場合もあります)
 
 ## **Configurations!**
 これで Cloud TPU によるモデルのファイン チューニング (SFT) 編の全てのラボが完了です。TPU を利用したモデルのファイン チューニングとその動作確認を体験いただきました。この経験が、皆さんの今後に役立つことを願っています！
