@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Agent Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Session Sidebar -->
+        <div class="session-sidebar">
+            <div class="sidebar-header">
+                <h3>Chat Sessions</h3>
+                <button id="new-session-btn" class="new-session-btn" title="New Session">+</button>
+            </div>
+            <div class="session-info-box">
+                <p><strong>Session:</strong> Conversation history (per chat)</p>
+                <p><strong>Memory Bank:</strong> Your preferences (shared across all sessions)</p>
+            </div>
+            <div class="session-list" id="session-list">
+                {% for sess in sessions %}
+                <div class="session-item {% if sess.id == current_session.id %}active{% endif %}"
+                     data-session-id="{{ sess.id }}">
+                    <span class="session-name">{{ sess.name }}</span>
+                    <span class="session-date">{{ sess.created_at[:10] }}</span>
+                    {% if sess.id != current_session.id %}
+                    <button class="delete-session-btn" data-session-id="{{ sess.id }}" title="Delete">&times;</button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="memory-status">
+                <div class="memory-indicator"></div>
+                <span>Memory Bank Connected</span>
+            </div>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window">
+            <div class="chat-header">
+                <h2>{{ current_session.name }} <span class="username-badge">({{ username }})</span></h2>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                {% for msg in current_session.messages %}
+                <div class="message {% if msg.role == 'user' %}user-message{% else %}agent-message{% endif %}">
+                    {% if msg.role == 'user' %}
+                    {{ msg.content }}
+                    {% else %}
+                    {{ msg.content|safe }}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="waiting-animation">
+                <div class="spinner"></div>
+                <span>The agent is thinking...</span>
+            </div>
+            <div class="chat-input">
+                <form id="chat-form">
+                    <input type="text" id="message-input" placeholder="Type your message...">
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="log-panel">
+            <h2>Server Log</h2>
+            <pre id="log-content"></pre>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

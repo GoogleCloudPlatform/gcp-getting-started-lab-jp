@@ -1,3 +1,0 @@
-Flask
-gunicorn
-google-cloud-datastore

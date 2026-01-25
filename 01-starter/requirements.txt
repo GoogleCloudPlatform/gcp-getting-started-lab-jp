@@ -1,0 +1,16 @@
+# Google ADK and AI Platform
+google-adk
+google-cloud-aiplatform
+
+# Environment and utilities
+python-dotenv
+
+# Google Maps API
+googlemaps
+
+# Web framework
+Flask
+Markdown
+
+# HTTP requests
+requests
