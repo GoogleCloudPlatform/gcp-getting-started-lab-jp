@@ -13,7 +13,7 @@
 
 ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID とプロジェクト番号を環境変数に設定し、以降の手順で利用できるようにします。 
 
-```
+```bash
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
@@ -80,7 +80,7 @@ gcloud services enable compute.googleapis.com tpu.googleapis.com
 
 コンピュートリソースを作成するデフォルトのリージョン、ゾーンを指定します。
 
-```
+```bash
 export REGION="us-west1"
 export ZONE="us-west1-c"
 gcloud config set compute/region $REGION
@@ -107,7 +107,7 @@ teachme tutorial.md
 ### **3. Google Cloud への認証を設定する**
 Cloud Shellのセッションが切れた場合、Google Cloudへの認証も切れていることがあります。その場合は、以下のコマンドを実行して再認証してください。
 
-```Bash
+```bash
 gcloud auth login
 ```
 コマンドを実行すると、Cloud Shell上にURLが表示され、続いて以下のようなメッセージが表示されることがあります。
@@ -135,7 +135,7 @@ Enable headless account? (Y/n)?
 
 ### **4. プロジェクト ID とプロジェクト番号を設定する**
 
-```
+```bash
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
@@ -202,7 +202,7 @@ TPU を搭載した仮想マシン インスタンスへの SSH 接続、ディ�
 
 HF_TOKEN の値は、ご自身の Hugging Face アクセス トークンに置き換えてください。アクセス トークンは Hugging Face のウェブサイトで取得できます（通常は Settings -> Access Tokens から）。講義スライドに利用方法が記載されていますので、そちらも参照してください。トークンは機密情報ですので、取り扱いには十分注意してください。
 
-```
+```bash
 export HF_MODEL_NAME="Qwen/Qwen3-4B"
 export HF_USERNAME="[YOUR_HUGGINGFACE_USERNAME]"
 export HF_TOKEN="[YOUR_HUGGINGFACE_ACCESS_TOKEN]" 
@@ -278,18 +278,28 @@ ls ${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items
 まずは以下を実行し、モデルの Tokenizer やステップ数、SFT で利用する教師データ、前ステップでダウンロードした SFT の学習元になるモデルの保存先など、学習に必要なデータに関する環境変数を設定します。
 
 ```bash
-export PRE_TRAINED_MODEL_TOKENIZER='Qwen/Qwen3-4B' # Qwen/Qwen3-4B のトークナイザーの指定
-export STEPS=100 # 学習のステップ数
-export PER_DEVICE_BATCH_SIZE=1 # バッチサイズ
-export DATASET_NAME=llm-jp/Synthetic-JP-EN-Coding-Dataset # Hugging Face Datasets に保存されている教師データ名
-export TRAIN_SPLIT=train # 教師データのバージョン
-export TRAIN_DATA_COLUMNS=['messages'] # 学習に使う列名
-export PRE_TRAINED_MODEL_CKPT_PATH=${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items # 先の手順で保存したモデルの保存先
+export PRE_TRAINED_MODEL_TOKENIZER='Qwen/Qwen3-4B'
+export STEPS=100
+export PER_DEVICE_BATCH_SIZE=1
+export DATASET_NAME=llm-jp/Synthetic-JP-EN-Coding-Dataset
+export TRAIN_SPLIT=train
+export TRAIN_DATA_COLUMNS=['messages']
+export PRE_TRAINED_MODEL_CKPT_PATH=${PRE_TRAINED_MODEL_CKPT_DIRECTORY}/0/items
 ```
+
+それぞれの変数の目的は以下のとおりです。
+
+- PRE_TRAINED_MODEL_TOKENIZER: Qwen/Qwen3-4B のトークナイザーの指定
+- STEPS: 学習のステップ数
+- PER_DEVICE_BATCH_SIZE: バッチサイズ
+- DATASET_NAME: Hugging Face Datasets に保存されている教師データ名
+- TRAIN_SPLIT: 教師データのバージョン
+- TRAIN_DATA_COLUMNS: 学習に使う列名
+- PRE_TRAINED_MODEL_CKPT_PATH: 先の手順で保存したモデルの保存先
 
 念のため、以下のコマンドで環境変数が設定されているかを確認します。
 
-```
+```bash
 cat << EOF
    PRE_TRAINED_MODEL:           ${PRE_TRAINED_MODEL}
    BASE_OUTPUT_DIRECTORY:       ${BASE_OUTPUT_DIRECTORY}
@@ -357,12 +367,14 @@ hf upload qwen3-4b-sft-test /mnt/disks/checkpoints/huggingface/qwen3-4b-sft --to
 
 新しく開いたタブで以下のコマンドを実行し、インスタンスに SSH をした上で Python の仮想環境をアクティベーションします。
 
+- VM インスタンスへの SSH 接続
 ``` bash
-# VM インスタンスへの SSH 接続
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 gcloud compute tpus tpu-vm ssh tpu-v5e-8 --project $PROJECT_ID --zone us-west1-c
+```
 
-# SSH 接続後に Python 仮想環境のアクティベーション
+- SSH 接続後に Python 仮想環境のアクティベーション
+```bash
 export VENV_NAME=maxtext_venv
 
 cd maxtext
@@ -381,7 +393,7 @@ vllm serve ${HF_USERNAME}/qwen3-4b-sft-test \
 
 モデルを TPU 上にロードする必要があるので vLLM が Ready になるまで 5 分程度の時間がかかります。
 
-Ready になりましたら新しく開いたクライアント用の Cloud Shell タブに切り替え、以下のコマンドを実行してチャット用の CLI を実行します。
+Ready になりましたら新しく開いたクライアント用の Cloud Shell タブに切り替え、以下のコマンドを実行してチャット用の CLI を実行します。`YOUR_HUGGINGFACE_USERNAME` はご自身のユーザー名に変更ください。
 
 ``` bash
 export HF_USERNAME="[YOUR_HUGGINGFACE_USERNAME]"
@@ -400,6 +412,14 @@ vllm chat --model ${HF_USERNAME}/qwen3-4b-sft-test
 任意のデータを選び、先の手順で起動したチャット画面に `"role": "user"` となっているデータの `content` 部分にかかれている文を入力ください。その返答として、`"role": "assistant"` となっているデータの `content` 内の内容に類似した文章が返ればチューニングは成功しています。
 
 なお、先の手順の `vllm serve` および `vllm chat` を `Qwen/Qwen3-4b` とすることでチューニング前のモデルも試せますので同じプロンプトを送信して結果を比較することもできます。(ただし、今回は 100 ステップのみの学習なので結果に差異が生じない場合もあります)
+
+### **8. クリーンアップ**
+
+以降のラボで GKE 内に TPU ノードを起動するため、Quota 消費などを鑑みて念のため最後にリソースをクリーンアップします。以下のコマンドを実行して TPU VM を削除します。
+
+```bash
+gcloud compute tpus tpu-vm delete tpu-v5e-8
+```
 
 ## **Configurations!**
 これで Cloud TPU によるモデルのファイン チューニング (SFT) 編の全てのラボが完了です。TPU を利用したモデルのファイン チューニングとその動作確認を体験いただきました。この経験が、皆さんの今後に役立つことを願っています！
