@@ -115,7 +115,7 @@ gcloud container clusters get-credentials ${CLUSTER_NAME} --region=${REGION}
 AI 推論専用の機能 (`InferencePool` 等) を有効化します。
 
 ```bash
-kubectl apply -f [https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.0.0/manifests.yaml](https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.0.0/manifests.yaml)
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.0.0/manifests.yaml
 ```
 
 ---
@@ -167,9 +167,9 @@ spec:
             cpu: "8"
             memory: "30Gi"
             ephemeral-storage: "50Gi"
-            [google.com/tpu](https://google.com/tpu): 4
+            google.com/tpu: 4
           limits:
-            [google.com/tpu](https://google.com/tpu): 4
+            google.com/tpu: 4
         ports:
         - containerPort: 8000
         env:
@@ -185,8 +185,8 @@ spec:
         - name: dshm
           mountPath: /dev/shm
       nodeSelector:
-        [cloud.google.com/gke-tpu-accelerator](https://cloud.google.com/gke-tpu-accelerator): tpu-v5-lite-podslice
-        [cloud.google.com/gke-tpu-topology](https://cloud.google.com/gke-tpu-topology): 2x2
+        cloud.google.com/gke-tpu-accelerator: tpu-v5-lite-podslice
+        cloud.google.com/gke-tpu-topology: 2x2
       volumes:
       - name: dshm
         emptyDir:
@@ -402,5 +402,5 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
 ---
 ## **Congratulations!**
 
-これで Lab 02 は完了です。
-ネットワーク構築から始まり、TPU 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。この基盤は、大規模な LLM サービスを安定して運用するための強力な武器となります。
+おめでとうございます。これで Lab 02 は完了です。
+TPU 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
