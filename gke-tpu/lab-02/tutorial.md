@@ -11,10 +11,9 @@
 単にモデルを動かすだけでなく、**GKE Inference Gateway** をフル活用し、「負荷に応じた賢い分散」や「リクエスト内容に基づくルーティング」、「可視化」までを一気通貫で実装します。
 
 **本ラボのゴール:**
-1.  **堅牢なネットワーク:** 推論専用 VPC とプロキシ専用サブネットの構築
-2.  **マルチ TPU 構成:** 複数の TPU ノード (v5e) へのスケールアウト
-3.  **高度なルーティング:** Inference Gateway による負荷分散と Body-Based Routing
-4.  **可視化:** Cloud Monitoring での推論メトリクス（KV キャッシュ等）の確認
+- **マルチ TPU 構成:** 複数の TPU ノード (v5e) へのスケールアウト
+- **高度なルーティング:** Inference Gateway による負荷分散と Body-Based Routing
+- **可視化:** Cloud Monitoring での推論メトリクス（KV キャッシュ等）の確認
 
 ---
 
@@ -97,13 +96,7 @@ gcloud container clusters create-auto ${CLUSTER_NAME} \
 クラスタが `RUNNING` になるまで待機します。
 
 ```bash
-echo "Provisioning..."
-sleep 60
-until gcloud container clusters describe ${CLUSTER_NAME} --region=${REGION} --format="value(status)" 2>/dev/null | grep -q "RUNNING"; do
-  echo -n "."
-  sleep 20
-done
-echo "Completed"
+echo "Provisioning..."; sleep 60; until gcloud container clusters describe ${CLUSTER_NAME} --region=${REGION} --format="value(status)" 2>/dev/null | grep -q "RUNNING"; do echo -n "."; sleep 20; done; echo "Completed"
 ```
 作成したクラスタを操作できるようにクレデンシャルの取得をします。
 ```bash
