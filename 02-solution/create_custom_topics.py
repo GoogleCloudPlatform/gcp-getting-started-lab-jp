@@ -14,6 +14,7 @@ import os
 import logging
 from dotenv import load_dotenv
 import vertexai
+from vertexai import types
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,8 +29,11 @@ AGENT_DISPLAY_NAME = "restaurant_agent_codelab"
 if not GOOGLE_CLOUD_PROJECT:
     raise ValueError("GOOGLE_CLOUD_PROJECT not found in environment variables.")
 
+CustomMemoryTopic = types.MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic
+CustomizationConfig = types.MemoryBankCustomizationConfig
+MemoryTopic = types.MemoryBankCustomizationConfigMemoryTopic
 
-def register_agent_engine():
+def create_agent_engine():
     """
     Registers an Agent Engine resource in Vertex AI to enable Sessions and Memory Bank.
     This does NOT deploy the agent code to the cloud - it just provisions the infrastructure.
@@ -41,6 +45,37 @@ def register_agent_engine():
 
     logger.info(f"Creating/Registering Agent Engine: {AGENT_DISPLAY_NAME}")
 
+    custom_topics = [
+        MemoryTopic(
+            custom_memory_topic=CustomMemoryTopic(
+                label="food_taste_preference",
+                description="""Extract the user's food taste and dietary preferences. 
+                Do not assume user likes certain food just because they are searching for it.
+                Extract only when they sound like they like the food.
+                
+                Example: "User like Japanese foods"
+                Example: "User prefers spicy food"
+                Example: "User is vegan"
+                Example: "User likes stakes"
+                """
+            )
+        ),
+
+        MemoryTopic(
+            custom_memory_topic=CustomMemoryTopic(
+                label="food_allergen_information",
+                description="""Extract the user's food allergen.
+                    Example: "User is allergic to peanuts."
+                    """,
+
+            )
+        )
+    ]
+
+    customization_config = CustomizationConfig(
+        memory_topics=custom_topics
+    )
+
     # Create Agent Engine with Memory Bank configuration
     agent_engine = client.agent_engines.create(
         config={
@@ -48,8 +83,10 @@ def register_agent_engine():
             "context_spec": {
                 "memory_bank_config": {
                     "generation_config": {
-                        "model": f"projects/{GOOGLE_CLOUD_PROJECT}/locations/{GOOGLE_CLOUD_LOCATION}/publishers/google/models/gemini-2.5-flash"
+                        "model": f"projects/{GOOGLE_CLOUD_PROJECT}/locations/{GOOGLE_CLOUD_LOCATION}/publishers/google/models/gemini-2.5-pro"
                     },
+
+                    "customization_configs": [customization_config]
                 }
             },
         }
@@ -57,14 +94,11 @@ def register_agent_engine():
 
     # Extract the ID and print instructions
     agent_engine_id = agent_engine.api_resource.name.split("/")[-1]
-    logger.info("Agent Engine Registered Successfully!")
+    logger.info("Agent Engine Created Successfully!")
     logger.info(f"Agent Engine ID: {agent_engine_id}")
-    logger.info("\nIMPORTANT: Add the following line to your .env file:")
-    logger.info(f"AGENT_ENGINE_ID={agent_engine_id}")
-
 
 if __name__ == "__main__":
     try:
-        register_agent_engine()
+        create_agent_engine()
     except Exception as e:
-        logger.error(f"Failed to register Agent Engine: {e}")
+        logger.error(f"Failed to create Agent Engine: {e}")

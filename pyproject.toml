@@ -1,0 +1,24 @@
+[project]
+name = "restaurant-agent"
+version = "0.1.0"
+description = "ADK Restaurant Agent with Session and Memory Bank"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk",
+    "google-cloud-aiplatform",
+    "python-dotenv",
+    "googlemaps",
+    "fastapi",
+    "uvicorn[standard]",
+    "jinja2",
+    "python-multipart",
+    "itsdangerous",
+    "markdown",
+    "requests",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff",
+]
