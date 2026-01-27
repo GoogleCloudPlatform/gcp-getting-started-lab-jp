@@ -7,7 +7,7 @@
 
 # Lab 02: GKE Inference Gateway による TPU 推論基盤の構築
 
-本ラボでは、Google Kubernetes Engine (GKE) 上で **本番運用を見据えた TPU 推論基盤** を構築します。
+本ラボでは、Google Kubernetes Engine (GKE) 上で **本番運用を見据えた AI 推論基盤** を構築します。
 単にモデルを動かすだけでなく、**GKE Inference Gateway** をフル活用し、「負荷に応じた賢い分散」や「リクエスト内容に基づくルーティング」、「可視化」までを一気通貫で実装します。
 
 **本ラボのゴール:**
@@ -20,19 +20,17 @@
 
 ## **1. プロジェクトとネットワークの準備**
 
-今回は、Inference Gateway (リージョン外部ロードバランサ) を利用するため、Envoy プロキシが配置される **「プロキシ専用サブネット」** が必須です。まずはネットワークと各種サブネットから作成します。
+GKE で利用する VPC 及びサブネットを作成していきます。また、今回は Inference Gateway (リージョン外部ロードバランサ) を利用するため、Envoy プロキシが配置される **「プロキシ専用サブネット」** の作成が含まれます。
 
 ### **1.1 環境変数の設定**
 
-```bash
+```
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
-
 gcloud config set project $PROJECT_ID
-export REGION="us-central1"
+export REGION="us-west1"
 export CLUSTER_NAME="inference-gateway-lab"
 export NETWORK_NAME="inference-vpc"
 export SUBNET_NAME="inference-subnet"
-
 echo "Project: $PROJECT_ID / Region: $REGION"
 ```
 
@@ -51,24 +49,23 @@ gcloud services enable \
 
 ### **1.3 VPC とサブネットの作成**
 
-GKE ノード用のサブネットに加え、**プロキシ専用サブネット (Proxy-only Subnet)** を作成します。
+GKE ノード用のサブネット及び、**プロキシ専用サブネット (Proxy-only Subnet)** を作成します。
 
 ```bash
-# VPC 作成
 gcloud compute networks create ${NETWORK_NAME} \
   --project=${PROJECT_ID} \
   --subnet-mode=custom \
   --bgp-routing-mode=regional
-
-# GKE用サブネット
+```
+```bash
 gcloud compute networks subnets create ${SUBNET_NAME} \
   --project=${PROJECT_ID} \
   --network=${NETWORK_NAME} \
   --region=${REGION} \
   --range=10.0.0.0/20 \
   --secondary-range=pods-range=10.4.0.0/14,services-range=10.8.0.0/20
-
-# プロキシ専用サブネット
+```
+```bash
 gcloud compute networks subnets create proxy-only-subnet \
   --project=${PROJECT_ID} \
   --purpose=REGIONAL_MANAGED_PROXY \
@@ -78,8 +75,6 @@ gcloud compute networks subnets create proxy-only-subnet \
   --range=10.129.0.0/23
 ```
 
----
-
 ## **2. GKE クラスタと機能拡張のインストール**
 
 ### **2.1 GKE Autopilot クラスタの作成**
@@ -87,7 +82,7 @@ gcloud compute networks subnets create proxy-only-subnet \
 TPU v5e を利用可能な Autopilot クラスタを作成します。
 
 ```bash
-echo "クラスタ作成中... (約 5〜10 分かかります)"
+echo "Provisioning..."
 gcloud container clusters create-auto ${CLUSTER_NAME} \
   --project=${PROJECT_ID} \
   --region=${REGION} \
@@ -102,15 +97,16 @@ gcloud container clusters create-auto ${CLUSTER_NAME} \
 クラスタが `RUNNING` になるまで待機します。
 
 ```bash
-echo "待機中..."
+echo "Provisioning..."
 sleep 60
 until gcloud container clusters describe ${CLUSTER_NAME} --region=${REGION} --format="value(status)" 2>/dev/null | grep -q "RUNNING"; do
   echo -n "."
   sleep 20
 done
-echo "クラスタ準備完了"
-
-# クレデンシャルの取得
+echo "Completed"
+```
+作成したクラスタを操作できるようにクレデンシャルの取得をします。
+```bash
 gcloud container clusters get-credentials ${CLUSTER_NAME} --region=${REGION}
 ```
 
@@ -126,8 +122,8 @@ kubectl apply -f [https://github.com/kubernetes-sigs/gateway-api-inference-exten
 
 ## **3. 推論モデル (vLLM / Qwen2.5) のデプロイ**
 
-今回はモデルとして `Qwen/Qwen2.5-14B-Instruct` を使用します。
-Inference Gateway の負荷分散効果を確認するため、 2つの Pod を起動します。
+今回は `Qwen/Qwen2.5-14B-Instruct` を使用します。
+Inference Gateway の負荷分散効果を確認するため、**2つの Pod (Replicas: 2)** で起動します。
 
 ### **3.1 モデルサーバーのデプロイ**
 
@@ -262,8 +258,7 @@ EOF
 Gateway の IP アドレスが払い出され、Pod が 2 つとも `Running` になるまで待ちます。
 
 ```bash
-# Gateway IPの取得待ち
-echo "Gateway IPの払い出しを待機中..."
+echo "Provisioning..."
 GATEWAY_IP=""
 while [ -z "$GATEWAY_IP" ]; do
   GATEWAY_IP=$(kubectl get gateway inference-gateway -o jsonpath='{.status.addresses[0].value}')
@@ -273,9 +268,9 @@ while [ -z "$GATEWAY_IP" ]; do
   fi
 done
 echo -e "\nGateway IP: $GATEWAY_IP"
-
-# Podの起動待ち (2/2)
-echo "Podの起動を待機中 (モデルDLとコンパイルに数分かかります)..."
+```
+Pod が Ready になるまで待ちます。
+```bash
 kubectl wait --for=condition=Ready pod -l app=vllm-qwen --timeout=900s
 ```
 
@@ -296,15 +291,15 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
 次に、**負荷分散の確認** です。10 回連続でリクエストを投げ、ログを確認します。Inference Gateway は、空いている TPU を優先して選びます。
 
 ```bash
-# 10回連続送信
 for i in {1..10}; do
   curl -s -o /dev/null -w "Request $i: HTTP %{http_code}\n" \
   -X POST http://${GATEWAY_IP}/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}' &
 done
-
-# 少し待ってログ確認（両方のPodからログが出るか確認）
+```
+少し待ってログを確認します（両方のPodからログが出るか確認）
+```bash
 sleep 5
 echo "--- Access Logs ---"
 kubectl logs -l app=vllm-qwen --tail=10
@@ -314,7 +309,6 @@ kubectl logs -l app=vllm-qwen --tail=10
 
 ## **5. 高度な機能: 可視化とボディベースルーティング**
 
-ここからは Inference Gateway の高度な機能をご紹介します。
 
 ### **5.1 メトリクスを確認する**
 
@@ -340,7 +334,7 @@ spec:
   default:
     logging:
       enabled: true
-      sampleRate: 1.0 # 検証用のため全件記録
+      sampleRate: 1.0
   targetRef:
     group: inference.networking.k8s.io
     kind: InferencePool
@@ -374,7 +368,6 @@ spec:
   - name: inference-gateway
   rules:
   - matches:
-    # 拡張機能がボディからモデル名を抽出し、このヘッダーにセットする
     - headers:
       - type: Exact
         name: X-Gateway-Model-Name
@@ -391,24 +384,23 @@ EOF
 ```
 
 **3. 検証:**
+正しいモデル名で検証します。
 ```bash
-# A: 正しいモデル名 -> 成功 (200 OK)
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Correct"}]}'
-
-# B: 間違ったモデル名 -> 失敗 (404 Not Found)
+```
+続いて誤ったモデル名で検証します。
+```bash
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "Wrong-Model", "messages": [{"role": "user", "content": "Wrong"}]}'
+  -d '{"model": "Owen/Owen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Wrong"}]}'
 ```
 
 これにより、Gateway がリクエストの中身（L7）を理解して制御していることが証明されます。
 
 ---
-
 ## **Congratulations!**
 
 これで Lab 02 は完了です。
-TPU 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
-この基盤は、大規模な LLM サービスを安定して運用するための強力な武器となります。
+ネットワーク構築から始まり、TPU 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。この基盤は、大規模な LLM サービスを安定して運用するための強力な武器となります。
