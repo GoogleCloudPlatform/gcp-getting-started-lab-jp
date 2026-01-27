@@ -22,8 +22,6 @@ from .tool import get_maps_mcp_toolset
 # -----------------------------------------------------------------------------
 
 # TODO: Initialize the Maps MCP toolset
-# Call get_maps_mcp_toolset() to get the toolset instance
-# REPLACE_MAPS_TOOLSET
 maps_toolset = None  # REPLACE THIS
 
 
@@ -59,25 +57,4 @@ async def save_session_to_memory(callback_context: CallbackContext) -> Optional[
 # - Uses GoogleSearchTool for web searches
 # - Uses the Maps MCP toolset for restaurant searches
 # - Saves sessions to memory using after_agent_callback
-#
-# It should:
-# - Have name="root_agent"
-# - Use model="gemini-2.5-pro"
-# - Have a description like "Personal concierge that likes to help user"
-# - Have instruction about being a thoughtful restaurant assistant
-# - Include tools=[PreloadMemoryTool(), GoogleSearchTool(bypass_multi_tools_limit=True), maps_toolset]
-# - Set output_key="searched_restaurant_info"
-# - Set after_agent_callback=save_session_to_memory
-#
-# Example instruction:
-# """
-# You are a thoughtful restaurant assistant with perfect memory - like a personal concierge.
-# PERSONALITY & APPROACH:
-# - Be warm, personal, and emotionally intelligent
-# - Make connections between past conversations and current requests
-# - Proactively mention what you remember about the user.
-#
-# Do not start search restaurant unless the user asks for it.
-# """
-
 root_agent = None  # REPLACE THIS WITH YOUR AGENT DEFINITION
