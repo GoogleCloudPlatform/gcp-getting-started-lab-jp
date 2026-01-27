@@ -17,11 +17,33 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from agent import root_agent
 from agent.runner import RestaurantRunner
 
+# Validate required environment variables
+REQUIRED_ENV_VARS = [
+    "GOOGLE_CLOUD_PROJECT",
+    "GOOGLE_CLOUD_LOCATION",
+    "GOOGLE_MAPS_API_KEY"
+]
+
+# AGENT_ENGINE_ID is optional for first run
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+if missing_vars:
+    raise RuntimeError(
+        f"Missing required environment variables: {', '.join(missing_vars)}. "
+        f"Please create a .env file or set these variables."
+    )
+
+# Warn if AGENT_ENGINE_ID is missing
+if not os.getenv("AGENT_ENGINE_ID"):
+    logging.warning("AGENT_ENGINE_ID not set - you must deploy an Agent Engine first")
+
 app = FastAPI(title="Restaurant Agent")
+# Trust proxy headers from Cloud Run (for HTTPS URL generation)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24).hex())
 
 # Mount static files and templates

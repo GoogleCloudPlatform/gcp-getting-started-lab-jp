@@ -1,0 +1,11 @@
+google-adk
+google-cloud-aiplatform
+python-dotenv
+googlemaps
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+itsdangerous
+markdown
+requests

@@ -7,6 +7,9 @@ Run the web server:
 Or with uvicorn directly:
     uvicorn web.app:app --reload --host 0.0.0.0 --port 8000
 """
+from dotenv import load_dotenv
+load_dotenv()  # Load .env before any other imports
+
 import uvicorn
 
 from web.app import app
