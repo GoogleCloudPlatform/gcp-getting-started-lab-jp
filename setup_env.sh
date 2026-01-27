@@ -16,12 +16,14 @@ echo "Enabling APIs.."
 gcloud services enable aiplatform.googleapis.com --project=$PROJECT_ID
 gcloud services enable apikeys.googleapis.com --project=$PROJECT_ID
 gcloud services enable mapstools.googleapis.com --project=$PROJECT_ID
-gcloud beta services enable mapstools.googleapis.com --project=PROJECT_ID
-gcloud beta services mcp enable mapstools.googleapis.com --project=PROJECT_ID
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com --project=$PROJECT_ID
+gcloud beta services enable mapstools.googleapis.com --project=$PROJECT_ID
+gcloud beta services mcp enable mapstools.googleapis.com --project=$PROJECT_ID
+
 
 ENABLED_SERVICES=$(gcloud beta services mcp list --enabled --format="value(name.basename())" --project=$PROJECT_ID)
 if [[ ! "$ENABLED_SERVICES" == *"mapstools.googleapis.com"* ]]; then
-    gcloud beta services mcp enable mapstools.googleapis.com --project=$PROJECT_ID
+    gcloud beta services mcp enable mapstools.googlseeapis.com --project=$PROJECT_ID
 fi
 if [[ ! "$ENABLED_SERVICES" == *"bigquery.googleapis.com"* ]]; then
     gcloud beta services mcp enable bigquery.googleapis.com --project=$PROJECT_ID
@@ -30,7 +32,7 @@ fi
 # Create API Key
 echo "Creating Google Maps Platform API Key..."
 
-API_KEY_NAME="bakery-demo-key-$(date +%s)"
+API_KEY_NAME="restaurant-demo-key-$(date +%s)"
 API_KEY_JSON=$(gcloud alpha services api-keys create --display-name="$API_KEY_NAME" \
     --api-target=service=mapstools.googleapis.com \
     --format=json 2>/dev/null)
@@ -51,16 +53,20 @@ if [ -z "$API_KEY" ]; then
     exit 1
 fi
 
-# Create .env file
+# Create .env files
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ENV_FILE="$SCRIPT_DIR/../adk_agent/mcp_bakery_app/.env"
-mkdir -p $(dirname "$ENV_FILE")
 
-cat <<EOF > "$ENV_FILE"
-GOOGLE_GENAI_USE_VERTEXAI=1
+ENV_CONTENT="GOOGLE_GENAI_USE_VERTEXAI=1
 GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-GOOGLE_CLOUD_LOCATION=global
+GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_MAPS_API_KEY=$API_KEY
-EOF
+AGENT_ENGINE_ID=\"\""
 
-echo "Successfully updated $ENV_FILE"
+# Create .env in root directory
+echo "$ENV_CONTENT" > "$SCRIPT_DIR/01-starter/.env"
+echo "Created $SCRIPT_DIR/01-starter/.env"
+
+echo "$ENV_CONTENT" > "$SCRIPT_DIR/02-starter/.env"
+echo "Created $SCRIPT_DIR/02-starter/.env"
+
+echo "Environment setup complete!"
