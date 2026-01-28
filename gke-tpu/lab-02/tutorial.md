@@ -37,6 +37,7 @@ echo "Project: $PROJECT_ID / Region: $REGION"
 
 ```bash
 gcloud services enable \
+  compute.googleapis.com \
   container.googleapis.com \
   cloudresourcemanager.googleapis.com \
   artifactregistry.googleapis.com \
@@ -134,7 +135,7 @@ metadata:
   labels:
     app: vllm-qwen
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: vllm-qwen
@@ -248,7 +249,7 @@ EOF
 
 ### **4.1 起動確認**
 
-Gateway の IP アドレスが払い出され、Pod が 2 つとも `Running` になるまで待ちます。
+Gateway の IP アドレスが払い出され、Pod が `Running` になるまで待ちます。
 
 ```bash
 echo "Provisioning..."
@@ -267,9 +268,9 @@ Pod が Ready になるまで待ちます。
 kubectl wait --for=condition=Ready pod -l app=vllm-qwen --timeout=900s
 ```
 
-### **4.2 推論テストと負荷分散**
+### **4.2 推論テスト**
 
-まずは単発のリクエストで疎通を確認します。
+リクエストで疎通を確認します。
 
 ```bash
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
@@ -344,7 +345,7 @@ EOF
 helm install body-based-router oci://registry.k8s.io/gateway-api-inference-extension/charts/body-based-routing \
     --set provider.name=gke \
     --set inferenceGateway.name=inference-gateway \
-    --version 0.1.0
+    --version v1.0.0
 ```
 
 **2. ルート定義の更新:**
