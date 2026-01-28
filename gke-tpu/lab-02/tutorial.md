@@ -160,9 +160,9 @@ spec:
             cpu: "8"
             memory: "30Gi"
             ephemeral-storage: "50Gi"
-            google.com/tpu: 4
+            "google.com/tpu": 4
           limits:
-            google.com/tpu: 4
+            "google.com/tpu": 4
         ports:
         - containerPort: 8000
         env:
@@ -178,8 +178,8 @@ spec:
         - name: dshm
           mountPath: /dev/shm
       nodeSelector:
-        cloud.google.com/gke-tpu-accelerator: tpu-v5-lite-podslice
-        cloud.google.com/gke-tpu-topology: 2x2
+        "cloud.google.com/gke-tpu-accelerator": tpu-v5-lite-podslice
+        "cloud.google.com/gke-tpu-topology": 2x2
       volumes:
       - name: dshm
         emptyDir:
