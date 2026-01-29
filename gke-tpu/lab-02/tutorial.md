@@ -172,16 +172,7 @@ kubectl apply -f gateway.yaml
 Gateway の IP アドレスが払い出され、Pod が `Running` になるまで待ちます。
 
 ```bash
-echo "Provisioning..."
-GATEWAY_IP=""
-while [ -z "$GATEWAY_IP" ]; do
-  GATEWAY_IP=$(kubectl get gateway inference-gateway -o jsonpath='{.status.addresses[0].value}')
-  if [ -z "$GATEWAY_IP" ]; then
-    echo -n "."
-    sleep 5
-  fi
-done
-echo -e "Gateway IP: $GATEWAY_IP"
+echo "Provisioning..."; GATEWAY_IP=""; while [ -z "$GATEWAY_IP" ]; do GATEWAY_IP=$(kubectl get gateway inference-gateway -o jsonpath='{.status.addresses[0].value}'); if [ -z "$GATEWAY_IP" ]; then echo -n "."; sleep 5; fi; done; echo -e "\nGateway IP: $GATEWAY_IP"
 ```
 以下のコマンドにより Pod が Ready になるまで待ちます。
 
