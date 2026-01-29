@@ -127,7 +127,7 @@ Inference Gateway の負荷分散効果を確認するため、**2つの Pod (Re
 * **起動コマンド** を明示的に指定 (コンテナの即時終了を防ぐため)
 
 ```bash
-cat <<EOF | kubectl apply -f -
+cat <<EOF > vllm.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -187,6 +187,11 @@ spec:
           medium: Memory
 EOF
 ```
+作成したマニフェストを適用します
+```bash
+kubectl apply -f vllm.yaml
+```
+
 
 モデルのダウンロードとコンパイルには数分かかります。その間にゲートウェイの設定を進めます。
 
