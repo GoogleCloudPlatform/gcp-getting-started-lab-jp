@@ -183,7 +183,7 @@ while [ -z "$GATEWAY_IP" ]; do
 done
 echo -e "\nGateway IP: $GATEWAY_IP"
 ```
-Pod が Ready になるまで待ちます。
+以下のコマンドで Pod が Ready になるまで待ちます。
 ```bash
 kubectl wait --for=condition=Ready pod -l app=vllm-qwen --timeout=900s
 ```
