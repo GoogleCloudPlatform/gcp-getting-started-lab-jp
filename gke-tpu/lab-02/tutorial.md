@@ -255,4 +255,4 @@ Inference Gateway によりリクエストが拒否されることを確認し�
 ## **Congratulations!**
 
 おめでとうございます。これで Lab 02 は完了です。
-TP 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
+TPU での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
