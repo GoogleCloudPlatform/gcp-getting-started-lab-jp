@@ -25,3 +25,4 @@ def get_maps_mcp_toolset():
     )
     print("MCP Toolset configured for Streamable HTTP connection.")
     return tools
+
