@@ -4,15 +4,17 @@ FastAPI Web Application for the Restaurant Agent.
 This file provides the web interface for users to interact with the agent.
 It handles user sessions, chat messages, and communicates with the ADK agent.
 """
+import json
 import logging
 import os
 import uuid
 from datetime import datetime
+from queue import Queue
 from typing import Optional
 
 import markdown
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -53,10 +55,55 @@ templates = Jinja2Templates(directory="web/templates")
 # In-memory storage for user sessions
 user_sessions: dict = {}
 
+# --- Logging Setup for SSE ---
+log_queue: Queue = Queue()
+
+
+class QueueHandler(logging.Handler):
+    def __init__(self, queue: Queue):
+        super().__init__()
+        self.queue = queue
+
+    def emit(self, record: logging.LogRecord):
+        self.queue.put(record)
+
+
+# Get the root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Create a handler that writes to the queue
+queue_handler = QueueHandler(log_queue)
+root_logger.addHandler(queue_handler)
+
 
 # Pydantic models for request/response
 class MessageRequest(BaseModel):
     message: str
+
+
+class SessionResponse(BaseModel):
+    session: dict
+    message: Optional[str] = None
+    messages: Optional[list] = None
+
+
+@app.get("/stream-logs")
+async def stream_logs():
+    """Stream server logs via SSE."""
+    def generate():
+        formatter = logging.Formatter('%(asctime)s')
+        while True:
+            record = log_queue.get()
+            log_entry = {
+                'timestamp': formatter.formatTime(record, "%Y-%m-%d %H:%M:%S"),
+                'name': record.name,
+                'levelname': record.levelname,
+                'message': record.getMessage()
+            }
+            yield f"data: {json.dumps(log_entry)}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -140,6 +187,46 @@ async def create_session(request: Request):
     }
 
 
+@app.post("/sessions/{session_id}/switch")
+async def switch_session(session_id: str, request: Request):
+    """Switch to a different chat session."""
+    username = request.session.get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if username not in user_sessions or session_id not in user_sessions[username]:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    request.session["current_chat_session"] = session_id
+    chat_session = user_sessions[username][session_id]
+
+    return {
+        "session": chat_session,
+        "messages": chat_session["messages"]
+    }
+
+
+@app.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, request: Request):
+    """Delete a chat session."""
+    username = request.session.get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if username not in user_sessions or session_id not in user_sessions[username]:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    del user_sessions[username][session_id]
+
+    if request.session.get("current_chat_session") == session_id:
+        if user_sessions[username]:
+            request.session["current_chat_session"] = list(user_sessions[username].keys())[0]
+        else:
+            request.session.pop("current_chat_session", None)
+
+    return {"message": "Session deleted"}
+
+
 @app.post("/ask")
 async def ask(request: Request, body: MessageRequest):
     """Handle user messages and get agent responses."""
@@ -160,19 +247,16 @@ async def ask(request: Request, body: MessageRequest):
     agent_session_id = chat_session.get("agent_session_id")
 
     try:
-        # TODO: Create RestaurantRunner instance
-        # The runner should be created with:
-        # - agent=root_agent
-        # - user_id=username
-        # - session_id=agent_session_id (can be None for new sessions)
-        # REPLACE_CREATE_RUNNER
-        runner = None  # REPLACE THIS
+        # Create RestaurantRunner instance
+        runner = RestaurantRunner(
+            agent=root_agent,
+            user_id=username,
+            session_id=agent_session_id
+        )
 
-        # TODO: Call the agent and get response
-        # Use await runner.call_agent(user_message) to get the response
-        # Convert the markdown response to HTML using markdown.markdown()
-        # REPLACE_CALL_AGENT
-        agent_response_html = "TODO: Implement agent call"  # REPLACE THIS
+        # Call the agent and get response
+        agent_response_md = await runner.call_agent(user_message)
+        agent_response_html = markdown.markdown(agent_response_md or "No response from agent.")
 
         # Store messages in our session
         chat_session["messages"].append({
@@ -187,7 +271,7 @@ async def ask(request: Request, body: MessageRequest):
         })
 
         # Update the agent session ID in our chat session
-        if runner and runner._session_id:
+        if runner._session_id:
             chat_session["agent_session_id"] = runner._session_id
 
         return {"agent_response": agent_response_html}

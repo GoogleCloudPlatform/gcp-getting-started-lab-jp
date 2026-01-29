@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_DEPLOY_LOCATION", "global")
+GOOGLE_CLOUD_DEPLOY_LOCATION = os.getenv("GOOGLE_CLOUD_DEPLOY_LOCATION", "us-central1")
 AGENT_DISPLAY_NAME = "restaurant_agent_codelab"
 
 if not GOOGLE_CLOUD_PROJECT:
@@ -35,9 +36,9 @@ def create_agent_engine():
     This does NOT deploy the agent code to the cloud - it just provisions the infrastructure.
     """
     # Initialize Vertex AI
-    logger.info(f"Initializing Vertex AI for project: {GOOGLE_CLOUD_PROJECT}, location: {GOOGLE_CLOUD_LOCATION}")
-    vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION)
-    client = vertexai.Client(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION)
+    logger.info(f"Initializing Vertex AI for project: {GOOGLE_CLOUD_PROJECT}, location: {GOOGLE_CLOUD_DEPLOY_LOCATION}")
+    vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_DEPLOY_LOCATION)
+    client = vertexai.Client(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_DEPLOY_LOCATION)
 
     logger.info(f"Creating/Registering Agent Engine: {AGENT_DISPLAY_NAME}")
 

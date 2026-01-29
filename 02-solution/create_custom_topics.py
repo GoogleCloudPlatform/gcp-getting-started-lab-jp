@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_DEPLOY_LOCATION", "us-central1")
 AGENT_DISPLAY_NAME = "restaurant_agent_codelab"
 
 if not GOOGLE_CLOUD_PROJECT:

@@ -21,6 +21,7 @@ load_dotenv()
 
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
+GOOGLE_CLOUD_DEPLOY_LOCATION = os.getenv("GOOGLE_CLOUD_DEPLOY_LOCATION")
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
 
@@ -41,7 +42,7 @@ class RestaurantRunner:
         # This handles short-term memory (conversation context)
         self.session_service = VertexAiSessionService(
             project=GOOGLE_CLOUD_PROJECT,
-            location=GOOGLE_CLOUD_LOCATION,
+            location=GOOGLE_CLOUD_DEPLOY_LOCATION,
             agent_engine_id=AGENT_ENGINE_ID,
         )
 
@@ -49,7 +50,7 @@ class RestaurantRunner:
         # This handles long-term memory (user preferences, facts)
         self.memory_service = VertexAiMemoryBankService(
             project=GOOGLE_CLOUD_PROJECT,
-            location=GOOGLE_CLOUD_LOCATION,
+            location=GOOGLE_CLOUD_DEPLOY_LOCATION,
             agent_engine_id=AGENT_ENGINE_ID,
         )
 
