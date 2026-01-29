@@ -185,24 +185,13 @@ kubectl wait --for=condition=Ready pod -l app=vllm-qwen --timeout=900s
 リクエストで疎通を確認します。
 
 ```bash
-curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen/Qwen2.5-14B-Instruct",
-    "messages": [{"role": "user", "content": "GKE Inference Gatewayについて一言で"}],
-    "max_tokens": 100
-  }'
+curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "GKE Inference Gatewayについて一言で"}], "max_tokens": 100}'
 ```
 
-次に、**負荷分散の確認** です。10 回連続でリクエストを投げ、ログを確認します。
+次に、10 回連続でリクエストを投げ、ログを確認します。
 
 ```bash
-for i in {1..10}; do
-  curl -s -o /dev/null -w "Request $i: HTTP %{http_code}\n" \
-  -X POST http://${GATEWAY_IP}/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}' &
-done
+for i in {1..10}; do curl -s -o /dev/null -w "Request $i: HTTP %{http_code}\n" -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}' & done; sleep 5; echo "--- Access Logs ---"; kubectl logs -l app=vllm-qwen --tail=10
 ```
 少し待ってログを確認します
 ```bash
@@ -263,15 +252,11 @@ kubectl apply -f body-routing.yaml
 **3. 検証:**
 正しいモデル名で検証します。
 ```bash
-curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Correct"}]}'
+curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Correct"}]}'
 ```
 続いて誤ったモデル名で検証します。
 ```bash
-curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "Owen/Owen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Wrong"}]}'
+curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Owen/Owen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Wrong"}]}'
 ```
 
 これにより、Gateway がリクエストの中身（L7）を理解して制御していることが証明されます。
