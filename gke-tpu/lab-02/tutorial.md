@@ -8,12 +8,11 @@
 # Lab 02: GKE Inference Gateway による TPU 推論基盤の構築
 
 本ラボでは、Google Kubernetes Engine (GKE) 上で **本番運用を見据えた AI 推論基盤** を構築します。
-単にモデルを動かすだけでなく、**GKE Inference Gateway** をフル活用し、「負荷に応じた賢い分散」や「リクエスト内容に基づくルーティング」、「可視化」までを一気通貫で実装します。
+単にモデルを動かすだけでなく、**GKE Inference Gateway** を活用し、高度なルーティングを実装します。
 
 **本ラボのゴール:**
 - **GKE TPU 構成:** GKE ノードで TPU を利用する
 - **高度なルーティング:** Inference Gateway による負荷分散と Body-Based Routing
-- **可視化:** Cloud Monitoring での推論メトリクス（KV キャッシュ等）の確認
 
 ---
 
@@ -49,7 +48,7 @@ gcloud services enable \
 
 ### **1.3 VPC とサブネットの作成**
 
-GKE ノード用のサブネット及び、**プロキシ専用サブネット (Proxy-only Subnet)** を作成します。
+GKE ノード用のサブネット及び、プロキシ専用サブネット (Proxy-only Subnet) を作成します。
 
 ```bash
 gcloud compute networks create ${NETWORK_NAME} \
@@ -79,7 +78,7 @@ gcloud compute networks subnets create proxy-only-subnet \
 
 ### **2.1 GKE Autopilot クラスタの作成**
 
-TPU v5e を利用可能な Autopilot クラスタを作成します。
+GKE Autopilot クラスタを作成します。Autopilot モードでは Pod のリクエストに応じたノードが用意される仕組みのため、現時点で TPU の定義が不要です。
 
 ```bash
 echo "Provisioning..."
@@ -117,7 +116,6 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api-inference-extens
 ## **3. 推論モデル (vLLM / Qwen2.5) のデプロイ**
 
 今回は `Qwen/Qwen2.5-14B-Instruct` を使用します。
-Inference Gateway の負荷分散効果を確認するため、**2つの Pod (Replicas: 2)** で起動します。
 
 ### **3.1 モデルサーバーのデプロイ**
 
@@ -126,7 +124,6 @@ Inference Gateway の負荷分散効果を確認するため、**2つの Pod (Re
 cat vllm.yaml
 ```
 * **TPU v5e (4チップ)** を指定
-* **Replicas: 2** (2つのノードで分散)
 * **起動コマンド** を明示的に指定 (コンテナの即時終了を防ぐため)
 
 作成したマニフェストを適用します
@@ -138,7 +135,7 @@ kubectl apply -f vllm.yaml
 
 ### **3.2 InferencePool の作成**
 
-`Service` の代わりに `InferencePool` を作成します。これにより、サイドカー (Endpoint Picker) が注入され、各 Pod の負荷状況（KV キャッシュ等）に基づいたルーティングが可能になります。
+`Service` の代わりに `InferencePool` を作成します。これにより、サイドカー (Endpoint Picker) が注入され、各 Pod の負荷状況（KV キャッシュ等）に基づいたルーティングなどが可能になります。
 
 ```bash
 helm install qwen-pool \
@@ -202,19 +199,10 @@ kubectl logs -l app=vllm-qwen --tail=10
 
 ---
 
-## **5. 高度な機能: 可視化とボディベースルーティング**
+## **5. 高度な機能: ボディベースルーティング**
 
 
-### **5.1 メトリクスを確認する**
-
-Inference Gateway は各 Pod から **KV Cache Utilization (メモリ使用率)** や **Queue Size (待ち行列数)** を収集し、それに基づいて一番空いている Pod にリクエストを送ります。
-
-**確認手順:**
-1.  Google Cloud Console で **[モニタリング] > [Metrics Explorer]** を開きます。
-2.  **[指標を選択]** をクリックし、`inference_pool_average_kv_cache_utilization` または `inference_pool_average_queue_size` を検索します。
-3.  グラフが表示されれば、Gateway が Pod の推論によるリソース負荷状況をリアルタイムで把握している証拠です。
-
-### **5.2 HTTP アクセスログの有効化**
+### **5.1 HTTP アクセスログの有効化**
 
 Gateway がどのバックエンドを選んだかを詳細に追跡するため、ログを有効化します。
 マニフェストを確認します。
@@ -226,7 +214,7 @@ cat backendpolicy.yaml
 kubectl apply -f  backendpolicy.yaml
 ```
 
-### **5.3 本文ベースルーティング (Body-Based Routing)**
+### **5.2 本文ベースルーティング (Body-Based Routing)**
 
 通常のロードバランサは URL パスしか見ませんが、Inference Gateway は **JSON ボディ内のモデル名** (`"model": "..."`) を見てルーティングできます。
 
@@ -259,10 +247,10 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: appli
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Owen/Owen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Wrong"}]}'
 ```
 
-これにより、Gateway がリクエストの中身（L7）を理解して制御していることが証明されます。
+これにより、Gateway がリクエストの中身（L7）を理解して制御していることが確認できます。
 
 ---
 ## **Congratulations!**
 
 おめでとうございます。これで Lab 02 は完了です。
-TPU 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
+TP 上での推論、そして Inference Gateway による高度なトラフィック制御までを実践しました。
