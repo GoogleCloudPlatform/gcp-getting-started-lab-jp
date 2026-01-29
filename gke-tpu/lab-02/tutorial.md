@@ -167,8 +167,8 @@ kubectl apply -f gateway.yaml
 ### **4.1 起動確認**
 
 Gateway の IP アドレスが払い出され、Pod が `Running` になるまで待ちます。
-
-```bash
+こちらのコマンドはクリップボードにコピーして、Cloud Shell 画面にペーストして実行してください。
+```
 echo "Provisioning..."; GATEWAY_IP=""; while [ -z "$GATEWAY_IP" ]; do GATEWAY_IP=$(kubectl get gateway inference-gateway -o jsonpath='{.status.addresses[0].value}'); if [ -z "$GATEWAY_IP" ]; then echo -n "."; sleep 5; fi; done; echo -e "\nGateway IP: $GATEWAY_IP"
 ```
 以下のコマンドにより Pod が Ready になるまで待ちます。
@@ -186,11 +186,13 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: appli
 ```
 
 次に、10 回連続でリクエストを投げ、ログを確認します。
-
-```bash
+こちらのコマンドはクリップボードにコピーして、Cloud Shell 画面にペーストして実行してください。
+```
 for i in {1..10}; do curl -s -o /dev/null -w "Request $i: HTTP %{http_code}\n" -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}' & done; sleep 5; echo "--- Access Logs ---"; kubectl logs -l app=vllm-qwen --tail=10
 ```
+
 少し待ってログを確認します
+こちらのコマンドはクリップボードにコピーして、Cloud Shell 画面にペーストして実行してください。
 ```bash
 sleep 5
 echo "--- Access Logs ---"
@@ -246,7 +248,7 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: appli
 ```bash
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Owen/Owen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Wrong"}]}'
 ```
-
+Inference Gateway によりリクエストが拒否されることを確認してください。
 これにより、Gateway がリクエストの中身（L7）を理解して制御していることが確認できます。
 
 ---
