@@ -11,7 +11,7 @@
 単にモデルを動かすだけでなく、**GKE Inference Gateway** をフル活用し、「負荷に応じた賢い分散」や「リクエスト内容に基づくルーティング」、「可視化」までを一気通貫で実装します。
 
 **本ラボのゴール:**
-- **マルチ TPU 構成:** 複数の TPU ノード (v5e) へのスケールアウト
+- **GKE TPU 構成:** GKE ノードで TPU を利用する
 - **高度なルーティング:** Inference Gateway による負荷分散と Body-Based Routing
 - **可視化:** Cloud Monitoring での推論メトリクス（KV キャッシュ等）の確認
 
@@ -19,12 +19,12 @@
 
 ## **1. プロジェクトとネットワークの準備**
 
-GKE で利用する VPC 及びサブネットを作成していきます。また、今回は Inference Gateway (リージョン外部ロードバランサ) を利用するため、Envoy プロキシが配置される **「プロキシ専用サブネット」** の作成が含まれます。
+GKE で利用する VPC 及びサブネットを作成していきます。また、今回は Inference Gateway (リージョン外部ロードバランサ) を利用するため、Envoy プロキシが配置されるプロキシ専用サブネットの作成が含まれます。
 
 ### **1.1 環境変数の設定**
 
 ```
-export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
+export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 gcloud config set project $PROJECT_ID
 export REGION="us-west1"
 export CLUSTER_NAME="inference-gateway-lab"
