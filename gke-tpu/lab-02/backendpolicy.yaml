@@ -1,0 +1,14 @@
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: logging-backend-policy
+  namespace: default
+spec:
+  default:
+    logging:
+      enabled: true
+      sampleRate: 1.0
+  targetRef:
+    group: inference.networking.k8s.io
+    kind: InferencePool
+    name: qwen-pool

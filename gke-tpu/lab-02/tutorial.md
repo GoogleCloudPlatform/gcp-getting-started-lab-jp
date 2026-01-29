@@ -121,77 +121,18 @@ Inference Gateway の負荷分散効果を確認するため、**2つの Pod (Re
 
 ### **3.1 モデルサーバーのデプロイ**
 
-以下のマニフェストを適用します。
+事前に用意されているマニフェストを表示して確認します。
+```bash
+cat vllm.yaml
+```
 * **TPU v5e (4チップ)** を指定
 * **Replicas: 2** (2つのノードで分散)
 * **起動コマンド** を明示的に指定 (コンテナの即時終了を防ぐため)
 
-```bash
-cat <<EOF > vllm.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vllm-qwen
-  labels:
-    app: vllm-qwen
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: vllm-qwen
-  template:
-    metadata:
-      labels:
-        app: vllm-qwen
-    spec:
-      containers:
-      - name: inference-server
-        image: vllm/vllm-tpu:latest
-        command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
-        args:
-        - "--model=Qwen/Qwen2.5-14B-Instruct"
-        - "--tensor-parallel-size=4"
-        - "--max-model-len=4096"
-        - "--gpu-memory-utilization=0.95"
-        - "--trust-remote-code"
-        - "--disable-log-stats"
-        - "--port=8000"
-        resources:
-          requests:
-            cpu: "8"
-            memory: "30Gi"
-            ephemeral-storage: "50Gi"
-            "google.com/tpu": 4
-          limits:
-            "google.com/tpu": 4
-        ports:
-        - containerPort: 8000
-        env:
-        - name: PJRT_DEVICE
-          value: "TPU"
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        volumeMounts:
-        - name: dshm
-          mountPath: /dev/shm
-      nodeSelector:
-        "cloud.google.com/gke-tpu-accelerator": tpu-v5-lite-podslice
-        "cloud.google.com/gke-tpu-topology": 2x2
-      volumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-EOF
-```
 作成したマニフェストを適用します
 ```bash
 kubectl apply -f vllm.yaml
 ```
-
 
 モデルのダウンロードとコンパイルには数分かかります。その間にゲートウェイの設定を進めます。
 
@@ -212,45 +153,19 @@ helm install qwen-pool \
 
 ### **3.3 Gateway と HTTPRoute の作成**
 
+推論サーバーへのルーティングを提供するロードバランサー＝ゲートウェイを作成します。
+まずはマニフェストを確認します。
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: inference-gateway
-spec:
-  gatewayClassName: gke-l7-regional-external-managed
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
-    allowedRoutes:
-      namespaces:
-        from: Same
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: qwen-route
-spec:
-  parentRefs:
-  - name: inference-gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /v1
-    backendRefs:
-    - name: qwen-pool
-      group: inference.networking.k8s.io
-      kind: InferencePool
-      port: 8000
-EOF
+cat gateway.yaml
+```
+マニフェストを適用します。
+```bash
+kubectl apply -f gateway.yaml
 ```
 
 ---
 
-## **4. 動作確認と負荷分散テスト**
+## **4. 動作確認と推論テスト**
 
 ### **4.1 起動確認**
 
@@ -287,7 +202,7 @@ curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions \
   }'
 ```
 
-次に、**負荷分散の確認** です。10 回連続でリクエストを投げ、ログを確認します。Inference Gateway は、空いている TPU を優先して選びます。
+次に、**負荷分散の確認** です。10 回連続でリクエストを投げ、ログを確認します。
 
 ```bash
 for i in {1..10}; do
@@ -297,7 +212,7 @@ for i in {1..10}; do
   -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "Hello"}], "max_tokens": 10}' &
 done
 ```
-少し待ってログを確認します（両方のPodからログが出るか確認）
+少し待ってログを確認します
 ```bash
 sleep 5
 echo "--- Access Logs ---"
@@ -316,29 +231,18 @@ Inference Gateway は各 Pod から **KV Cache Utilization (メモリ使用率)*
 **確認手順:**
 1.  Google Cloud Console で **[モニタリング] > [Metrics Explorer]** を開きます。
 2.  **[指標を選択]** をクリックし、`inference_pool_average_kv_cache_utilization` または `inference_pool_average_queue_size` を検索します。
-3.  グラフが表示されれば、Gateway が「どの Pod が忙しいか」をリアルタイムで把握している証拠です。
+3.  グラフが表示されれば、Gateway が Pod の推論によるリソース負荷状況をリアルタイムで把握している証拠です。
 
 ### **5.2 HTTP アクセスログの有効化**
 
 Gateway がどのバックエンドを選んだかを詳細に追跡するため、ログを有効化します。
-
+マニフェストを確認します。
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: networking.gke.io/v1
-kind: GCPBackendPolicy
-metadata:
-  name: logging-backend-policy
-  namespace: default
-spec:
-  default:
-    logging:
-      enabled: true
-      sampleRate: 1.0
-  targetRef:
-    group: inference.networking.k8s.io
-    kind: InferencePool
-    name: qwen-pool
-EOF
+cat backendpolicy.yaml
+```
+続いてマニフェストを適用します。
+```bash
+kubectl apply -f  backendpolicy.yaml
 ```
 
 ### **5.3 本文ベースルーティング (Body-Based Routing)**
@@ -355,31 +259,13 @@ helm install body-based-router oci://registry.k8s.io/gateway-api-inference-exten
 
 **2. ルート定義の更新:**
 「モデル名が `Qwen/Qwen2.5-14B-Instruct` の時だけ通す」設定に変更します。
-
+マニフェストを確認します。
 ```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: qwen-route
-spec:
-  parentRefs:
-  - name: inference-gateway
-  rules:
-  - matches:
-    - headers:
-      - type: Exact
-        name: X-Gateway-Model-Name
-        value: "Qwen/Qwen2.5-14B-Instruct"
-      path:
-        type: PathPrefix
-        value: /v1
-    backendRefs:
-    - name: qwen-pool
-      group: inference.networking.k8s.io
-      kind: InferencePool
-      port: 8000
-EOF
+cat body-routing.yaml
+```
+マニフェストを適用します。
+```bash
+kubectl apply -f body-routing.yaml
 ```
 
 **3. 検証:**
