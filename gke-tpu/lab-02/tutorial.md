@@ -180,8 +180,9 @@ kubectl wait --for=condition=Ready pod -l app=vllm-qwen --timeout=900s
 ### **4.2 推論テスト**
 
 リクエストで疎通を確認します。
+こちらのコマンドはクリップボードにコピーして、Cloud Shell 画面にペーストして実行してください。
 
-```bash
+```
 curl -i -X POST http://${GATEWAY_IP}/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen2.5-14B-Instruct", "messages": [{"role": "user", "content": "GKE Inference Gatewayについて一言で"}], "max_tokens": 100}'
 ```
 
