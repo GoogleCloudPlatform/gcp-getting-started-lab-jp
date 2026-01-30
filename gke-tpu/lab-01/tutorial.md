@@ -171,9 +171,10 @@ gcloud compute tpus tpu-vm create tpu-v5e-8 \
 ```
 ※ 仮想マシンがリソース不足などで起動エラーになる場合は `--spot` の引数を追加して再度インスタンス作成を試してみてください。
 
-仮想マシン インスタンスのデプロイには 5 分程度の時間がかかります。コマンドの実行が完了するまでしばらくお待ちください。コマンドが成功すると指定したリージョンに新しい TPU VM インスタンスが作成されます。インスタンスが作成されましたら以下のコマンドで SSH 接続します。
+仮想マシン インスタンスのデプロイには 5 分程度の時間がかかります。コマンドの実行が完了するまでしばらくお待ちください。コマンドが成功すると指定したリージョンに新しい TPU VM インスタンスが作成されます。インスタンスが作成されましたら以下のコマンドで SSH 接続します。今回は SSH の簡素化のために OS Login を無効化します。
 
 ```bash
+gcloud compute project-info add-metadata --metadata enable-oslogin=FALSE
 gcloud compute tpus tpu-vm ssh tpu-v5e-8 --project $PROJECT_ID --zone us-west1-c
 ```
 
