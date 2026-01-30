@@ -145,8 +145,8 @@ echo $PROJECT_NUMBER
 ### **5. gcloud のデフォルト設定**
 
 ```bash
-export REGION="us-west1"
-export ZONE="us-west1-c"
+export REGION="us-central1"
+export ZONE="us-central1-b"
 gcloud config set project $PROJECT_ID
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
