@@ -25,7 +25,7 @@ GKE で利用する VPC 及びサブネットを作成していきます。ま�
 ```
 export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 gcloud config set project $PROJECT_ID
-export REGION="us-west1"
+export REGION="us-central1"
 export CLUSTER_NAME="inference-gateway-lab"
 export NETWORK_NAME="inference-vpc"
 export SUBNET_NAME="inference-subnet"
