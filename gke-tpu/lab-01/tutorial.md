@@ -81,8 +81,8 @@ gcloud services enable compute.googleapis.com tpu.googleapis.com
 コンピュートリソースを作成するデフォルトのリージョン、ゾーンを指定します。
 
 ```bash
-export REGION="us-west1"
-export ZONE="us-west1-c"
+export REGION="us-central1"
+export ZONE="us-central1-b"
 gcloud config set compute/region $REGION
 gcloud config set compute/zone $ZONE
 ```
