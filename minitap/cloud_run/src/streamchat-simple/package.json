@@ -19,7 +19,7 @@
     "csstype": "3.1.2",
     "edge-csrf": "1.0.4",
     "encoding": "0.1.13",
-    "eslint": "8.43.0",
+    "eslint": "9.26.0",
     "eslint-config-next": "13.4.7",
     "firebase": "^9.23.0",
     "firebase-admin": "11.9.0",
