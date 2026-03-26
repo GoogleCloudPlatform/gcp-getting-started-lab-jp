@@ -129,7 +129,7 @@ root_agent = LlmAgent(
 ### ローカル環境で Agent を動かしてみる
 
 ```bash
-adk web . --port 8080
+adk web . --allow_origins "*" 
 ```
 
 Cloud Shell の Web Preview 機能を使ってアクセスします:
