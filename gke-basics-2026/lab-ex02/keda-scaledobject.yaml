@@ -24,4 +24,4 @@ spec:
       authenticationRef:
         name: keda-auth
       metadata:
-        subscriptionName: "projects/PROJECT_ID/subscriptions/keda-echo-read"
+        subscriptionName: "projects/gke-handson-sample/subscriptions/keda-echo-read"

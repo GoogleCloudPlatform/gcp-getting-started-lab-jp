@@ -170,7 +170,6 @@ kubectl get svc | grep LoadBalancer | awk '{print "http://"$4}'
 
 Lab01 はこちらで完了となります。
 
-
 ## **Lab02.Balloon Pod の利用による高速なスケーリング**
 <walkthrough-tutorial-duration duration=10></walkthrough-tutorial-duration>
 
@@ -334,13 +333,11 @@ Endpoints 列に IP アドレスが表示され、リンクとなっているた
 
 <walkthrough-tutorial-duration duration=30></walkthrough-tutorial-duration>
 
-このラボでは、KEDA (Kubernetes Event-Driven Autoscaling) を GKE Autopilot クラスタにインストールし、Pub/Sub のメッセージ数に応じた自動スケーリングと **Scale-to-Zero** を体験します。さらに、Cron Scaler を組み合わせたスケジュールスケーリングも試します。
+このラボでは、KEDA (Kubernetes Event-Driven Autoscaling) を GKE Autopilot クラスタにインストールし、Pub/Sub のメッセージ数に応じた自動スケーリングと **Scale-to-Zero** を体験します。
 
 このラボで学ぶこと:
 - KEDA のインストールと Workload Identity 連携
 - Pub/Sub ベースの Scale-to-Zero
-- Cron Scaler による時間帯ベースの事前スケーリング
-- 複数トリガーの組み合わせ
 
 ### **0. 事前準備 — API の有効化**
 
@@ -407,13 +404,32 @@ gcloud projects add-iam-policy-binding projects/${PROJECT_ID} \
 
 Pub/Sub からメッセージを取得して処理するサンプルワーカーをデプロイします。
 
-まず、マニフェストを確認します。
+まず、ワーカーアプリケーションのコンテナイメージをビルドします。このアプリは Pub/Sub サブスクリプションからメッセージを取得し、3 秒かけて処理した後に確認応答（Ack）を送信するシンプルな Python プログラムです。
+
+```bash
+cat lab-ex02/app/main.py
+```
+
+Artifact Registry にイメージをビルド＆プッシュします（Ex01 で作成したリポジトリを使用します）。
+
+```bash
+gcloud builds submit lab-ex02/app/ \
+  --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/gke-dojo/keda-pubsub-worker:v1
+```
+
+ビルドが完了したら、マニフェスト内の `PROJECT_ID` を実際のプロジェクト ID に置き換えます。
+
+```bash
+sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex02/pubsub-workload.yaml
+```
+
+マニフェストを確認します。
 
 ```bash
 cat lab-ex02/pubsub-workload.yaml
 ```
 
-Namespace `keda-pubsub`、ServiceAccount `keda-pubsub-sa` が作成され、Pub/Sub メッセージを処理する Deployment がデプロイされます。
+Namespace `keda-pubsub`、ServiceAccount `keda-pubsub-sa` が作成され、先ほどビルドした Pub/Sub ワーカーの Deployment がデプロイされます。
 
 デプロイを実行します。
 
@@ -514,57 +530,7 @@ kubectl get pods -n keda-pubsub
 
 この一連の流れ（0 → N → 0）が KEDA のイベント駆動スケーリングです。
 
-### **8. Cron Scaler の追加 — スケジュール + リアクティブの組み合わせ**
-
-次に、Pub/Sub トリガーに加えて **Cron Scaler** を組み合わせた ScaledObject を適用します。これにより「特定の時間帯は最低 N 台を保証しつつ、負荷に応じてリアクティブにもスケール」というパターンを実現します。
-
-まず、マニフェストの PROJECT_ID を置き換えます。
-
-```bash
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex02/cron-scaledobject.yaml
-```
-
-次に、Cron のスケジュールを設定します。ハンズオンですぐに効果を確認するため、**現在時刻の 1 分後〜10 分後**を設定します。
-
-```bash
-START_MIN=$(date -u -d "+1 minute" +"%M" 2>/dev/null || date -u -v+1M +"%M")
-END_MIN=$(date -u -d "+10 minutes" +"%M" 2>/dev/null || date -u -v+10M +"%M")
-START_HOUR=$(date -u -d "+1 minute" +"%H" 2>/dev/null || date -u -v+1M +"%H")
-END_HOUR=$(date -u -d "+10 minutes" +"%H" 2>/dev/null || date -u -v+10M +"%H")
-echo "Cron window: ${START_MIN} ${START_HOUR} - ${END_MIN} ${END_HOUR} (UTC)"
-sed -i "s/CRON_START/${START_MIN} ${START_HOUR} * * */g" lab-ex02/cron-scaledobject.yaml
-sed -i "s/CRON_END/${END_MIN} ${END_HOUR} * * */g" lab-ex02/cron-scaledobject.yaml
-```
-
-マニフェストの内容を確認します。
-
-```bash
-cat lab-ex02/cron-scaledobject.yaml
-```
-
-注目すべきポイント:
-- **2 つのトリガー**が定義されています（`gcp-pubsub` + `cron`）
-- Cron トリガーの `desiredReplicas: "3"` — 指定した時間帯は最低 3 Pod を保証
-- 複数トリガーがある場合、**各トリガーの要求レプリカ数の最大値**が採用されます
-
-既存の ScaledObject を削除してから、新しいものを適用します。
-
-```bash
-kubectl delete scaledobject keda-pubsub -n keda-pubsub
-kubectl apply -f lab-ex02/cron-scaledobject.yaml
-```
-
-Pod の状態を監視します。
-
-```bash
-watch -n 5 kubectl get pods,hpa -n keda-pubsub
-```
-
-Cron の時間帯に入ると、メッセージがなくても **3 Pod が起動**するのを確認してください。これが「事前ウォームアップ」です。Cold Start を回避し、ピーク時間帯のリクエストに即座に対応できます。
-
-確認できたら `Ctrl-C` で終了します。
-
-### **9. Cloud Monitoring でスケーリング挙動を可視化**
+### **8. Cloud Monitoring でスケーリング挙動を可視化**
 
 kubectl だけでなく、Cloud Monitoring のダッシュボードを使うと、Pod の CPU 使用率と Pub/Sub のメッセージ数を**並べて可視化**でき、スケーリングの因果関係が一目で分かります。
 
@@ -596,7 +562,7 @@ done
 本番運用では、このダッシュボードに加えてアラートポリシーを設定することを推奨します。例えば「未確認メッセージが 1000 件を超えたらアラート」のように設定すれば、KEDA のスケーリングが追いついていない場合に早期に検知できます。
 </walkthrough-caution>
 
-### **10. 【参考】Spot Pods との組み合わせによるさらなるコスト削減**
+### **9. 【参考】Spot Pods との組み合わせによるさらなるコスト削減**
 
 KEDA で Scale-to-Zero を実現した上で、さらにコストを削減したい場合は **Spot Pods** と組み合わせることができます。Spot Pods は通常の 60-91% 引きで利用できますが、GKE がリソースを必要とした際に中断される可能性があります。
 
@@ -617,12 +583,11 @@ spec:
 Spot Pods は中断される可能性があるため、ステートフルなワークロードや長時間のバッチジョブには適しません。また terminationGracePeriodSeconds は Spot Pods では最大 25 秒に制限されます。
 </walkthrough-caution>
 
-### **11. クリーンアップ**
+### **10. クリーンアップ**
 
 ハンズオンで作成したリソースを削除します。Cloud Monitoring ダッシュボードはコンソールから手動で削除してください。
 
 ```bash
-kubectl delete -f lab-ex02/cron-scaledobject.yaml
 kubectl delete -f lab-ex02/pubsub-workload.yaml
 helm uninstall keda -n keda
 kubectl delete namespace keda keda-pubsub
