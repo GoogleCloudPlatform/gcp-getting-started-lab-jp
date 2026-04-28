@@ -14,8 +14,9 @@
 
 ハンズオンを行う Google Cloud プロジェクトのプロジェクト ID とプロジェクト番号を環境変数に設定し、以降の手順で利用できるようにします。 
 
-```bash
-export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
+プロジェクトIDの設定
+```
+export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
 echo $PROJECT_NUMBER
@@ -95,7 +96,7 @@ gcloud config set compute/region asia-northeast1 && gcloud config set compute/zo
 ### **1. チュートリアル資材があるディレクトリに移動する**
 
 ```bash
-cd ~/gcp-getting-started-lab-jp/gke-basics-2025
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026
 ```
 
 ### **2. チュートリアルを開く**
@@ -106,8 +107,8 @@ teachme tutorial.md
 
 ### **3. プロジェクト ID とプロジェクト番号を設定する**
 
-```bash
-export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-gcp-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
+```
+export PROJECT_ID=$(gcloud projects list --filter="projectId ~ '^qwiklabs-' AND projectId != 'qwiklabs-resources'" --format="value(projectId)" | head -n 1)
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo $PROJECT_ID
 echo $PROJECT_NUMBER
