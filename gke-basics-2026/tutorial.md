@@ -404,34 +404,37 @@ Pub/Sub からメッセージを取得して処理するサンプルワーカー
 まず、ワーカーアプリケーションのコンテナイメージをビルドします。このアプリは Pub/Sub サブスクリプションからメッセージを取得し、3 秒かけて処理した後に確認応答（Ack）を送信するシンプルな Python プログラムです。
 
 ```bash
-cat lab-ex02/app/main.py
+cat ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02/app/main.py
 ```
 
 Artifact Registry にイメージをビルド＆プッシュします（Ex01 で作成したリポジトリを使用します）。
 
-```bash
-gcloud builds submit lab-ex02/app/ \
+```
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02;
+gcloud builds submit app/ \
   --tag asia-northeast1-docker.pkg.dev/${PROJECT_ID}/gke-dojo/keda-pubsub-worker:v1
 ```
 
 ビルドが完了したら、マニフェスト内の `PROJECT_ID` を実際のプロジェクト ID に置き換えます。
 
 ```bash
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex02/pubsub-workload.yaml
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02;
+sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' pubsub-workload.yaml
 ```
 
 マニフェストを確認します。
 
 ```bash
-cat lab-ex02/pubsub-workload.yaml
+cat ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02/pubsub-workload.yaml
 ```
 
 Namespace `keda-pubsub`、ServiceAccount `keda-pubsub-sa` が作成され、先ほどビルドした Pub/Sub ワーカーの Deployment がデプロイされます。
 
 デプロイを実行します。
 
-```bash
-kubectl apply -f lab-ex02/pubsub-workload.yaml
+```
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02;
+kubectl apply -f pubsub-workload.yaml
 ```
 
 Pod が Running になるまで待ちます。
@@ -448,14 +451,15 @@ Running になったら `Ctrl-C` で終了します。
 
 まず、マニフェスト内の `PROJECT_ID` を実際のプロジェクト ID に置き換えます。
 
-```bash
-sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' lab-ex02/keda-scaledobject.yaml
+```
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02;
+sed -i 's/PROJECT_ID/'"$PROJECT_ID"'/g' keda-scaledobject.yaml
 ```
 
 マニフェストの内容を確認しましょう。
 
 ```bash
-cat lab-ex02/keda-scaledobject.yaml
+cat ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02/keda-scaledobject.yaml
 ```
 
 注目すべきポイント:
@@ -468,9 +472,24 @@ cat lab-ex02/keda-scaledobject.yaml
 
 ScaledObject を適用します。
 
-```bash
-kubectl apply -f lab-ex02/keda-scaledobject.yaml
 ```
+cd ~/gcp-getting-started-lab-jp/gke-basics-2026/lab-ex02;
+kubectl apply -f keda-scaledobject.yaml
+```
+
+<walkthrough-caution>
+gcp-pubsub Scaler の制限事項
+
+KEDA の gcp-pubsub Scaler は、Pub/Sub API を直接参照するのではなく **Cloud Monitoring（Stackdriver）API** を経由してメッセージ数を取得しています。このため、以下の制限があります:
+
+1. **メトリクス伝播に 2〜5 分かかる**: メッセージが Pub/Sub に到着してから Cloud Monitoring に反映されるまでにラグがあります。そのため、メッセージ送信後すぐにはスケールアップしません。
+
+2. **メトリクスが存在しない間はエラーログが出力される**: サブスクリプションにメッセージが流れていない期間が長いと、Cloud Monitoring にデータポイントが存在せず、KEDA Operator のログに `could not find stackdriver metric` というエラーが繰り返し出力されます。これはメッセージが流れ始めると自動的に解消されます。
+
+3. **MQL 非推奨化**: gcp-pubsub Scaler は MQL（Monitoring Query Language）に依存しており、GCP は MQL を PromQL に移行中です。今後のバージョンで非推奨化が予定されています。本番環境では `prometheus` Scaler + Google Managed Prometheus（GMP）の組み合わせへの移行を推奨します。
+
+これらの理由から、このハンズオンではスケーリングの反応に **数分の遅延** が発生することがあります。これは正常な動作です。
+</walkthrough-caution>
 
 ### **6. Scale-to-Zero の確認**
 
@@ -515,11 +534,37 @@ done
 
 送信後、watch コマンドの出力を確認してください。
 
-数秒〜十数秒後に:
+Cloud Monitoring のメトリクス伝播に **2〜5 分**かかるため、メッセージ送信後すぐにはスケールしません。数分お待ちください。
+
+メトリクスが反映されると:
 1. Pod が 0 → 1 にスケールアップ（KEDA が 0→1 を制御）
 2. メッセージ数に応じて 1 → N にスケールアップ（HPA が制御）
 
-Pod が起動してメッセージを処理し、すべてのメッセージが処理されると、cooldownPeriod（60 秒）後に再び 0 にスケールダウンします。
+Pod が起動したら、ログを確認してメッセージが正しく処理されていることを確認しましょう。
+
+```bash
+kubectl logs -n keda-pubsub -l app=keda-pubsub --tail=20
+```
+
+以下のようなログが出力されていれば、Pod が Pub/Sub からメッセージを取得し、処理・確認応答（Ack）していることが確認できます。
+
+```
+Pulling messages from projects/qwiklabs-gcp-xxxxx/subscriptions/keda-echo-read...
+[2026-04-28 09:15:01] Received: Message 1
+[2026-04-28 09:15:04] Acked: 19292238311290381
+[2026-04-28 09:15:04] Received: Message 2
+[2026-04-28 09:15:07] Acked: 19478692411110001
+```
+
+Pub/Sub 側でも未確認メッセージ数が減っていることを確認できます。
+
+```bash
+gcloud pubsub subscriptions pull keda-echo-read --project=${PROJECT_ID} --limit=5
+```
+
+メッセージが残っていなければ `Listed 0 items.` と表示されます。すべてのメッセージが処理済みです。
+
+すべてのメッセージが処理されると、cooldownPeriod（60 秒）後に再び 0 にスケールダウンします。
 
 ```bash
 kubectl get pods -n keda-pubsub
@@ -527,11 +572,11 @@ kubectl get pods -n keda-pubsub
 
 この一連の流れ（0 → N → 0）が KEDA のイベント駆動スケーリングです。
 
-### **8. Cloud Monitoring でスケーリング挙動を可視化**
+### **8. [オプショナル] Cloud Monitoring でスケーリング挙動を可視化**
 
 kubectl だけでなく、Cloud Monitoring のダッシュボードを使うと、Pod の CPU 使用率と Pub/Sub のメッセージ数を**並べて可視化**でき、スケーリングの因果関係が一目で分かります。
 
-[Cloud Monitoring コンソール](https://console.cloud.google.com/monitoring) を開き、左メニューから **ダッシュボード** → **ダッシュボードを作成** をクリックします。
+[Cloud Monitoring コンソール](https://console.cloud.google.com/monitoring) を開き、左メニューから **ダッシュボード** → **ダッシュボードを作成** → **ウィジェットを追加** をクリックします。
 
 以下の 2 つのグラフを追加します:
 

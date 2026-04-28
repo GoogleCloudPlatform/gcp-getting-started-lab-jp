@@ -27,7 +27,7 @@ spec:
       serviceAccountName: keda-pubsub-sa
       containers:
       - name: subscriber
-        image: asia-northeast1-docker.pkg.dev/gke-handson-sample/gke-dojo/keda-pubsub-worker:v1
+        image: asia-northeast1-docker.pkg.dev/PROJECT_ID/gke-dojo/keda-pubsub-worker:v1
         resources:
           requests:
             cpu: 250m
