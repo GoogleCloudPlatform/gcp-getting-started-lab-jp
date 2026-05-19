@@ -1,5 +1,0 @@
-trl==0.17.0
-peft==0.10.0
-tensorboard
-sentencepiece
-protobuf<4

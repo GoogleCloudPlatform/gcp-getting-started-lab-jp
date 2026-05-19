@@ -1,6 +1,0 @@
-langchain-community==0.3.20
-wikipedia==1.4.0
-crewai-tools==0.38.1
-google-adk==1.0.0
-deprecated
-setuptools
