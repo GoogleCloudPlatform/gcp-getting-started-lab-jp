@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "gcloud": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"],
+      "env": { "LOG_LEVEL": "ERROR" },
+      "timeout": 120000
+    },
+    "google-developer-knowledge": {
+      "httpUrl": "https://developerknowledge.googleapis.com/mcp",
+      "authProviderType": "google_credentials",
+      "oauth": {
+        "scopes": ["https://www.googleapis.com/auth/cloud-platform"]
+      },
+      "timeout": 30000,
+      "headers": {
+        "X-goog-user-project": "PROJECT_ID"
+      }
+    },
+    "awsknowledge": {
+      "httpUrl": "https://knowledge-mcp.global.api.aws",
+      "timeout": 30000
+    }
+  }
+}

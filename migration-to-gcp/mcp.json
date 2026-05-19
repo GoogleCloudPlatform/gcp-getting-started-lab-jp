@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "gcloud": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"],
+      "env": { "LOG_LEVEL": "ERROR" },
+      "timeout": 120,
+      "description": "Official Google MCP server — runs any gcloud CLI command for GCP resource discovery, management, and billing queries. npm: @google-cloud/gcloud-mcp (v0.5.3). Source: https://github.com/googleapis/gcloud-mcp",
+      "autoApprove": ["run_gcloud_command"]
+    },
+    "google-developer-knowledge": {
+      "type": "http",
+      "url": "https://developerknowledge.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "YOUR_API_KEY"
+      },
+      "description": "Official Google Developer Knowledge MCP server — searches and retrieves Google developer documentation. Replace YOUR_API_KEY with a Developer Knowledge API key or configure the server locally with the Claude Code command from https://developers.google.com/knowledge/mcp."
+    },
+    "awsknowledge": {
+      "type": "http",
+      "url": "https://knowledge-mcp.global.api.aws",
+      "description": "Official AWS Knowledge MCP Server — AWS documentation for source infrastructure understanding. Source: https://github.com/awslabs/mcp"
+    }
+  }
+}

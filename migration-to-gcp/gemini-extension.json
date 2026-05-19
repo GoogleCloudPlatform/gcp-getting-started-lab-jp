@@ -1,0 +1,28 @@
+{
+  "name": "migration-to-gcp",
+  "version": "1.0.0",
+  "description": "AI-powered migration assistant for moving workloads from AWS to Google Cloud Platform. Discovers existing infrastructure, maps services to GCP equivalents, estimates costs, and generates Terraform + migration artifacts. Designed to be used alongside google/skills (https://github.com/google/skills); install via `npx skills add google/skills` to unlock canonical GCP service guidance during the Design and Generate phases.",
+  "mcpServers": {
+    "gcloud": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"],
+      "env": { "LOG_LEVEL": "ERROR" },
+      "timeout": 120000
+    },
+    "google-developer-knowledge": {
+      "httpUrl": "https://developerknowledge.googleapis.com/mcp",
+      "authProviderType": "google_credentials",
+      "oauth": {
+        "scopes": ["https://www.googleapis.com/auth/cloud-platform"]
+      },
+      "timeout": 30000,
+      "headers": {
+        "X-goog-user-project": "PROJECT_ID"
+      }
+    },
+    "awsknowledge": {
+      "httpUrl": "https://knowledge-mcp.global.api.aws",
+      "timeout": 30000
+    }
+  }
+}

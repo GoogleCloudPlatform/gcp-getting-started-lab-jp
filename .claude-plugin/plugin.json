@@ -1,0 +1,26 @@
+{
+  "name": "migration-to-gcp",
+  "version": "1.0.0",
+  "description": "AI-powered migration assistant for moving workloads from AWS to Google Cloud Platform. Designed to be used alongside google/skills (https://github.com/google/skills); install via `npx skills add google/skills` to unlock canonical GCP service guidance during the Design and Generate phases.",
+  "author": "migration-skills-harness",
+  "keywords": [
+    "migration",
+    "gcp",
+    "google-cloud",
+    "aws",
+    "terraform",
+    "cloud-migration",
+    "infrastructure"
+  ],
+  "skills": [
+    {
+      "name": "aws-to-gcp",
+      "path": "skills/aws-to-gcp"
+    }
+  ],
+  "mcpServers": [
+    "gcloud",
+    "google-developer-knowledge",
+    "awsknowledge"
+  ]
+}

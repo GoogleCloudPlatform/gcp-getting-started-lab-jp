@@ -1,0 +1,50 @@
+---
+description: Standards for AWS to GCP migration artifacts
+alwaysApply: true
+---
+
+migration-standards:
+
+- Re-platform by default: select GCP services that match AWS workload types (EC2 to Compute Engine, RDS to Cloud SQL, Lambda to Cloud Run functions or Cloud Run services, EKS to GKE, S3 to Cloud Storage, DynamoDB to Firestore/Bigtable, SQS to Pub/Sub, ECS/Fargate to Cloud Run).
+- Default to development-tier sizing unless production is explicitly specified.
+- Always estimate costs before generating infrastructure code.
+- Use Terraform as the default IaC tool for migration artifacts.
+- Preserve existing application architecture patterns during migration.
+
+gcp-naming-conventions:
+
+- Use lowercase letters, numbers, and hyphens only.
+- Maximum 63 characters for most GCP resources (Compute Engine instances, GKE clusters, Cloud SQL instances, Cloud Run services).
+- Project IDs: 6-30 characters, must start with a letter, globally unique.
+- Labels (not tags): maximum 64 labels per resource, keys and values must be lowercase, max 63 characters each.
+
+gcp-networking:
+
+- GCP VPC is GLOBAL -- subnets are regional. This is a key architectural difference from AWS where VPCs are regional and subnets are zonal.
+- Use Shared VPC for multi-project networking instead of VPC peering for organizational patterns.
+- Use Private Google Access for private connectivity to Google APIs (equivalent to AWS VPC Endpoints).
+- Use Cloud NAT for outbound internet access from private instances -- do not create NAT instances manually.
+- Firewall rules are applied at the VPC level (global), not at the subnet level like AWS Security Groups.
+- Use network tags on instances to scope firewall rules rather than attaching security groups directly.
+
+gcp-iam:
+
+- GCP IAM uses project-level role bindings, not inline policies attached to resources.
+- Use service accounts instead of IAM roles for workload identity (compute workloads run as service accounts).
+- Prefer predefined roles over custom roles where possible.
+- Use Workload Identity for GKE pods instead of node-level service accounts.
+- Use Workload Identity Federation for external workloads instead of exporting service account keys.
+
+gcp-cost-optimization:
+
+- Use Committed Use Discounts (CUDs) instead of AWS Reserved Instances for sustained compute savings.
+- Use Sustained Use Discounts (automatic) for workloads running more than 25% of the month.
+- Use Preemptible VMs or Spot VMs instead of AWS Spot Instances for fault-tolerant workloads.
+- Use Cloud Storage lifecycle policies with Nearline/Coldline/Archive classes instead of S3 Glacier tiers.
+
+gcp-regions:
+
+- GCP region format uses hyphens and descriptive names: us-central1, europe-west1, asia-east1 (not us-east-1 style).
+- Zones append letters: us-central1-a, us-central1-b, us-central1-c.
+- Select target regions based on latency requirements and service availability.
+- Multi-region resources (Cloud Storage, BigQuery) use region codes: US, EU, ASIA.
