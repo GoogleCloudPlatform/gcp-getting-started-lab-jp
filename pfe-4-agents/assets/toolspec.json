@@ -1,0 +1,44 @@
+{
+  "tools": [
+    {
+      "name": "get_system_status",
+      "description": "社内システムの現在の稼働状況を取得します。例えば、経費精算システム、勤怠管理システム、社内ポータルなどの状態を確認できます。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "service_name": {
+            "type": "string",
+            "description": "状態を確認したい社内システム名"
+          }
+        },
+        "required": ["service_name"]
+      },
+      "annotations": {
+        "title": "Get System Status",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "get_employee_info",
+      "description": "指定された従業員の部署とメールアドレスを取得します。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "従業員名"
+          }
+        },
+        "required": ["name"]
+      },
+      "annotations": {
+        "title": "Get Employee Info",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "destructiveHint": false
+      }
+    }
+  ]
+}
