@@ -24,7 +24,7 @@
 - Agent Identity: エージェント単位の専用 ID
 - IAM policy: Agent Identity に対する最小権限付与
 - Model Armor: MCP tool に渡す入力の安全性チェック
-- Cloud Logging / Trace: エージェントや MCP server の動作確認
+- Cloud Logging : エージェントや MCP server の動作確認
 
 
 ## 作成する構成
@@ -1144,9 +1144,10 @@ get_employee_info:
 
 Cloud Run MCP server 側のログを確認します。
 
-```bash
-gcloud logging read \
-  'resource.type="cloud_run_revision" AND resource.labels.service_name="'${MCP_SERVICE_NAME}'"' \
+```
+export LOG_FILTER="resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"${MCP_SERVICE_NAME}\""
+
+gcloud logging read "${LOG_FILTER}" \
   --project="${PROJECT_ID}" \
   --limit=50 \
   --format="table(timestamp,severity,textPayload)"
@@ -1156,9 +1157,10 @@ gcloud logging read \
 
 MCP server のコードでは、Model Armor の判定結果を Cloud Run logs に出力しています。
 
-```bash
-gcloud logging read \
-  'resource.type="cloud_run_revision" AND resource.labels.service_name="'${MCP_SERVICE_NAME}'" AND textPayload:"Model Armor result"' \
+```
+export LOG_FILTER_ARMOR="resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"${MCP_SERVICE_NAME}\" AND textPayload:\"Model Armor result\""
+
+gcloud logging read "${LOG_FILTER_ARMOR}" \
   --project="${PROJECT_ID}" \
   --limit=20 \
   --format="table(timestamp,severity,textPayload)"
