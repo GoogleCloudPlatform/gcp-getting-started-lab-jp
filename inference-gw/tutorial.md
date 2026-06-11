@@ -41,15 +41,6 @@ gcloud config set project "$PROJECT_ID"
 
 期待する状態は、アクティブアカウントが `student-...@qwiklabs.net`、プロジェクトが Qwiklabs から払い出された `qwiklabs-...` のプロジェクトになっていることです。個人アカウントや別プロジェクトが表示された場合は、このラボの操作対象がずれているので、先に直してください。
 
-Terraform などが Application Default Credentials を要求する場合があります。`terraform plan` や `terraform apply` で認証エラーが出た場合は、同じ Qwiklabs アカウントで ADC も更新します。
-
-```bash
-gcloud auth application-default login
-gcloud auth application-default print-access-token >/dev/null && echo "ADC OK"
-```
-
-表示された URL をブラウザで開き、Qwiklabs の一時アカウントで認可し、表示されたコードをターミナルに貼り付けます。
-
 教材のルートディレクトリを環境変数に入れます。以降の手順は、この `LAB_DIR` を使って移動します。
 `gcp-getting-started-lab-jp` のルートから実行している場合は `inference-gw` ディレクトリを、`inference-gw` の中で実行している場合は現在のディレクトリを使います。
 
@@ -147,8 +138,8 @@ gcloud container clusters get-credentials gke-asia-northeast1 \
   --project="$PROJECT_ID"
 ```
 
-## **Lab01. Terraform で VPC、GKE、Fleet を作成する**
-
+## (参考)**Lab01. Terraform で VPC、GKE、Fleet を作成する** 
+**本手順は、講義では事前にラボをプロビジョニングしているため、不要です。**
 <walkthrough-tutorial-duration duration=40></walkthrough-tutorial-duration>
 
 このラボでは、カスタム VPC、Cloud NAT、Cloud Storage バケット、2 つの GKE Standard クラスタ、TPU v6e 1 チップノードのノードプール、Fleet 登録、マルチクラスタ サービス関連機能を作成します。任意の Lab04 で使うシングルクラスタ Gateway 用に、regional managed proxy subnet と専用の内部 IP も同時に作成します。
@@ -192,7 +183,7 @@ terraform apply -auto-approve
 成功時は `Apply complete!` で終了します。実測では再実行時に残りの IAM と Fleet 関連リソースだけが作成されました。
 
 ### **3. 作成結果を確認する**
-
+**講義ではこの手順から開始します**
 ```bash
 ./verify-infra.sh
 ```
