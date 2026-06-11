@@ -365,13 +365,13 @@ cross-region-gateway   gke-l7-cross-regional-internal-managed-mc  10.0.2.3  True
 
 - 両クラスタの Pod 状態を確認
 - Asia クラスタにテストクライアント Pod を作成
-- Gateway 経由で通常の推論リクエストを実行
+- Gateway 経由で通常の推論リクエストを実行し、どのリージョンの Pod が処理したかを vLLM counter の差分で確認
 - Asia 側の `vllm-qwen` を `replicas=0` に変更
 - Gateway ヘルスチェックの更新を待機
-- 同じ Gateway IP に対する推論リクエストが EU 側へ流れることを確認
+- 同じ Gateway IP に対する推論リクエストが EU 側へ流れることを vLLM counter の差分で確認
 - 最終状態を Asia `replicas=0`、Europe `replicas=2` にそろえて終了
 
-成功時は、通常時とフェイルオーバー時の両方で OpenAI 互換の JSON が返ります。フェイルオーバー確認では Asia 側の Pod が 0 になっていても、同じ Asia Gateway IP へのリクエストが EU 側の TPU に届きます。スクリプトは既定では Asia を復旧しません。TPU 在庫と待ち時間を節約するため、ラボの最終状態は Asia `0`、Europe `2` のままにします。
+成功時は、通常時とフェイルオーバー時の両方で OpenAI 互換の JSON が返ります。加えて、`Baseline request attribution` と `Failover request attribution` の `Region totals` を見ます。baseline で Asia 側の `delta` が増え、Asia を 0 にした後の failover で Europe 側の `delta` が増えていれば、最初は Asia で処理され、その後 EU へ切り替わったことを確認できます。スクリプトは既定では Asia を復旧しません。TPU 在庫と待ち時間を節約するため、ラボの最終状態は Asia `0`、Europe `2` のままにします。
 
 ```text
 === PHASE 6: FAILOVER TEST (Asia Client -> EU TPUs) ===
@@ -388,6 +388,30 @@ Request is actively being rerouted to Europe. Expecting full JSON response...
   ]
 }
 ```
+
+次のように表示されれば、どちらのリージョンで処理されたかが分かります。
+
+```text
+Baseline request attribution
+asia-northeast1   vllm-qwen-...                              vllm:request_success_total           delta=    1.00
+europe-west4      vllm-qwen-...                              vllm:request_success_total           delta=    0.00
+
+Region totals:
+  asia-northeast1   delta=    1.00
+  europe-west4      delta=    0.00
+  all-regions       delta=    1.00
+Expected attribution observed: asia-northeast1 handled this request.
+
+Failover request attribution
+europe-west4      vllm-qwen-...                              vllm:request_success_total           delta=    1.00
+
+Region totals:
+  europe-west4      delta=    1.00
+  all-regions       delta=    1.00
+Expected attribution observed: europe-west4 handled this request.
+```
+
+もし baseline の時点で Europe 側の `delta` が増えていた場合は、そのリクエストは最初から EU に流れています。その場合、この 1 回の実行だけでは「Asia から EU へ failover した」とは言えません。もう一度実行するか、Lab03 のリージョン分散確認で通常時の流れを確認してください。
 
 後続の作業で Asia 側の vLLM Pod が必要な場合だけ、明示的に復旧します。
 
