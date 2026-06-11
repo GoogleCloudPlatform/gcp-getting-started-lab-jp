@@ -230,7 +230,7 @@ gcloud storage buckets create "gs://${BUCKET_NAME}" \
 mkdir -p "${HOME}/agent-platform-it-support-handson"
 cd "${HOME}/agent-platform-it-support-handson"
 export HANDSON_HOME="${HOME}/agent-platform-it-support-handson"
-export HANDSON_ASSETS_DIR="${HANDSON_HOME}/assets"
+export HANDSON_ASSETS_DIR="${HOME}/gcp-getting-started-lab-jp/pfe-4-agents/assets"
 
 pwd
 ```
@@ -342,7 +342,9 @@ gcloud config set compute/region "${REGION}"
 
 #### 4. 共通の環境変数を再設定する
 
-```bash
+以下のコマンドはコピー＆ペーストしてください。
+
+```
 export DB_INSTANCE="it-support-db"
 export DB_NAME="company_data"
 export DB_USER="postgres"
@@ -421,8 +423,6 @@ gcloud sql instances describe "${DB_INSTANCE}" \
 
 ## Lab01. 社内 IT サポート用データを投入する
 
-このラボ以降では、Teachme の実行ボタンで安定して実行できるように、ファイル作成は heredoc ではなく 1 行の Python コマンドで行います。Teachme では `cat << EOF` や複数行 JSON の改行が `;` に変換され、ファイル内容が壊れる場合があります。
-
 このラボでは、Cloud SQL に社内 IT サポート用のサンプルデータを投入します。
 
 投入するデータは以下です。
@@ -431,8 +431,6 @@ gcloud sql instances describe "${DB_INSTANCE}" \
 - 従業員の部署とメールアドレス
 
 ### 1. 初期データ投入スクリプトを作成する
-
-このスクリプトでは、環境依存のコピー崩れを避けるため、SQL を行末バックスラッシュで継続しません。また、Teachme のコピー時に `with` ブロック配下のインデントが崩れることを避けるため、DB 操作は `with` を使わず明示的に `connect()` / `commit()` / `close()` します。
 
 ```bash
 cd "${HOME}/agent-platform-it-support-handson"
@@ -443,6 +441,7 @@ python -c 'from pathlib import Path; import os, shutil; src=Path(os.environ.get(
 ### 2. 初期データ投入スクリプトを実行する
 
 ```bash
+cd $HOME/gcp-getting-started-lab-jp/pfe-4-agents/assets
 python setup_db.py
 ```
 
@@ -460,8 +459,6 @@ Cloud SQL への初期データ投入が完了しました。
 Model Armor は、AI アプリケーションに渡されるプロンプトやモデル応答を検査し、危険な入力や望ましくない出力を検出するためのサービスです。
 今回は MCP server の中から Model Armor を呼び出し、危険な入力を Cloud SQL に到達させない構成を作ります。
 
-> 重要: Qwiklabs / Cloud Shell 環境では、`gcloud model-armor templates create` が global endpoint 側を参照して `PERMISSION_DENIED` になる場合があります。
-> このハンズオンでは、挙動を安定させるため、Model Armor template の作成・確認・削除は **REST API** で実施します。
 
 ### 1. 利用する template 名を確認する
 
@@ -678,7 +675,7 @@ gcloud run deploy "${MCP_SERVICE_NAME}" \
   --no-allow-unauthenticated \
   --set-env-vars="PROJECT_ID=${PROJECT_ID},REGION=${REGION},INSTANCE_CONNECTION_NAME=${PROJECT_ID}:${REGION}:${DB_INSTANCE},DB_NAME=${DB_NAME},DB_USER=${DB_USER},DB_PASS=${DB_PASS},MODEL_ARMOR_TEMPLATE=${MODEL_ARMOR_TEMPLATE},MODEL_ARMOR_FAIL_OPEN=false"
 ```
-
+デプロイを続けるために y を入力します。
 デプロイには数分かかることがあります。
 
 ### 7. Cloud Run service URL を取得する
@@ -723,7 +720,7 @@ gcloud run services add-iam-policy-binding "${MCP_SERVICE_NAME}" \
 
 `gcloud run services proxy` を使うと、認証付き Cloud Run service をローカルポートに転送できます。
 
-```bash
+```
 cd "${HOME}/agent-platform-it-support-handson/mcp-server"
 
 gcloud run services proxy "${MCP_SERVICE_NAME}" \
@@ -1049,35 +1046,8 @@ cd "${HOME}/agent-platform-it-support-handson"
 python -c 'from pathlib import Path; import os, shutil; src=Path(os.environ.get("HANDSON_ASSETS_DIR","assets"))/"query_it_support_agent.py"; dst=Path("query_it_support_agent.py"); dst.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(src,dst); print(f"copied {src} -> {dst}")'
 ```
 
-### 2. Agent 内部の async MCP 呼び出しについて確認する
 
-このハンズオンの Agent は、同期の `query()` メソッドから async MCP client を呼び出します。
-
-Agent Runtime / Reasoning Engine 側では、query 実行時点で既に asyncio event loop が動いている場合があります。
-その状態で `asyncio.run()` を直接呼ぶと、以下のエラーになります。
-
-```text
-asyncio.run() cannot be called from a running event loop
-```
-
-そのため、`deploy_it_support_agent.py` では、別スレッドに新しい event loop を作り、その中で MCP の async 処理を実行します。
-
-```python
-def _call_mcp(self, tool_name: str, args: dict):
-    import asyncio
-    from concurrent.futures import ThreadPoolExecutor
-
-    def runner():
-        return asyncio.run(self._call_mcp_async(tool_name, args))
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(runner)
-        return future.result()
-```
-
-もし古いスクリプトで Agent Runtime を作成済みの場合は、`deploy_it_support_agent.py` を修正したうえで再度 `python deploy_it_support_agent.py` を実行し、新しく作成された Agent Engine ID を使ってください。
-
-### 3. IAM policy 付与前の失敗を確認する
+### 2. IAM policy 付与前の失敗を確認する
 
 まだ Agent Identity には Cloud Run Invoker を付与していません。
 
@@ -1094,7 +1064,7 @@ Agent Runtime は作成されている。
 しかし、Agent Identity に `roles/iam.serviceAccountTokenCreator` がないため、Private Cloud Run MCP server を呼べない。
 ```
 
-### 4. Cloud Run 呼び出し用サービスアカウントを作成する
+### 3. Cloud Run 呼び出し用サービスアカウントを作成する
 
 Cloud Run の認証には ID token が必要です。
 Agent Runtime では metadata server の identity endpoint が利用できない場合があるため、このハンズオンでは専用のサービスアカウントを作成し、IAM Credentials API の `generateIdToken` で Cloud Run 用 ID token を発行します。
@@ -1113,7 +1083,7 @@ gcloud run services add-iam-policy-binding "${MCP_SERVICE_NAME}" \
   --role="roles/run.invoker"
 ```
 
-### 5. Agent Identity に Token Creator を付与する
+### 4. Agent Identity に Token Creator を付与する
 
 次に、Cloud Run service に対して Agent Identity principal だけを Invoker として許可します。
 
@@ -1135,7 +1105,7 @@ gcloud run services get-iam-policy "${MCP_SERVICE_NAME}" \
   --format=json | python -m json.tool
 ```
 
-### 6. IAM policy 付与後の成功を確認する
+### 5. IAM policy 付与後の成功を確認する
 
 ```bash
 python query_it_support_agent.py
@@ -1191,30 +1161,6 @@ gcloud logging read \
 ```
 
 `Model Armor result` というログが表示されれば、MCP server から Model Armor を呼び出せています。
-
-### 3. Agent Runtime / Trace を確認する
-
-Agent Runtime 側は、Google Cloud Console から確認するのが分かりやすいです。
-
-GUI:
-
-```text
-Google Cloud Console
-  > Vertex AI
-  > Agent Engine / Agent Runtime
-  > it-support-agent-with-identity
-  > Trace / Logs
-```
-
-デプロイ時に以下を設定しています。
-
-```python
-"env_vars": {
-    "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY": "true"
-}
-```
-
-そのため、Agent Runtime 側の telemetry / trace が表示される環境では、query 実行の流れを確認できます。
 
 
 ## Optional. Google 管理の Cloud Run remote MCP server
