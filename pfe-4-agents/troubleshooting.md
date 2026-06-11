@@ -202,6 +202,47 @@ python -m pip install \
 
 Agent Runtime の build log で同じエラーが出る場合は、`deploy_it_support_agent.py` の `config.requirements` 側も `mcp==1.19.0` になっていることを確認してから、再度デプロイします。
 
+## 4.2. Cloud Run build で `httpcore==1.*` / `No matching distribution found` が出る
+
+Cloud Run の build log に以下が出る場合があります。
+
+```text
+Collecting mcp (from -r requirements.txt (line 2))
+ERROR: Could not find a version that satisfies the requirement httpcore==1.* (from httpx) (from versions: none)
+ERROR: No matching distribution found for httpcore==1.*
+```
+
+`Collecting mcp` と表示されている場合、Cloud Run に送られた `mcp-server/requirements.txt` が古く、`mcp` が未固定のままです。`git pull` できない場合は、`mcp-server` ディレクトリでその場のファイルだけ直します。
+
+```bash
+cd "${HOME}/agent-platform-it-support-handson/mcp-server"
+
+sed -i.bak -E 's/^mcp$/mcp==1.19.0/' requirements.txt
+sed -i.bak 's|^RUN pip install --no-cache-dir -r requirements.txt$|RUN python -m pip install --upgrade pip setuptools wheel \&\& python -m pip install --no-cache-dir --retries 10 --default-timeout 120 -r requirements.txt|' Dockerfile
+
+grep -n '^mcp' requirements.txt
+grep -n 'default-timeout' Dockerfile
+```
+
+以下のように表示されれば修正済みです。
+
+```text
+2:mcp==1.19.0
+```
+
+確認後、Cloud Run へ再デプロイします。
+
+```bash
+gcloud run deploy "${MCP_SERVICE_NAME}" \
+  --source . \
+  --region="${REGION}" \
+  --service-account="${MCP_SA}" \
+  --set-env-vars="PROJECT_ID=${PROJECT_ID},REGION=${REGION},INSTANCE_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME},DB_NAME=${DB_NAME},DB_USER=${DB_USER},DB_PASS=${DB_PASS},MODEL_ARMOR_TEMPLATE=${MODEL_ARMOR_TEMPLATE}" \
+  --no-allow-unauthenticated
+```
+
+もし `mcp==1.19.0` になっているのに `httpcore` の取得で落ちる場合は、PyPI への一時的な接続タイムアウトの可能性があります。上の `sed` で Dockerfile の timeout / retry を長めにしたうえで、数分置いて再デプロイしてください。
+
 ## 5. Agent Runtime デプロイで `metadata server: service account info is missing 'email' field` になる
 
 以下のようなエラーが出る場合があります。
