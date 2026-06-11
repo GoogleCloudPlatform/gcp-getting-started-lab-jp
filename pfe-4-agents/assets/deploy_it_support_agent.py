@@ -131,7 +131,7 @@ remote_app = client.agent_engines.create(
         "identity_type": types.IdentityType.AGENT_IDENTITY,
         "requirements": [
             "google-cloud-aiplatform",
-            "mcp",
+            "mcp==1.19.0",
             "google-auth",
             "google-cloud-iam",
             "requests",

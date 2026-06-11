@@ -243,16 +243,20 @@ Cloud Shell 上に Python 仮想環境を作成します。
 ```bash
 cd "${HOME}/agent-platform-it-support-handson"
 
-python3 -m venv agent-env
+PYTHON_BIN="$(command -v python3.11 || command -v python3.10 || command -v python3)"
+"${PYTHON_BIN}" -c 'import sys; print("Python", sys.version.split()[0]); assert sys.version_info >= (3, 10), "Python 3.10 以上が必要です"'
+
+rm -rf agent-env
+"${PYTHON_BIN}" -m venv agent-env
 source agent-env/bin/activate
 
-pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
 ```
 
 必要な Python パッケージをインストールします。
 
 ```bash
-pip install \
+python -m pip install \
   "google-cloud-aiplatform[adk,agent_engines]" \
   "google-adk[a2a]>=1.9.0" \
   "google-cloud-logging" \
@@ -260,7 +264,7 @@ pip install \
   "sqlalchemy>=2.0.0" \
   "pg8000" \
   "fastmcp==2.13.1" \
-  "mcp" \
+  "mcp==1.19.0" \
   "google-auth" \
   "requests" \
   "httpx" \
@@ -273,7 +277,7 @@ pip install \
 ```bash
 which python
 python --version
-pip list | grep -E "google-cloud-aiplatform|fastmcp|mcp|sqlalchemy"
+python -m pip list | grep -E "google-cloud-aiplatform|fastmcp|mcp|sqlalchemy"
 ```
 
 
@@ -991,8 +995,9 @@ Assembly Service failed to initialize.
 ```python
 "requirements": [
     "google-cloud-aiplatform",
-    "mcp",
+    "mcp==1.19.0",
     "google-auth",
+    "google-cloud-iam",
     "requests",
     "httpx",
     "cloudpickle",
