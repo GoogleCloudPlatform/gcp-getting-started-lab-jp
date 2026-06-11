@@ -8,6 +8,11 @@ export VLLM_REPLICAS_ASIA="${VLLM_REPLICAS_ASIA:-1}"
 export VLLM_REPLICAS_EU="${VLLM_REPLICAS_EU:-2}"
 export RESTORE_ASIA_AFTER_FAILOVER="${RESTORE_ASIA_AFTER_FAILOVER:-false}"
 export CLIENT_POD="${CLIENT_POD:-curl-test}"
+export MODEL_NAME="${MODEL_NAME:-Qwen/Qwen3-8B}"
+export BASELINE_REQUESTS="${BASELINE_REQUESTS:-5}"
+export FAILOVER_REQUESTS="${FAILOVER_REQUESTS:-5}"
+export REQUEST_MAX_TOKENS="${REQUEST_MAX_TOKENS:-80}"
+export CURL_TIMEOUT="${CURL_TIMEOUT:-180}"
 
 TMP_DIR="$(mktemp -d)"
 cleanup() {
@@ -142,13 +147,55 @@ print_request_delta() {
       printf "  %-17s delta=%8.2f\n", "all-regions", total
       if (expected_region != "") {
         if (region_total[expected_region] > 0) {
-          printf "Expected attribution observed: %s handled this request.\n", expected_region
+          printf "Expected attribution observed: %s handled one or more requests.\n", expected_region
+          if (region_total[expected_region] < total) {
+            printf "NOTE: not all requests went to %s; compare Region totals before interpreting failover strength.\n", expected_region
+          }
         } else {
           printf "WARN: expected %s to handle this request, but its delta did not increase.\n", expected_region
         }
       }
     }
   ' "$before_file" "$after_file"
+}
+
+send_chat_requests() {
+  local phase="$1"
+  local prompt="$2"
+  local request_count="$3"
+  local i payload output_file status failed
+
+  failed=0
+  i=1
+  while [[ "$i" -le "$request_count" ]]; do
+    output_file="/tmp/failover-${phase}-${i}.json"
+    payload="$(printf '{"model":"%s","messages":[{"role":"user","content":"%s Request %s of %s."}],"max_tokens":%s,"temperature":0}' \
+      "$MODEL_NAME" "$prompt" "$i" "$request_count" "$REQUEST_MAX_TOKENS")"
+
+    if ! status="$(kubectl exec "$CLIENT_POD" --context="$CTX_ASIA" -- \
+      curl -sS --max-time "$CURL_TIMEOUT" \
+        -o "$output_file" \
+        -w "%{http_code}" \
+        -X POST "http://${GATEWAY_IP_ASIA}/v1/chat/completions" \
+        -H "Content-Type: application/json" \
+        -d "$payload")"; then
+      status="curl_failed"
+      failed=1
+    fi
+
+    echo "${phase}_request=${i}/${request_count} http=${status}"
+    if [[ "$i" -eq 1 ]]; then
+      kubectl exec "$CLIENT_POD" --context="$CTX_ASIA" -- cat "$output_file" | jq . || true
+    fi
+    if [[ "$status" != "200" ]]; then
+      failed=1
+      kubectl exec "$CLIENT_POD" --context="$CTX_ASIA" -- cat "$output_file" || true
+    fi
+
+    i=$((i + 1))
+  done
+
+  return "$failed"
 }
 
 echo -e "\n=== PHASE 1: VERIFYING CURRENT STATE (BOTH CLUSTERS UP) ==="
@@ -165,18 +212,12 @@ ensure_client "$CTX_EU"
 
 echo -e "\n=== PHASE 2: BASELINE TEST WITH REQUEST ATTRIBUTION ==="
 echo "Prompting the AI: 'What is the capital of France?'"
-echo "Expect to see the full JSON response, then check which region's vLLM counter increased..."
+echo "Sending ${BASELINE_REQUESTS} baseline requests, then checking which region's vLLM counter increased..."
 snapshot_all "$TMP_DIR/baseline-before.psv"
-kubectl exec "$CLIENT_POD" --context="$CTX_ASIA" -- curl -s -X POST "http://$GATEWAY_IP_ASIA/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen/Qwen3-8B",
-    "messages": [{"role": "user", "content": "What is the capital of France?"}],
-    "max_tokens": 100
-  }' | jq .
+send_chat_requests "baseline" "What is the capital of France?" "$BASELINE_REQUESTS"
 sleep 3
 snapshot_all "$TMP_DIR/baseline-after.psv"
-print_request_delta "$TMP_DIR/baseline-before.psv" "$TMP_DIR/baseline-after.psv" "Baseline request attribution" "asia-northeast1"
+print_request_delta "$TMP_DIR/baseline-before.psv" "$TMP_DIR/baseline-after.psv" "Baseline request attribution (${BASELINE_REQUESTS} requests)" "asia-northeast1"
 
 echo -e "\n=== PHASE 3: SIMULATING REGIONAL OUTAGE (Scaling Asia to 0) ==="
 kubectl scale deployment vllm-qwen --replicas=0 --context="$CTX_ASIA"
@@ -200,18 +241,12 @@ kubectl get pods -l app=qwen-server --context="$CTX_EU"
 
 echo -e "\n=== PHASE 6: FAILOVER TEST WITH REQUEST ATTRIBUTION ==="
 echo "Prompting the AI: 'What is the capital of Germany?'"
-echo "Asia is scaled to 0. Expect the JSON response and a Europe-side counter increase..."
+echo "Asia is scaled to 0. Sending ${FAILOVER_REQUESTS} requests and expecting a Europe-side counter increase..."
 snapshot_all "$TMP_DIR/failover-before.psv"
-kubectl exec "$CLIENT_POD" --context="$CTX_ASIA" -- curl -s -X POST "http://$GATEWAY_IP_ASIA/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen/Qwen3-8B",
-    "messages": [{"role": "user", "content": "What is the capital of Germany?"}],
-    "max_tokens": 100
-  }' | jq .
+send_chat_requests "failover" "What is the capital of Germany?" "$FAILOVER_REQUESTS"
 sleep 3
 snapshot_all "$TMP_DIR/failover-after.psv"
-print_request_delta "$TMP_DIR/failover-before.psv" "$TMP_DIR/failover-after.psv" "Failover request attribution" "europe-west4"
+print_request_delta "$TMP_DIR/failover-before.psv" "$TMP_DIR/failover-after.psv" "Failover request attribution (${FAILOVER_REQUESTS} requests)" "europe-west4"
 
 echo -e "\n=== PHASE 7: KEEPING FAILOVER STATE (Asia=0, Europe=${VLLM_REPLICAS_EU}) ==="
 kubectl scale deployment vllm-qwen --replicas=0 --context="$CTX_ASIA"
