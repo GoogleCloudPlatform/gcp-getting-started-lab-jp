@@ -73,7 +73,8 @@ gcloud auth application-default login --no-launch-browser
 教材のルートディレクトリを環境変数に入れます。以降の手順は、この `LAB_DIR` を使って移動します。
 `gcp-getting-started-lab-jp` のルートから実行している場合は `inference-gw` ディレクトリを、`inference-gw` の中で実行している場合は現在のディレクトリを使います。
 
-```bash
+このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
+```
 if [ -d "./inference-gw/lab-01" ]; then
   export LAB_DIR="$(pwd)/inference-gw"
 elif [ -d "./lab-01" ]; then
@@ -95,8 +96,8 @@ export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
 ### **3. Cloud Shell の接続が切れたときの復旧**
 
 Cloud Shell の接続が切れて新しいターミナルになった場合、ホームディレクトリのファイルは残りますが、`export` した環境変数、カレントディレクトリ、場合によっては認証状態をもう一度確認する必要があります。迷ったら、次のブロックをそのまま実行してください。
-
-```bash
+このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
+```
 # 1. プロジェクトを復旧します。
 export PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
 if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
@@ -310,8 +311,8 @@ envsubst '${PROJECT_ID}' < workload_template.yaml > workload.yaml
 `deploy-workload.sh` は TPU node pool の既定台数に合わせ、Europe は `replicas=2`、Asia は `replicas=1` に調整します。台数を変えた場合は、`VLLM_REPLICAS_EU` と `VLLM_REPLICAS_ASIA` で上書きできます。
 
 ロールアウトを確認します。
-
-```bash
+このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
+```
 for CTX in $CTX_EU $CTX_ASIA; do
   kubectl rollout status deployment/vllm-qwen --timeout=15m --context=$CTX
 done
@@ -325,8 +326,8 @@ deployment "vllm-qwen" successfully rolled out
 ```
 
 TPU ファブリック用のネットワークインターフェースが割り当てられていることを確認します。
-
-```bash
+このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
+```
 for CTX in $CTX_EU $CTX_ASIA; do
   echo "Checking DRA network interfaces on $CTX..."
   kubectl --context=$CTX exec deployment/vllm-qwen -c vllm-tpu -- ls /sys/class/net
