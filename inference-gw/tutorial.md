@@ -8,11 +8,7 @@
 
 # GKE Inference Gateway マルチクラスタ TPU 編
 
-このハンズオンでは、TPU v6e、Cloud Storage FUSE、GKE マネージド DRANET、マルチクラスタ GKE Inference Gateway を使い、2 リージョン構成の Qwen 推論基盤を構築します。
-
-参考元: [TPU、Cloud Storage FUSE、マネージド DRANET を使用してマルチクラスタ GKE Inference Gateway を構築する](https://codelabs.developers.google.com/codelabs/gke-inference-gateway-multi-cluster-tpus-dranet?hl=ja)
-
-元コンテンツは Google Codelabs の記載に従い、ドキュメント本文は Creative Commons Attribution 4.0、コードサンプルは Apache 2.0 License の条件で扱います。
+このハンズオンでは、TPU v6e、Cloud Storage FUSE、GKE マネージド DRANET、マルチクラスタ GKE Inference Gateway を使い、2 リージョン構成の推論基盤を構築します。
 
 ## Google Cloud プロジェクトの設定、確認
 
@@ -30,12 +26,9 @@ gcloud config set project $PROJECT_ID
 ```
 
 このラボでは TPU v6e の割り当てが必要です。既定では `europe-west4-a` と `asia-northeast1-b` に Spot VM の `ct6e-standard-1t` TPU ノードを 2 台ずつ作成します。1 Pod あたり v6e 1 チップを使い、各リージョン 2 Pod、全体で 4 チップを使う想定です。割り当てが別ゾーンにある場合は、`lab-01/variables.tf` の `regions` と `region_to_tpu_zone` を更新してください。
-
-利用モデルは `Qwen/Qwen3-8B` です。Hugging Face 上でゲートされていない公開モデルのため、このハンズオンでは Hugging Face アクセストークンを使いません。vLLM の TPU 対応表で `Qwen/Qwen3-8B` は TPU 対応済みとして掲載されています。
+利用モデルは `Qwen/Qwen3-8B` です。
 
 ### **2. 必要なツールと認証**
-
-Cloud Shell で実行する想定です。ローカル端末で実行する場合は、`gcloud`、`kubectl`、`terraform`、`helm`、`jq` が使える状態にしてください。
 
 ```bash
 gcloud auth login
@@ -158,18 +151,15 @@ export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
 export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
 ```
 
-`Qwen/Qwen3-8B` はゲートされていないため、Hugging Face トークンの設定は不要です。ただし、多人数ラボでは Hugging Face の匿名ダウンロードが遅くなることがあります。講師側で公開 Cloud Storage ミラーを用意している場合は、その GCS URI を指定してください。
-Terraform は各リージョンに Cloud NAT を作成するため、ノードに外部 IP がない環境でも `pip`、Hugging Face fallback、公開 Cloud Storage ミラーへの egress が利用できます。
+`Qwen/Qwen3-8B` はゲートされていないため、Hugging Face トークンの設定は不要です。ただし、多人数ラボでは Hugging Face の匿名ダウンロードが遅くなることがあります。
+ハンズオンでは講師側で公開 Cloud Storage ミラーを用意しているため、その GCS URI を指定してください。
 
 ### **2. モデル取得元を指定する**
 
+**こちらは講義中にミラーの URL を聞いて差し替えてください**
 ```bash
 cd "$LAB_DIR/lab-02"
-
-# 推奨: 公開 GCS ミラーからコピーする場合
 export SOURCE_MODEL_GCS_URI="gs://YOUR_PUBLIC_BUCKET/qwen3-8b"
-
-# SOURCE_MODEL_GCS_URI を未設定にすると、Hugging Face から匿名ダウンロードします。
 ```
 
 ### **3. モデル重みを Cloud Storage バケットに保存する**
