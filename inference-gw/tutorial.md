@@ -1,0 +1,450 @@
+<walkthrough-metadata>
+  <meta name="title" content="GKE Multi-Cluster Inference Gateway with TPUs and DRANET" />
+  <meta name="description" content="TPU、Cloud Storage FUSE、マネージド DRANET を使用して、マルチクラスタ GKE Inference Gateway を構築するハンズオン" />
+  <meta name="component_id" content="103" />
+</walkthrough-metadata>
+
+<walkthrough-disable-features toc></walkthrough-disable-features>
+
+# GKE Inference Gateway マルチクラスタ TPU 編
+
+このハンズオンでは、TPU v6e、Cloud Storage FUSE、GKE マネージド DRANET、マルチクラスタ GKE Inference Gateway を使い、2 リージョン構成の Qwen 推論基盤を構築します。
+
+参考元: [TPU、Cloud Storage FUSE、マネージド DRANET を使用してマルチクラスタ GKE Inference Gateway を構築する](https://codelabs.developers.google.com/codelabs/gke-inference-gateway-multi-cluster-tpus-dranet?hl=ja)
+
+元コンテンツは Google Codelabs の記載に従い、ドキュメント本文は Creative Commons Attribution 4.0、コードサンプルは Apache 2.0 License の条件で扱います。
+
+## Google Cloud プロジェクトの設定、確認
+
+### **1. 対象の Google Cloud プロジェクトを設定**
+
+```bash
+export PROJECT_ID=$(gcloud config get-value project)
+echo $PROJECT_ID
+```
+
+必要に応じて、操作対象のプロジェクトを明示します。
+
+```bash
+gcloud config set project $PROJECT_ID
+```
+
+このラボでは TPU v6e の割り当てが必要です。既定では `europe-west4-a` と `asia-northeast1-b` に Spot VM の `ct6e-standard-1t` TPU ノードを 2 台ずつ作成します。1 Pod あたり v6e 1 チップを使い、各リージョン 2 Pod、全体で 4 チップを使う想定です。割り当てが別ゾーンにある場合は、`lab-01/variables.tf` の `regions` と `region_to_tpu_zone` を更新してください。
+
+利用モデルは `Qwen/Qwen3-8B` です。Hugging Face 上でゲートされていない公開モデルのため、このハンズオンでは Hugging Face アクセストークンを使いません。vLLM の TPU 対応表で `Qwen/Qwen3-8B` は TPU 対応済みとして掲載されています。
+
+### **2. 必要なツールと認証**
+
+Cloud Shell で実行する想定です。ローカル端末で実行する場合は、`gcloud`、`kubectl`、`terraform`、`helm`、`jq` が使える状態にしてください。
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+```
+
+教材のルートディレクトリを環境変数に入れます。以降の手順は、この `LAB_DIR` を使って移動します。
+`gcp-getting-started-lab-jp` のルートから実行している場合は `inference-gw` ディレクトリを、`inference-gw` の中で実行している場合は現在のディレクトリを使います。
+
+```bash
+if [ -d "./inference-gw/lab-01" ]; then
+  export LAB_DIR="$(pwd)/inference-gw"
+elif [ -d "./lab-01" ]; then
+  export LAB_DIR="$(pwd)"
+else
+  echo "inference-gw directory not found. Move to gcp-getting-started-lab-jp or inference-gw."
+  exit 1
+fi
+echo "$LAB_DIR"
+```
+
+## **Lab01. Terraform で VPC、GKE、Fleet を作成する**
+
+<walkthrough-tutorial-duration duration=40></walkthrough-tutorial-duration>
+
+このラボでは、カスタム VPC、Cloud NAT、Cloud Storage バケット、2 つの GKE Standard クラスタ、TPU v6e 1 チップノードのノードプール、Fleet 登録、マルチクラスタ サービス関連機能を作成します。任意の Lab04 で使うシングルクラスタ Gateway 用に、regional managed proxy subnet と専用の内部 IP も同時に作成します。
+
+### **1. Terraform 変数を生成する**
+
+```bash
+cd "$LAB_DIR/lab-01"
+envsubst < terraform.tfvars.template > terraform.tfvars
+```
+
+生成された `terraform.tfvars` に現在のプロジェクト ID が入っていることを確認します。
+
+```bash
+cat terraform.tfvars
+```
+
+### **2. ネットワーク、バケット、GKE クラスタを作成する**
+
+```bash
+terraform init
+terraform plan
+terraform apply -auto-approve
+```
+
+クラスタと TPU ノードプールの作成には 10〜15 分ほどかかることがあります。各リージョンに `ct6e-standard-1t` ノードを 2 台作るため、リージョンあたり 2 チップ、全体で 4 チップを消費します。
+
+初回の `terraform apply` で、GKE/Fleet 側の反映待ちにより次のようなエラーが出ることがあります。
+
+```text
+Identity Pool does not exist (...svc.id.goog)
+GKE service agent is still being created or replicated
+```
+
+クラスタと TPU node pool が作成済みであれば、多くの場合は一時的な IAM / service agent の反映待ちです。1〜2 分待ってから、同じコマンドをもう一度実行してください。
+
+```bash
+terraform apply -auto-approve
+```
+
+成功時は `Apply complete!` で終了します。実測では再実行時に残りの IAM と Fleet 関連リソースだけが作成されました。
+
+### **3. 作成結果を確認する**
+
+```bash
+./verify-infra.sh
+```
+
+以下が確認できれば成功です。
+
+- `gke-europe-west4` と `gke-asia-northeast1` クラスタ
+- `tpu-gke-dranet-vpc` VPC
+- `tpu-gke-dranet-nat-*` Cloud NAT
+- `qwen-gateway-ip-*` の内部 IP
+- `qwen-single-gateway-ip-*` の内部 IP
+- cross-region 用と regional 用の proxy subnet
+- `${PROJECT_ID}-qwen-weights` Cloud Storage バケット
+- `gcs-fuse-sa` サービスアカウント
+
+出力例です。IP アドレスは環境ごとに変わります。
+
+```text
+NAME                     LOCATION           MASTER_VERSION      STATUS
+gke-asia-northeast1      asia-northeast1-b  ...                 RUNNING
+gke-europe-west4         europe-west4-a     ...                 RUNNING
+
+qwen-gateway-ip-asia-northeast1          10.0.2.3
+qwen-single-gateway-ip-asia-northeast1   10.0.2.2
+qwen-gateway-ip-europe-west4             10.0.1.2
+qwen-single-gateway-ip-europe-west4      10.0.1.3
+
+multiclusteringress:
+  state:
+    code: OK
+    description: Ready to use
+```
+
+### **4. Fleet 登録を確認する**
+
+```bash
+gcloud container fleet memberships list --project=$PROJECT_ID
+```
+
+`gke-europe-west4` と `gke-asia-northeast1` が表示されれば、マルチクラスタ構成の土台が整っています。
+`./verify-infra.sh` の Fleet feature 表示で `membershipStates` が `Lost connection` になっている場合は、Fleet からクラスタへ到達できていないため、Lab03 の `GatewayClass` や `qwen-pool` import が同期されません。`git pull` 後に `terraform apply -auto-approve` を再実行して、Multi Cluster Ingress service agent の IAM と Fleet membership を更新してください。必要に応じて `./repair-fleet-memberships.sh` を実行し、`externalId` 付きの Fleet membership と Connect agent を両クラスタに作成してください。
+
+## **Lab02. モデルの重みをキャッシュし、vLLM ワークロードをデプロイする**
+
+<walkthrough-tutorial-duration duration=45></walkthrough-tutorial-duration>
+
+このラボでは、`Qwen/Qwen3-8B` のモデル重みを Cloud Storage FUSE 経由でキャッシュし、両方の GKE クラスタに TPU 対応の vLLM ワークロードをデプロイします。
+
+### **1. Kubernetes コンテキストを設定する**
+
+```bash
+export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
+export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
+```
+
+`Qwen/Qwen3-8B` はゲートされていないため、Hugging Face トークンの設定は不要です。ただし、多人数ラボでは Hugging Face の匿名ダウンロードが遅くなることがあります。講師側で公開 Cloud Storage ミラーを用意している場合は、その GCS URI を指定してください。
+Terraform は各リージョンに Cloud NAT を作成するため、ノードに外部 IP がない環境でも `pip`、Hugging Face fallback、公開 Cloud Storage ミラーへの egress が利用できます。
+
+### **2. モデル取得元を指定する**
+
+```bash
+cd "$LAB_DIR/lab-02"
+
+# 推奨: 公開 GCS ミラーからコピーする場合
+export SOURCE_MODEL_GCS_URI="gs://YOUR_PUBLIC_BUCKET/qwen3-8b"
+
+# SOURCE_MODEL_GCS_URI を未設定にすると、Hugging Face から匿名ダウンロードします。
+```
+
+### **3. モデル重みを Cloud Storage バケットに保存する**
+
+```bash
+./cache-model.sh
+kubectl logs -f job/model-downloader --context=$CTX_ASIA --pod-running-timeout=10m
+```
+
+`cache-model.sh` はラボ用バケットの IAM を確認したうえで、両クラスタの kubeconfig を取得し、Kubernetes ServiceAccount を両クラスタに作成します。モデルのダウンロード Job は Asia クラスタで実行します。
+`SOURCE_MODEL_GCS_URI` が設定されている場合、Job は公開 GCS ミラーから `${PROJECT_ID}-qwen-weights` バケットへ直接コピーします。未設定の場合のみ Hugging Face から匿名ダウンロードしたあと、同じバケットへアップロードします。
+
+進捗を別タブで確認する場合は、ラボ用 GCS バケットを直接見ます。
+
+```bash
+gcloud storage ls "gs://${PROJECT_ID}-qwen-weights/model-00005-of-00005.safetensors"
+gcloud storage du "gs://${PROJECT_ID}-qwen-weights" --summarize
+kubectl get job model-downloader --context=$CTX_ASIA -o wide
+```
+
+`Download complete!` と表示されたら、`Ctrl+C` でログ表示を終了します。
+
+公開 GCS ミラーを使った場合の出力例です。
+
+```text
+Copying Qwen3-8B from public GCS mirror: gs://YOUR_PUBLIC_BUCKET/qwen3-8b
+Target bucket: gs://${PROJECT_ID}-qwen-weights
+Copying gs://.../model-00005-of-00005.safetensors to gs://${PROJECT_ID}-qwen-weights/model-00005-of-00005.safetensors
+Average throughput: 59.6MiB/s
+Download complete! Safe to proceed.
+```
+
+別タブの `gcloud storage du` は、コピー完了直前でも先に shard が見えることがあります。`model-00001-of-00005.safetensors` から `model-00005-of-00005.safetensors` までが見え、合計が約 16 GB になっていれば、ほぼ完了状態です。
+
+### **4. vLLM ワークロードを両クラスタにデプロイする**
+
+```bash
+envsubst '${PROJECT_ID}' < workload_template.yaml > workload.yaml
+./deploy-workload.sh
+```
+
+ロールアウトを確認します。
+
+```bash
+for CTX in $CTX_EU $CTX_ASIA; do
+  kubectl rollout status deployment/vllm-qwen --timeout=15m --context=$CTX
+done
+```
+
+成功時の例です。
+
+```text
+deployment "vllm-qwen" successfully rolled out
+deployment "vllm-qwen" successfully rolled out
+```
+
+TPU ファブリック用のネットワークインターフェースが割り当てられていることを確認します。
+
+```bash
+for CTX in $CTX_EU $CTX_ASIA; do
+  echo "Checking DRA network interfaces on $CTX..."
+  kubectl --context=$CTX exec deployment/vllm-qwen -c vllm-tpu -- ls /sys/class/net
+done
+```
+
+### **5. Inference API リソースを作成する**
+
+```bash
+./configure-inference-api.sh
+```
+
+`InferenceObjective`、`kv-cache` `AutoscalingMetric`、`InferencePool` が作成され、`qwen-pool` が両クラスタからエクスポートされます。
+
+この時点で、各リージョンに `vllm-qwen` Pod が 2 つずつ起動します。各 Pod は v6e 1 チップだけを要求します。
+
+## **Lab03. Gateway を構成し、フェイルオーバーをテストする**
+
+<walkthrough-tutorial-duration duration=30></walkthrough-tutorial-duration>
+
+このラボでは、マルチクラスタ GKE Inference Gateway を作成し、Asia リージョン停止を模擬して EU 側へ推論リクエストがフェイルオーバーすることを確認します。
+
+### **1. Cross-Regional Gateway を作成する**
+
+```bash
+cd "$LAB_DIR/lab-03"
+./configure-gateway.sh
+```
+
+Gateway のプログラム完了まで 5〜10 分ほどかかることがあります。
+このスクリプトは、Lab02 の `configure-inference-api.sh` で作成される `qwen-pool` import が存在するかを事前確認します。`GatewayClass` がまだ config cluster に同期されていない場合は、未完了の Gateway リソースを削除してから Fleet ingress を再有効化し、最大 15 分ほど同期を待って Gateway の作成を続行します。
+
+### **2. Gateway の状態を確認する**
+
+```bash
+kubectl get gateway cross-region-gateway --context=$CTX_ASIA
+kubectl get httproute qwen-route --context=$CTX_ASIA
+```
+
+Gateway が利用可能になると、`PROGRAMMED` が `True` になります。
+
+```text
+NAME                   CLASS                                      ADDRESS   PROGRAMMED
+cross-region-gateway   gke-l7-cross-regional-internal-managed-mc  10.0.2.3  True
+```
+
+### **3. フェイルオーバーをテストする**
+
+```bash
+./failover-test.sh
+```
+
+スクリプトでは、次の流れを自動実行します。
+
+- 両クラスタの Pod 状態を確認
+- Asia クラスタにテストクライアント Pod を作成
+- Gateway 経由で通常の推論リクエストを実行
+- Asia 側の `vllm-qwen` を `replicas=0` に変更
+- Gateway ヘルスチェックの更新を待機
+- 同じ Gateway IP に対する推論リクエストが EU 側へ流れることを確認
+- Asia 側の `vllm-qwen` を復旧
+
+成功時は、通常時とフェイルオーバー時の両方で OpenAI 互換の JSON が返ります。フェイルオーバー確認では Asia 側の Pod が 0 になっていても、同じ Asia Gateway IP へのリクエストが EU 側の TPU に届きます。
+
+```text
+=== PHASE 6: FAILOVER TEST (Asia Client -> EU TPUs) ===
+Request is actively being rerouted to Europe. Expecting full JSON response...
+{
+  "model": "Qwen/Qwen3-8B",
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "The capital of Germany is Berlin."
+      }
+    }
+  ]
+}
+```
+
+### **4. リージョン分散をメトリクスで確認する**
+
+通常時に Gateway がどのリージョン、どの Pod にリクエストを流したかはレスポンスだけでは見えません。次のスクリプトは、Gateway にリクエストを送る前後で各 vLLM Pod の Prometheus メトリクスを読み、リクエストカウンタの差分を表示します。
+
+```bash
+REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
+```
+
+出力の `Cluster totals` で `asia-northeast1` と `europe-west4` の両方に差分が出ていれば、マルチクラスタ Gateway 経由の推論リクエストが複数リージョンの backend pool に到達しています。片方だけに寄る場合は、Gateway が正常系では近いリージョンを優先している、または `kv-cache` custom metric の値が十分に偏っていない可能性があります。より強いシグナルを見る場合は、`REQUESTS_PER_REGION` を増やしてください。
+
+実測例です。`delta` は、テスト前後で増えた vLLM の成功リクエスト数です。
+
+```text
+=== Regional distribution result ===
+asia-northeast1   vllm-qwen-7855dc88f4-5x5dm    vllm:request_success_total   delta=    4.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+asia-northeast1   vllm-qwen-7855dc88f4-vx2hk    vllm:request_success_total   delta=    6.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+europe-west4      vllm-qwen-7855dc88f4-l5dlv    vllm:request_success_total   delta=    6.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+europe-west4      vllm-qwen-7855dc88f4-tzv75    vllm:request_success_total   delta=    4.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+
+Cluster totals:
+  asia-northeast1   delta=   10.00
+  europe-west4      delta=   10.00
+```
+
+短い prompt では `kv=0.000000` のままでも異常ではありません。このテストでは KV cache の圧力ではなく、Gateway から各リージョンの backend pool にリクエストが到達したことを確認しています。
+
+## **Lab04. シングルクラスタ Inference Gateway で追加機能を試す（任意）**
+
+<walkthrough-tutorial-duration duration=20></walkthrough-tutorial-duration>
+
+Body-Based Routing、Prefix/KV cache の観察、LoRA adapter のロードなどは、マルチクラスタ Gateway よりもシングルクラスタの GKE Inference Gateway で切り分けたほうが確認しやすい機能です。Lab02 まで完了して `qwen-pool` が作成済みの状態で実行します。
+
+### **1. シングルクラスタ Gateway を作成する**
+
+```bash
+cd "$LAB_DIR/lab-04"
+export SINGLE_GATEWAY_REGION=asia-northeast1
+export SINGLE_GATEWAY_ZONE=asia-northeast1-b
+export SINGLE_GATEWAY_CLUSTER=gke-asia-northeast1
+export SINGLE_CTX="gke_${PROJECT_ID}_${SINGLE_GATEWAY_ZONE}_${SINGLE_GATEWAY_CLUSTER}"
+
+./configure-single-gateway.sh
+./test-single-gateway-features.sh
+```
+
+この Gateway は `gke-l7-rilb` を使い、Asia クラスタ内の `InferencePool/qwen-pool` に直接ルーティングします。Lab03 の cross-region Gateway とは別 IP なので、両方を同時に配置できます。
+
+Gateway 作成直後に `HTTP 503` が返る場合は、backend health の反映待ちのことがあります。1〜3 分待ってから `./test-single-gateway-features.sh` を再実行してください。正常時は base request が `HTTP 200` になります。
+
+```text
+=== Base request ===
+Expected: HTTP 200 from Gateway -> InferencePool -> vLLM.
+HTTP 200
+{
+  "model": "Qwen/Qwen3-8B",
+  "choices": [...]
+}
+```
+
+### **2. Body-Based Routing を有効化する**
+
+```bash
+ENABLE_BBR=true ./configure-single-gateway.sh
+EXPECT_BBR=true ./test-single-gateway-features.sh
+```
+
+Body-Based Routing を有効にすると、OpenAI 互換リクエスト本文の `model` から `X-Gateway-Model-Name` が注入されます。このラボの `body-routing-route.yaml` は `Qwen/Qwen3-8B` だけを通すため、存在しないモデル名は vLLM に到達する前に失敗します。
+
+BBR 有効時の negative check では、存在しないモデル名が `HTTP 404` で失敗すれば期待どおりです。
+
+```text
+=== Body-Based Routing negative check ===
+HTTP 404
+BBR fail-closed check passed.
+```
+
+### **3. Prefix/KV cache の挙動を観察する**
+
+```bash
+PREFIX_ROUNDS=8 ./test-single-gateway-features.sh
+```
+
+同じ prefix を持つリクエストを繰り返し、Pod の `/metrics` とレスポンスタイムを比較します。マルチクラスタ側のリージョン分散を確認したい場合は、Lab03 の `regional-distribution-test.sh` を使います。
+
+この出力は合否判定というより観察用です。毎回 `HTTP 200` が返り、Pod が Ready のままであれば、シングル Gateway 経由の推論経路は正常です。
+
+```text
+round=1 http=200 elapsed_seconds=1
+round=2 http=200 elapsed_seconds=0
+round=3 http=200 elapsed_seconds=0
+```
+
+### **4. LoRA adapter を試す**
+
+LoRA は vLLM を LoRA 有効で起動し、adapter を vLLM コンテナから見えるパスに置く必要があります。adapter の準備ができている場合は、次のように vLLM を再デプロイします。
+このラボには LoRA adapter の実体は同梱していません。講師または受講者が adapter artifact を用意できた場合だけ、この手順を実行してください。
+
+```bash
+cd "$LAB_DIR/lab-02"
+export VLLM_EXTRA_ARGS="--enable-lora --max-loras 4 --max-lora-rank 64"
+export VLLM_ALLOW_RUNTIME_LORA_UPDATING=True
+envsubst '${PROJECT_ID} ${VLLM_EXTRA_ARGS} ${VLLM_ALLOW_RUNTIME_LORA_UPDATING}' < workload_template.yaml > workload.yaml
+./deploy-workload.sh
+```
+
+その後、adapter をロードして疎通確認します。
+
+```bash
+cd "$LAB_DIR/lab-04"
+export LORA_NAME="my-qwen-lora"
+export LORA_PATH="/data/lora/my-qwen-lora"
+./load-lora-adapter.sh
+```
+
+Body-Based Routing と LoRA を同時に使う場合は、adapter のモデル名も `HTTPRoute` の header match に追加するか、一時的に default route に戻してください。
+
+## **クリーンアップ（参考）**
+
+Qwiklabs ではラボ終了時に一時プロジェクトが削除されるため、通常は個別のクリーンアップ操作は不要です。手元の検証用プロジェクトで実行した場合だけ、次の手順を使ってください。
+
+まず Kubernetes ワークロードと Gateway 関連リソースを削除します。
+
+```bash
+cd "$LAB_DIR/lab-03"
+./cleanup-workloads.sh
+```
+
+次に Terraform で作成した基盤を削除します。
+
+```bash
+cd "$LAB_DIR/lab-01"
+../lab-03/cleanup-tf.sh
+```
+
+削除時に一時的な GCP リソースロックで失敗した場合は、少し待ってから `../lab-03/cleanup-tf.sh` を再実行してください。
+
+## **完了**
+
+これで、TPU v6e、Cloud Storage FUSE、マネージド DRANET、GKE Inference Gateway を組み合わせた、復元力のあるマルチクラスタ推論基盤を構築できました。

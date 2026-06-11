@@ -1,0 +1,11 @@
+.DS_Store
+lab-01/.terraform/
+lab-01/.terraform.lock.hcl
+lab-01/tfplan
+lab-01/terraform.tfvars
+lab-01/terraform.tfstate
+lab-01/terraform.tfstate.*
+lab-02/ksa.yaml
+lab-02/download-job.yaml
+lab-02/workload.yaml
+lab-04/config-single-gateway.yaml

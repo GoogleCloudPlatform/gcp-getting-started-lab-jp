@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qwen-ksa
+  namespace: default
+  annotations:
+    iam.gke.io/gcp-service-account: "gcs-fuse-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+---
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: all-netdev
+  namespace: default
+spec:
+  spec:
+    devices:
+      requests:
+      - name: req-netdev
+        exactly:
+          deviceClassName: netdev.google.com
+          allocationMode: All
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-qwen
+  namespace: default
+  labels:
+    app: qwen-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qwen-server
+  template:
+    metadata:
+      labels:
+        app: qwen-server
+      annotations:
+        gke-gcsfuse/volumes: "true"
+    spec:
+      serviceAccountName: qwen-ksa
+      nodeSelector:
+        cloud.google.com/gke-tpu-accelerator: tpu-v6e-slice
+        cloud.google.com/gke-tpu-topology: 1x1
+      resourceClaims:
+      - name: netdev
+        resourceClaimTemplateName: all-netdev
+      containers:
+      - name: vllm-tpu
+        image: vllm/vllm-tpu:latest
+        command:
+        - bash
+        - -c
+        - |
+          export PYTHONUNBUFFERED=1
+          export VLLM_ALLOW_RUNTIME_LORA_UPDATING="${VLLM_ALLOW_RUNTIME_LORA_UPDATING:-False}"
+          echo "Booting vLLM instantly from local GCS FUSE mount..."
+
+          python3 -m vllm.entrypoints.openai.api_server \
+            --model /data/qwen-weights \
+            --served-model-name Qwen/Qwen3-8B \
+            --tensor-parallel-size 1 \
+            --gpu-memory-utilization 0.98 \
+            --max-model-len 4096 \
+            --max-num-batched-tokens 1024 \
+            --max-num-seqs 128 \
+            --port 8000 \
+            ${VLLM_EXTRA_ARGS}
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            google.com/tpu: 1
+          limits:
+            google.com/tpu: 1
+          claims:
+          - name: netdev
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        - name: gcs-fuse-volume
+          mountPath: /data/qwen-weights
+          readOnly: true
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      - name: gcs-fuse-volume
+        csi:
+          driver: gcsfuse.csi.storage.gke.io
+          readOnly: true
+          volumeAttributes:
+            bucketName: "${PROJECT_ID}-qwen-weights"
+            mountOptions: "implicit-dirs"
+            fileCacheCapacity: "100Gi"
+            fileCacheForRangeRead: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-qwen-service
+  namespace: default
+spec:
+  selector:
+    app: qwen-server
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: vllm-qwen-monitoring
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: qwen-server
+  endpoints:
+  - port: 8000
+    interval: 15s
+    path: /metrics

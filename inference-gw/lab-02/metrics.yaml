@@ -1,0 +1,17 @@
+apiVersion: autoscaling.gke.io/v1beta1
+kind: AutoscalingMetric
+metadata:
+  name: kv-cache
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: qwen-server
+  endpoints:
+  - port: 8000
+    path: /metrics
+    metrics:
+    - name: vllm:kv_cache_usage_perc
+      exportName: kv-cache
+    - name: vllm:gpu_cache_usage_perc
+      exportName: kv-cache-old
