@@ -90,6 +90,7 @@ REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
 ```
 
 That script compares per-pod vLLM counters before and after Gateway traffic.
+Run it before `lab-03/failover-test.sh`, or restore the Asia deployment first, because the failover test intentionally leaves Asia scaled to 0 by default.
 
 Example distribution result:
 

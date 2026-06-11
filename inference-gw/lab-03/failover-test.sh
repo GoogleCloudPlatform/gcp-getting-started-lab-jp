@@ -5,6 +5,8 @@ export PROJECT_ID=$(gcloud config get-value project)
 export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
 export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
 export VLLM_REPLICAS_ASIA="${VLLM_REPLICAS_ASIA:-1}"
+export VLLM_REPLICAS_EU="${VLLM_REPLICAS_EU:-2}"
+export RESTORE_ASIA_AFTER_FAILOVER="${RESTORE_ASIA_AFTER_FAILOVER:-false}"
 
 echo -e "\n=== PHASE 1: VERIFYING CURRENT STATE (BOTH CLUSTERS UP) ==="
 echo "Checking Asia Cluster (Primary):"
@@ -15,6 +17,7 @@ kubectl get pods -l app=qwen-server --context="$CTX_EU"
 echo -e "\nDeploying Test Client in Asia..."
 export GATEWAY_IP_ASIA=$(gcloud compute addresses describe qwen-gateway-ip-asia-northeast1 --region=asia-northeast1 --project="$PROJECT_ID" --format="value(address)")
 
+kubectl delete pod curl-test --context="$CTX_ASIA" --ignore-not-found >/dev/null
 kubectl run curl-test --image=curlimages/curl --restart=Never --context="$CTX_ASIA" -- sleep 3600
 kubectl wait --for=condition=ready pod/curl-test --context="$CTX_ASIA" --timeout=60s
 
@@ -60,17 +63,31 @@ kubectl exec curl-test --context="$CTX_ASIA" -- curl -s -X POST "http://$GATEWAY
     "max_tokens": 100
   }' | jq .
 
-echo -e "\n=== PHASE 7: RESTORING INFRASTRUCTURE (Scaling Asia to ${VLLM_REPLICAS_ASIA}) ==="
-kubectl scale deployment vllm-qwen --replicas="$VLLM_REPLICAS_ASIA" --context="$CTX_ASIA"
-echo "Waiting for Asia pods to boot and mount FUSE..."
-kubectl rollout status deployment/vllm-qwen --timeout=15m --context="$CTX_ASIA"
+echo -e "\n=== PHASE 7: KEEPING FAILOVER STATE (Asia=0, Europe=${VLLM_REPLICAS_EU}) ==="
+kubectl scale deployment vllm-qwen --replicas=0 --context="$CTX_ASIA"
+kubectl scale deployment vllm-qwen --replicas="$VLLM_REPLICAS_EU" --context="$CTX_EU"
+echo "Waiting for Europe pods to be ready..."
+kubectl rollout status deployment/vllm-qwen --timeout=15m --context="$CTX_EU"
 
-echo -e "\n=== PHASE 8: CONFIRMING BOTH SYSTEMS ARE BACK UP ==="
-echo "Checking Asia Cluster (Restored):"
+if [[ "$RESTORE_ASIA_AFTER_FAILOVER" == "true" ]]; then
+  echo -e "\n=== PHASE 8: OPTIONAL RESTORE (Scaling Asia to ${VLLM_REPLICAS_ASIA}) ==="
+  kubectl scale deployment vllm-qwen --replicas="$VLLM_REPLICAS_ASIA" --context="$CTX_ASIA"
+  echo "Waiting for Asia pods to boot and mount FUSE..."
+  kubectl rollout status deployment/vllm-qwen --timeout=15m --context="$CTX_ASIA"
+else
+  echo
+  echo "Leaving Asia scaled to 0 to save TPU capacity and lab time."
+  echo "To restore Asia later, run:"
+  echo "  kubectl scale deployment/vllm-qwen --replicas=${VLLM_REPLICAS_ASIA} --context=\"${CTX_ASIA}\""
+  echo "  kubectl rollout status deployment/vllm-qwen --timeout=15m --context=\"${CTX_ASIA}\""
+fi
+
+echo -e "\n=== PHASE 9: CONFIRMING FINAL STATE ==="
+echo "Checking Asia Cluster (Should stay at 0 qwen-server pods unless RESTORE_ASIA_AFTER_FAILOVER=true):"
 kubectl get pods -l app=qwen-server --context="$CTX_ASIA"
-echo "Checking EU Cluster (Still Healthy):"
+echo "Checking EU Cluster (Should have ${VLLM_REPLICAS_EU} qwen-server pods):"
 kubectl get pods -l app=qwen-server --context="$CTX_EU"
 
-echo -e "\n=== PHASE 9: CLEANUP ==="
-kubectl delete pod curl-test --context="$CTX_ASIA"
+echo -e "\n=== PHASE 10: CLEANUP ==="
+kubectl delete pod curl-test --context="$CTX_ASIA" --ignore-not-found
 echo "Failover lab complete."

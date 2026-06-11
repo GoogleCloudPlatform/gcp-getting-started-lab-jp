@@ -388,9 +388,9 @@ cross-region-gateway   gke-l7-cross-regional-internal-managed-mc  10.0.2.3  True
 - Asia 側の `vllm-qwen` を `replicas=0` に変更
 - Gateway ヘルスチェックの更新を待機
 - 同じ Gateway IP に対する推論リクエストが EU 側へ流れることを確認
-- Asia 側の `vllm-qwen` を復旧
+- 最終状態を Asia `replicas=0`、Europe `replicas=2` にそろえて終了
 
-成功時は、通常時とフェイルオーバー時の両方で OpenAI 互換の JSON が返ります。フェイルオーバー確認では Asia 側の Pod が 0 になっていても、同じ Asia Gateway IP へのリクエストが EU 側の TPU に届きます。
+成功時は、通常時とフェイルオーバー時の両方で OpenAI 互換の JSON が返ります。フェイルオーバー確認では Asia 側の Pod が 0 になっていても、同じ Asia Gateway IP へのリクエストが EU 側の TPU に届きます。スクリプトは既定では Asia を復旧しません。TPU 在庫と待ち時間を節約するため、ラボの最終状態は Asia `0`、Europe `2` のままにします。
 
 ```text
 === PHASE 6: FAILOVER TEST (Asia Client -> EU TPUs) ===
@@ -408,9 +408,18 @@ Request is actively being rerouted to Europe. Expecting full JSON response...
 }
 ```
 
+後続の作業で Asia 側の vLLM Pod が必要な場合だけ、明示的に復旧します。
+
+```bash
+kubectl scale deployment/vllm-qwen --replicas=1 --context=$CTX_ASIA
+kubectl rollout status deployment/vllm-qwen --timeout=15m --context=$CTX_ASIA
+```
+
 ### **4. リージョン分散をメトリクスで確認する**
 
 通常時に Gateway がどのリージョン、どの Pod にリクエストを流したかはレスポンスだけでは見えません。次のスクリプトは、Gateway にリクエストを送る前後で各 vLLM Pod の Prometheus メトリクスを読み、リクエストカウンタの差分を表示します。
+
+この確認は、Asia と Europe の両方に vLLM Pod がある状態で実行してください。`./failover-test.sh` の実行後は既定で Asia が `replicas=0` のままなので、リージョン分散を見る場合は failover test より前に実行するか、上の復旧コマンドで Asia を戻してから実行します。
 
 ```bash
 REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
