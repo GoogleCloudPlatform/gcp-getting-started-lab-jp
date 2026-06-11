@@ -73,7 +73,7 @@ export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
 export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
 ```
 
-### **3. Cloud Shell の接続が切れたときの復旧**
+## **3. Cloud Shell の接続が切れたときの復旧**
 
 Cloud Shell の接続が切れて新しいターミナルになった場合、ホームディレクトリのファイルは残りますが、`export` した環境変数、カレントディレクトリ、場合によっては認証状態をもう一度確認する必要があります。迷ったら、次のブロックをそのまま実行してください。
 このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
@@ -305,7 +305,8 @@ deployment "vllm-qwen" successfully rolled out
 deployment "vllm-qwen" successfully rolled out
 ```
 
-TPU ファブリック用のネットワークインターフェースが割り当てられていることを確認します。
+DRANET で動的に TPU ファブリック用のネットワークインターフェースが割り当てられていることを確認します。
+ただし、今回は複数ノードにまたがるようなモデルは使用しないため、設定ができるかを確認するのみとなっております。
 このコマンドは ボタン実行が不可のため、コピー＆ペーストで行います。
 ```
 for CTX in $CTX_EU $CTX_ASIA; do
