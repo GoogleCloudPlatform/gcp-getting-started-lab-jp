@@ -1,4 +1,4 @@
-fastmcp==2.13.1
+fastmcp==3.2.0
 mcp==1.19.0
 sqlalchemy>=2.0.0
 pg8000
