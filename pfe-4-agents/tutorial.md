@@ -475,6 +475,10 @@ echo "${MODEL_ARMOR_TEMPLATE}"
 以下の REST API 呼び出しで、RAI filter、Sensitive Data Protection、Prompt Injection / Jailbreak filter、Malicious URI filter を有効にした template を作成します。Teachme では複数行 JSON を inline の `-d '{...}'` として実行すると改行が `;` に変換されることがあるため、JSON は一度ファイルに保存してから `--data-binary @model_armor_template.json` で送信します。
 
 ```bash
+cd $HOME/agent-platform-it-support-handson
+```
+
+```bash
 python -c 'from pathlib import Path; import os, shutil; src=Path(os.environ.get("HANDSON_ASSETS_DIR","assets"))/"model_armor_template.json"; dst=Path("model_armor_template.json"); dst.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(src,dst); print(f"copied {src} -> {dst}")'
 
 python -m json.tool model_armor_template.json >/dev/null && echo "JSON OK"
