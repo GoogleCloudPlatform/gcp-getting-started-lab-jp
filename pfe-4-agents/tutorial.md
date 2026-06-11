@@ -186,7 +186,7 @@ gcloud services enable \
 
 このハンズオンで利用するリソース名を環境変数として設定します。
 
-```bash
+```
 export DB_INSTANCE="it-support-db"
 export DB_NAME="company_data"
 export DB_USER="postgres"
