@@ -4,6 +4,7 @@ set -euo pipefail
 export PROJECT_ID=$(gcloud config get-value project)
 export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
 export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
+export VLLM_REPLICAS_ASIA="${VLLM_REPLICAS_ASIA:-1}"
 
 echo -e "\n=== PHASE 1: VERIFYING CURRENT STATE (BOTH CLUSTERS UP) ==="
 echo "Checking Asia Cluster (Primary):"
@@ -59,8 +60,8 @@ kubectl exec curl-test --context="$CTX_ASIA" -- curl -s -X POST "http://$GATEWAY
     "max_tokens": 100
   }' | jq .
 
-echo -e "\n=== PHASE 7: RESTORING INFRASTRUCTURE (Scaling Asia to 2) ==="
-kubectl scale deployment vllm-qwen --replicas=2 --context="$CTX_ASIA"
+echo -e "\n=== PHASE 7: RESTORING INFRASTRUCTURE (Scaling Asia to ${VLLM_REPLICAS_ASIA}) ==="
+kubectl scale deployment vllm-qwen --replicas="$VLLM_REPLICAS_ASIA" --context="$CTX_ASIA"
 echo "Waiting for Asia pods to boot and mount FUSE..."
 kubectl rollout status deployment/vllm-qwen --timeout=15m --context="$CTX_ASIA"
 

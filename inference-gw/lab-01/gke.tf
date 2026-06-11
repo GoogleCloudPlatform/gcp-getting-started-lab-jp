@@ -52,7 +52,7 @@ resource "google_container_node_pool" "tpu_pools" {
   name       = "tpu-v6e-pool"
   location   = var.region_to_tpu_zone[each.value]
   cluster    = google_container_cluster.clusters[each.value].name
-  node_count = 2
+  node_count = var.region_to_tpu_node_count[each.value]
 
   network_config { accelerator_network_profile = "auto" }
 

@@ -25,7 +25,7 @@ echo $PROJECT_ID
 gcloud config set project $PROJECT_ID
 ```
 
-このラボでは TPU v6e の割り当てが必要です。既定では `europe-west4-a` と `asia-northeast1-b` に Spot VM の `ct6e-standard-1t` TPU ノードを 2 台ずつ作成します。1 Pod あたり v6e 1 チップを使い、各リージョン 2 Pod、全体で 4 チップを使う想定です。割り当てが別ゾーンにある場合は、`lab-01/variables.tf` の `regions` と `region_to_tpu_zone` を更新してください。
+このラボでは TPU v6e の割り当てが必要です。既定では Spot VM の `ct6e-standard-1t` TPU ノードを `europe-west4-a` に 2 台、`asia-northeast1-b` に 1 台作成します。1 Pod あたり v6e 1 チップを使い、Europe は 2 Pod、Asia は 1 Pod、全体で 3 チップを使う想定です。割り当てが別ゾーンにある場合は、`lab-01/variables.tf` の `regions` と `region_to_tpu_zone` を更新してください。リージョンごとの台数を変える場合は、同じファイルの `region_to_tpu_node_count` も更新してください。
 利用モデルは `Qwen/Qwen3-8B` です。
 
 ### **2. 必要なツールと認証**
@@ -77,7 +77,7 @@ terraform plan
 terraform apply -auto-approve
 ```
 
-クラスタと TPU ノードプールの作成には 10〜15 分ほどかかることがあります。各リージョンに `ct6e-standard-1t` ノードを 2 台作るため、リージョンあたり 2 チップ、全体で 4 チップを消費します。
+クラスタと TPU ノードプールの作成には 10〜15 分ほどかかることがあります。既定では `europe-west4-a` に `ct6e-standard-1t` ノードを 2 台、`asia-northeast1-b` に 1 台作るため、全体で 3 チップを消費します。
 
 初回の `terraform apply` で、GKE/Fleet 側の反映待ちにより次のようなエラーが出ることがあります。
 
@@ -201,6 +201,8 @@ envsubst '${PROJECT_ID}' < workload_template.yaml > workload.yaml
 ./deploy-workload.sh
 ```
 
+`deploy-workload.sh` は TPU node pool の既定台数に合わせ、Europe は `replicas=2`、Asia は `replicas=1` に調整します。台数を変えた場合は、`VLLM_REPLICAS_EU` と `VLLM_REPLICAS_ASIA` で上書きできます。
+
 ロールアウトを確認します。
 
 ```bash
@@ -233,7 +235,7 @@ done
 
 `InferenceObjective`、`kv-cache` `AutoscalingMetric`、`InferencePool` が作成され、`qwen-pool` が両クラスタからエクスポートされます。
 
-この時点で、各リージョンに `vllm-qwen` Pod が 2 つずつ起動します。各 Pod は v6e 1 チップだけを要求します。
+この時点で、`vllm-qwen` Pod は Europe に 2 つ、Asia に 1 つ起動します。各 Pod は v6e 1 チップだけを要求します。
 
 ## **Lab03. Gateway を構成し、フェイルオーバーをテストする**
 
@@ -313,8 +315,7 @@ REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
 
 ```text
 === Regional distribution result ===
-asia-northeast1   vllm-qwen-7855dc88f4-5x5dm    vllm:request_success_total   delta=    4.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
-asia-northeast1   vllm-qwen-7855dc88f4-vx2hk    vllm:request_success_total   delta=    6.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+asia-northeast1   vllm-qwen-7855dc88f4-5x5dm    vllm:request_success_total   delta=   10.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
 europe-west4      vllm-qwen-7855dc88f4-l5dlv    vllm:request_success_total   delta=    6.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
 europe-west4      vllm-qwen-7855dc88f4-tzv75    vllm:request_success_total   delta=    4.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
 

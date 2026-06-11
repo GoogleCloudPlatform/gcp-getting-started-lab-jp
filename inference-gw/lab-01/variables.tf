@@ -7,3 +7,9 @@ variable "region_to_tpu_zone" {
     "asia-northeast1" = "asia-northeast1-b"
   }
 }
+variable "region_to_tpu_node_count" {
+  default = {
+    "europe-west4"    = 2
+    "asia-northeast1" = 1
+  }
+}
