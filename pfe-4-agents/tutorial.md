@@ -1333,3 +1333,94 @@ gcloud logging read "resource.type=\"cloud_run_revision\" AND resource.labels.se
   --limit=50 \
   --format="table(timestamp,severity,textPayload)"
 ```
+
+## おまけ. 困ったときは agy CLI に聞く
+
+Cloud Shell で作業中に、どの手順が抜けたか分からなくなった場合は、Antigravity CLI (`agy`) に `tutorial.md` と `troubleshooting.md` を読ませて相談できます。
+
+### 1. agy CLI を確認する
+
+Cloud Shell には `agy` が入っている場合があります。まず確認します。
+
+```bash
+command -v agy
+agy --version
+```
+
+見つからない場合だけインストールします。
+
+```bash
+curl -fsSL https://antigravity.google/cli/install.sh | bash
+export PATH="${HOME}/.local/bin:${PATH}"
+agy --version
+```
+
+初回起動時にログインや承認を求められたら、画面の案内に従って進めます。認証コードやトークンは他の人に共有しないでください。
+
+### 2. チュートリアルがあるディレクトリへ移動する
+
+```bash
+cd "${HOME}/agent-platform-it-support-handson"
+
+if [ ! -f tutorial.md ]; then
+  cd "${HOME}/gcp-getting-started-lab-jp/pfe-4-agents"
+fi
+
+pwd
+ls tutorial.md troubleshooting.md
+```
+
+### 3. ファイルだけ読ませて質問する
+
+`agy` には、コマンドを実行せずファイルだけ読むように最初に明示します。
+
+```text
+@tutorial.md と @troubleshooting.md だけを読んでください。
+コマンドは実行しないでください。
+Google Cloud リソースの確認・作成・変更も行わないでください。
+
+私は今 Lab02 を実行中です。次のエラーが出ました。
+tutorial.md のどの手順が抜けている可能性がありますか。
+原因候補と、私が自分で実行する確認コマンドを3つまで教えてください。
+
+<ここにエラーメッセージを貼る>
+```
+
+一度だけ質問したい場合は、Cloud Shell から次のようにも実行できます。
+
+```bash
+agy -p "Do NOT run shell commands. Do NOT change or inspect cloud resources. Read only local files @tutorial.md and @troubleshooting.md. Answer in Japanese only. Question: Cloud Shell で次のエラーが出ています。tutorial.md のどの手順が抜けている可能性がありますか。原因候補と、私が自分で実行する確認コマンドを3つまで教えてください: <ここにエラー>"
+```
+
+質問するときは、エラーだけでなく、以下の出力も一緒に渡すと原因を絞りやすくなります。
+
+```bash
+pwd
+git log -1 --oneline
+gcloud config get-value project
+echo "${REGION}"
+ls -l
+```
+
+貼り付ける例:
+
+```text
+以下の出力を見て、tutorial.md のどの手順からやり直すべきか教えてください。
+
+pwd:
+<pwd の出力>
+
+git log -1 --oneline:
+<git log の出力>
+
+gcloud config get-value project:
+<project id>
+
+echo ${REGION}:
+<region>
+
+エラー:
+<エラーメッセージ>
+```
+
+認証コード、アクセストークン、パスワード、Secret Manager の値、`.env` の中身は貼らないでください。`agy` が環境構築や API 有効化などを始めようとした場合は `Ctrl+C` で止めます。`agy` が修正コマンドを提案した場合も、実行前に `pwd`、`PROJECT_ID`、`REGION` がチュートリアルの想定と合っているか確認してください。
