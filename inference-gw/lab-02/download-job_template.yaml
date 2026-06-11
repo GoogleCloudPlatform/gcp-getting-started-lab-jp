@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-downloader
+  namespace: default
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      serviceAccountName: qwen-ksa
+      restartPolicy: Never
+      containers:
+      - name: downloader
+        image: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+        env:
+        - name: SOURCE_MODEL_GCS_URI
+          value: "${SOURCE_MODEL_GCS_URI}"
+        command:
+        - bash
+        - -c
+        - |
+          set -euo pipefail
+          SOURCE="${SOURCE_MODEL_GCS_URI:-}"
+          TARGET="gs://${PROJECT_ID}-qwen-weights"
+          WORKDIR="/tmp/qwen-weights"
+
+          if [[ -n "$SOURCE" ]]; then
+            echo "Copying Qwen3-8B from public GCS mirror: $SOURCE"
+            echo "Target bucket: $TARGET"
+            gcloud storage rsync "$SOURCE" "$TARGET" --recursive
+          else
+            echo "SOURCE_MODEL_GCS_URI is not set. Falling back to anonymous Hugging Face download."
+            mkdir -p "$WORKDIR"
+            python3 -m pip install --no-cache-dir -U huggingface_hub
+            python3 -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Qwen/Qwen3-8B', local_dir='$WORKDIR')"
+            gcloud storage rsync "$WORKDIR" "$TARGET" --recursive
+          fi
+
+          gcloud storage ls "$TARGET/config.json" >/dev/null || {
+            echo "Model copy finished, but $TARGET/config.json was not found."
+            echo "Set SOURCE_MODEL_GCS_URI to the directory that directly contains the model files."
+            gcloud storage ls "$TARGET/**" | head -20
+            exit 1
+          }
+          gcloud storage ls "$TARGET/model-00005-of-00005.safetensors" >/dev/null
+          echo "Download complete! Safe to proceed."
+        resources:
+          requests:
+            ephemeral-storage: 30Gi
