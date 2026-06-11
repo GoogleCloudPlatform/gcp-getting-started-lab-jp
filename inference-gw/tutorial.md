@@ -41,31 +41,11 @@ gcloud config set project "$PROJECT_ID"
 
 期待する状態は、アクティブアカウントが `student-...@qwiklabs.net`、プロジェクトが Qwiklabs から払い出された `qwiklabs-...` のプロジェクトになっていることです。個人アカウントや別プロジェクトが表示された場合は、このラボの操作対象がずれているので、先に直してください。
 
-Cloud Shell やローカル端末で認証が切れている場合は、次の順に実行します。
-
-```bash
-gcloud auth login
-```
-
-ブラウザで認証画面が開いたら、必ず Qwiklabs の一時アカウントを選びます。認可後、Cloud Shell に戻って次を確認します。
-
-```bash
-gcloud auth list --filter=status:ACTIVE --format="value(account)"
-gcloud config set project "$PROJECT_ID"
-```
-
 Terraform などが Application Default Credentials を要求する場合があります。`terraform plan` や `terraform apply` で認証エラーが出た場合は、同じ Qwiklabs アカウントで ADC も更新します。
 
 ```bash
 gcloud auth application-default login
 gcloud auth application-default print-access-token >/dev/null && echo "ADC OK"
-```
-
-Cloud Shell でブラウザ連携がうまく動かない場合や、ローカル端末から実行していて URL と認証コードを手動で扱いたい場合は、次の形式を使います。
-
-```bash
-gcloud auth login --no-launch-browser
-gcloud auth application-default login --no-launch-browser
 ```
 
 表示された URL をブラウザで開き、Qwiklabs の一時アカウントで認可し、表示されたコードをターミナルに貼り付けます。
