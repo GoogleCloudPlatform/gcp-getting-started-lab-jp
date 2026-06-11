@@ -82,6 +82,21 @@ round=2 http=200 elapsed_seconds=0
 round=3 http=200 elapsed_seconds=0
 ```
 
+To see whether same-prefix requests concentrate on the same pod, run the single Gateway against Europe, which has 2 vLLM pods by default:
+
+```bash
+cd "$LAB_DIR/lab-04"
+export SINGLE_GATEWAY_REGION=europe-west4
+export SINGLE_GATEWAY_ZONE=europe-west4-a
+export SINGLE_GATEWAY_CLUSTER=gke-europe-west4
+export SINGLE_CTX="gke_${PROJECT_ID}_${SINGLE_GATEWAY_ZONE}_${SINGLE_GATEWAY_CLUSTER}"
+
+./configure-single-gateway.sh
+PREFIX_AFFINITY_TEST=true PREFIX_AFFINITY_ROUNDS=8 MAX_TOKENS=128 ./test-single-gateway-features.sh
+```
+
+The interesting signal is the per-pod `delta` in `Same-prefix batch result`. If one pod receives most of the same-prefix requests, the batch is concentrating on that backend. This is an observation, not a strict pass/fail assertion, because endpoint selection can also account for health, load, and backend metrics.
+
 For regional distribution on the multi-cluster Gateway, use:
 
 ```bash

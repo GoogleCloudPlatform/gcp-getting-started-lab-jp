@@ -535,6 +535,35 @@ round=2 http=200 elapsed_seconds=0
 round=3 http=200 elapsed_seconds=0
 ```
 
+同じ prefix が同じ Pod に寄るかを見る場合は、Pod が 2 つある Europe 側の single Gateway で確認します。Asia は既定で 1 Pod なので、同じ Pod に行くかを見ても自明になってしまいます。
+
+```bash
+cd "$LAB_DIR/lab-04"
+export SINGLE_GATEWAY_REGION=europe-west4
+export SINGLE_GATEWAY_ZONE=europe-west4-a
+export SINGLE_GATEWAY_CLUSTER=gke-europe-west4
+export SINGLE_CTX="gke_${PROJECT_ID}_${SINGLE_GATEWAY_ZONE}_${SINGLE_GATEWAY_CLUSTER}"
+
+./configure-single-gateway.sh
+
+PREFIX_AFFINITY_TEST=true \
+PREFIX_AFFINITY_ROUNDS=8 \
+MAX_TOKENS=128 \
+./test-single-gateway-features.sh
+```
+
+追加で `Same-prefix batch result` と `Different-prefix comparison result` が表示されます。`delta` が同じ prefix の batch で 1 Pod に大きく寄っていれば、cache-aware routing が同じ prefix を持つリクエストを同じ backend に寄せている様子を観察できます。
+
+```text
+Same-prefix batch result
+vllm-qwen-...                              vllm:request_success_total           delta=    8.00 kv=0.000000->0.015625 waiting=0.000000 running=0.000000
+vllm-qwen-...                              vllm:request_success_total           delta=    0.00 kv=0.000000->0.000000 waiting=0.000000 running=0.000000
+Total delta=    8.00 active_pods=1
+Observation: this batch concentrated on one pod.
+```
+
+これは合否判定ではなく観察です。Endpoint picker は prefix だけでなく、Pod の health、負荷、メトリクスも見て判断するため、常に 1 Pod に固定されるとは限りません。逆に `Different-prefix comparison result` で複数 Pod に分散していれば、同じ prefix と異なる prefix の挙動差が見えやすくなります。
+
 ## **完了**
 
 これで、TPU v6e、Cloud Storage FUSE、マネージド DRANET、GKE Inference Gateway を組み合わせた、復元力のあるマルチクラスタ推論基盤を構築できました。
