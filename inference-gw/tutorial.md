@@ -30,10 +30,45 @@ gcloud config set project $PROJECT_ID
 
 ### **2. 必要なツールと認証**
 
+Cloud Shell で実行している場合は、通常は Qwiklabs の一時アカウントでログイン済みです。まず、現在のアカウントとプロジェクトを確認します。
+
+```bash
+gcloud auth list --filter=status:ACTIVE --format="value(account)"
+export PROJECT_ID="$(gcloud config get-value project)"
+echo "$PROJECT_ID"
+gcloud config set project "$PROJECT_ID"
+```
+
+期待する状態は、アクティブアカウントが `student-...@qwiklabs.net`、プロジェクトが Qwiklabs から払い出された `qwiklabs-...` のプロジェクトになっていることです。個人アカウントや別プロジェクトが表示された場合は、このラボの操作対象がずれているので、先に直してください。
+
+Cloud Shell やローカル端末で認証が切れている場合は、次の順に実行します。
+
 ```bash
 gcloud auth login
-gcloud auth application-default login
 ```
+
+ブラウザで認証画面が開いたら、必ず Qwiklabs の一時アカウントを選びます。認可後、Cloud Shell に戻って次を確認します。
+
+```bash
+gcloud auth list --filter=status:ACTIVE --format="value(account)"
+gcloud config set project "$PROJECT_ID"
+```
+
+Terraform などが Application Default Credentials を要求する場合があります。`terraform plan` や `terraform apply` で認証エラーが出た場合は、同じ Qwiklabs アカウントで ADC も更新します。
+
+```bash
+gcloud auth application-default login
+gcloud auth application-default print-access-token >/dev/null && echo "ADC OK"
+```
+
+Cloud Shell でブラウザ連携がうまく動かない場合や、ローカル端末から実行していて URL と認証コードを手動で扱いたい場合は、次の形式を使います。
+
+```bash
+gcloud auth login --no-launch-browser
+gcloud auth application-default login --no-launch-browser
+```
+
+表示された URL をブラウザで開き、Qwiklabs の一時アカウントで認可し、表示されたコードをターミナルに貼り付けます。
 
 教材のルートディレクトリを環境変数に入れます。以降の手順は、この `LAB_DIR` を使って移動します。
 `gcp-getting-started-lab-jp` のルートから実行している場合は `inference-gw` ディレクトリを、`inference-gw` の中で実行している場合は現在のディレクトリを使います。
@@ -48,6 +83,87 @@ else
   exit 1
 fi
 echo "$LAB_DIR"
+```
+
+Kubernetes コンテキストも、後続のラボで何度も使うのでここで設定しておきます。
+
+```bash
+export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
+export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
+```
+
+### **3. Cloud Shell の接続が切れたときの復旧**
+
+Cloud Shell の接続が切れて新しいターミナルになった場合、ホームディレクトリのファイルは残りますが、`export` した環境変数、カレントディレクトリ、場合によっては認証状態をもう一度確認する必要があります。迷ったら、次のブロックをそのまま実行してください。
+
+```bash
+# 1. プロジェクトを復旧します。
+export PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
+if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "(unset)" ]; then
+  echo "PROJECT_ID is empty. Run: gcloud config set project YOUR_QWIKLABS_PROJECT_ID"
+  exit 1
+fi
+gcloud config set project "$PROJECT_ID"
+echo "PROJECT_ID=$PROJECT_ID"
+
+# 2. 認証状態を確認します。アカウントが表示されなければ gcloud auth login を実行します。
+ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null)"
+if [ -z "$ACTIVE_ACCOUNT" ]; then
+  echo "No active gcloud account. Run: gcloud auth login"
+else
+  echo "ACTIVE_ACCOUNT=$ACTIVE_ACCOUNT"
+fi
+
+# 3. Terraform 用の ADC を確認します。失敗したら同じ Qwiklabs アカウントで再ログインします。
+gcloud auth application-default print-access-token >/dev/null 2>&1 || {
+  echo "ADC is not ready. Run: gcloud auth application-default login"
+}
+
+# 4. 教材ディレクトリを探して LAB_DIR とカレントディレクトリを復旧します。
+if [ -d "$HOME/gcp-getting-started-lab-jp/inference-gw/lab-01" ]; then
+  export LAB_DIR="$HOME/gcp-getting-started-lab-jp/inference-gw"
+elif [ -d "./inference-gw/lab-01" ]; then
+  export LAB_DIR="$(pwd)/inference-gw"
+elif [ -d "./lab-01" ]; then
+  export LAB_DIR="$(pwd)"
+else
+  export LAB_DIR="$(find "$HOME" -maxdepth 5 -type d -path "*/inference-gw/lab-01" -print -quit | sed 's#/lab-01$##')"
+fi
+
+if [ -z "$LAB_DIR" ] || [ ! -d "$LAB_DIR/lab-01" ]; then
+  echo "Could not find inference-gw. Move to the cloned gcp-getting-started-lab-jp directory and rerun this block."
+  exit 1
+fi
+cd "$LAB_DIR"
+echo "LAB_DIR=$LAB_DIR"
+pwd
+
+# 5. Kubernetes コンテキストを復旧します。
+export CTX_EU="gke_${PROJECT_ID}_europe-west4-a_gke-europe-west4"
+export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
+echo "CTX_EU=$CTX_EU"
+echo "CTX_ASIA=$CTX_ASIA"
+```
+
+復旧後、作業していたラボのディレクトリに戻ります。
+
+```bash
+cd "$LAB_DIR/lab-01"  # Terraform 作業中の場合
+# cd "$LAB_DIR/lab-02"  # モデルキャッシュや vLLM デプロイ中の場合
+# cd "$LAB_DIR/lab-03"  # Gateway / failover 確認中の場合
+# cd "$LAB_DIR/lab-04"  # single Gateway 機能確認中の場合
+```
+
+`kubectl` の context が見つからない場合は、クラスタ作成後に次を再実行して kubeconfig を復旧します。
+
+```bash
+gcloud container clusters get-credentials gke-europe-west4 \
+  --zone=europe-west4-a \
+  --project="$PROJECT_ID"
+
+gcloud container clusters get-credentials gke-asia-northeast1 \
+  --zone=asia-northeast1-b \
+  --project="$PROJECT_ID"
 ```
 
 ## **Lab01. Terraform で VPC、GKE、Fleet を作成する**
