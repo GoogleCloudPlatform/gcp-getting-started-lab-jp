@@ -499,50 +499,6 @@ round=2 http=200 elapsed_seconds=0
 round=3 http=200 elapsed_seconds=0
 ```
 
-### **4. LoRA adapter を試す**
-
-LoRA は vLLM を LoRA 有効で起動し、adapter を vLLM コンテナから見えるパスに置く必要があります。adapter の準備ができている場合は、次のように vLLM を再デプロイします。
-このラボには LoRA adapter の実体は同梱していません。講師または受講者が adapter artifact を用意できた場合だけ、この手順を実行してください。
-
-```bash
-cd "$LAB_DIR/lab-02"
-export VLLM_EXTRA_ARGS="--enable-lora --max-loras 4 --max-lora-rank 64"
-export VLLM_ALLOW_RUNTIME_LORA_UPDATING=True
-envsubst '${PROJECT_ID} ${VLLM_EXTRA_ARGS} ${VLLM_ALLOW_RUNTIME_LORA_UPDATING}' < workload_template.yaml > workload.yaml
-./deploy-workload.sh
-```
-
-その後、adapter をロードして疎通確認します。
-
-```bash
-cd "$LAB_DIR/lab-04"
-export LORA_NAME="my-qwen-lora"
-export LORA_PATH="/data/lora/my-qwen-lora"
-./load-lora-adapter.sh
-```
-
-Body-Based Routing と LoRA を同時に使う場合は、adapter のモデル名も `HTTPRoute` の header match に追加するか、一時的に default route に戻してください。
-
-## **クリーンアップ（参考）**
-
-Qwiklabs ではラボ終了時に一時プロジェクトが削除されるため、通常は個別のクリーンアップ操作は不要です。手元の検証用プロジェクトで実行した場合だけ、次の手順を使ってください。
-
-まず Kubernetes ワークロードと Gateway 関連リソースを削除します。
-
-```bash
-cd "$LAB_DIR/lab-03"
-./cleanup-workloads.sh
-```
-
-次に Terraform で作成した基盤を削除します。
-
-```bash
-cd "$LAB_DIR/lab-01"
-../lab-03/cleanup-tf.sh
-```
-
-削除時に一時的な GCP リソースロックで失敗した場合は、少し待ってから `../lab-03/cleanup-tf.sh` を再実行してください。
-
 ## **完了**
 
 これで、TPU v6e、Cloud Storage FUSE、マネージド DRANET、GKE Inference Gateway を組み合わせた、復元力のあるマルチクラスタ推論基盤を構築できました。
