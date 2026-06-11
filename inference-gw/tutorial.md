@@ -425,7 +425,11 @@ kubectl rollout status deployment/vllm-qwen --timeout=15m --context=$CTX_ASIA
 REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
 ```
 
-出力の `Cluster totals` で `asia-northeast1` と `europe-west4` の両方に差分が出ていれば、マルチクラスタ Gateway 経由の推論リクエストが複数リージョンの backend pool に到達しています。片方だけに寄る場合は、Gateway が正常系では近いリージョンを優先している、または `kv-cache` custom metric の値が十分に偏っていない可能性があります。より強いシグナルを見る場合は、`REQUESTS_PER_REGION` を増やしてください。
+出力の `delta` は、各 vLLM Pod のリクエストカウンタがテスト前後でどれだけ増えたかを表します。つまり `delta = テスト後のカウンタ - テスト前のカウンタ` です。レイテンシや負荷率ではなく、「この Pod がこのテスト中に何件処理したか」を見るための数値です。
+
+`Cluster totals` は Pod ごとの `delta` をリージョン単位で合計したものです。`asia-northeast1` と `europe-west4` の両方に差分が出ていれば、マルチクラスタ Gateway 経由の推論リクエストが複数リージョンの backend pool に到達しています。片方だけに寄る場合は、Gateway が正常系では近いリージョンを優先している、または `kv-cache` custom metric の値が十分に偏っていない可能性があります。より強いシグナルを見る場合は、`REQUESTS_PER_REGION` を増やしてください。
+
+`kv`、`waiting`、`running` はカウンタではなく、その瞬間の状態を表す gauge です。このスクリプトの通常モードでは、リクエスト完了後に snapshot を撮るため、短い prompt では `waiting=0`、`running=0`、`kv=0.000000` になりやすいです。これは失敗ではなく、「snapshot 時点では処理中のリクエストがなかった」という意味です。
 
 実測例です。`delta` は、テスト前後で増えた vLLM の成功リクエスト数です。
 
@@ -440,7 +444,30 @@ Cluster totals:
   europe-west4      delta=   10.00
 ```
 
-短い prompt では `kv=0.000000` のままでも異常ではありません。このテストでは KV cache の圧力ではなく、Gateway から各リージョンの backend pool にリクエストが到達したことを確認しています。
+短い prompt では `kv=0.000000` のままでも異常ではありません。この通常モードでは KV cache の圧力ではなく、Gateway から各リージョンの backend pool にリクエストが到達したことを確認しています。
+
+`kv`、`waiting`、`running` が動いている瞬間を観察したい場合は、既定のラボ手順は変えずに、オプションの in-flight snapshot を使います。長めの prompt と多めの token を指定し、リクエスト実行中にも一度メトリクスを読みます。
+
+```bash
+export PROMPT_PREFIX="Write a detailed multi-paragraph explanation of GKE Inference Gateway, including routing, failover, cache behavior, and operational tradeoffs."
+
+OBSERVE_IN_FLIGHT=true \
+REQUESTS_PER_REGION=12 \
+MAX_TOKENS=256 \
+IN_FLIGHT_SAMPLE_DELAY=2 \
+CURL_TIMEOUT=300 \
+./regional-distribution-test.sh
+```
+
+追加で次のような `In-flight gauge snapshot` が表示されます。
+
+```text
+=== In-flight gauge snapshot ===
+asia-northeast1   vllm-qwen-...    vllm:request_success_total   counter=  42.000000 kv=0.031250 waiting=0.000000 running=1.000000
+europe-west4      vllm-qwen-...    vllm:request_success_total   counter=  51.000000 kv=0.027344 waiting=0.000000 running=2.000000
+```
+
+`running` は snapshot 時点で処理中のリクエスト数、`waiting` はキューで待っているリクエスト数です。`waiting` は、vLLM がまだ捌ける範囲の負荷では 0 のままでも自然です。さらにキューを見たい場合は `REQUESTS_PER_REGION` を増やしますが、ラボ時間と TPU 負荷が増えるため、講師の指示がある場合だけ実行してください。
 
 ## **Lab04. シングルクラスタ Inference Gateway で追加機能を試す（任意）**
 

@@ -91,6 +91,12 @@ REQUESTS_PER_REGION=10 MAX_TOKENS=16 ./regional-distribution-test.sh
 
 That script compares per-pod vLLM counters before and after Gateway traffic.
 Run it before `lab-03/failover-test.sh`, or restore the Asia deployment first, because the failover test intentionally leaves Asia scaled to 0 by default.
+`delta` is the per-pod counter increase during the test. `kv`, `waiting`, and `running` are point-in-time gauges, so they often read 0 after short requests finish. To capture those gauges while requests are still running, use:
+
+```bash
+export PROMPT_PREFIX="Write a detailed multi-paragraph explanation of GKE Inference Gateway and KV cache behavior."
+OBSERVE_IN_FLIGHT=true REQUESTS_PER_REGION=12 MAX_TOKENS=256 IN_FLIGHT_SAMPLE_DELAY=2 ./regional-distribution-test.sh
+```
 
 Example distribution result:
 

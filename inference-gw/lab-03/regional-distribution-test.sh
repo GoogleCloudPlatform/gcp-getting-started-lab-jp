@@ -11,9 +11,12 @@ CURL_TIMEOUT="${CURL_TIMEOUT:-180}"
 CLIENT_POD="${CLIENT_POD:-curl-regional-test}"
 MODEL_NAME="${MODEL_NAME:-Qwen/Qwen3-8B}"
 PROMPT_PREFIX="${PROMPT_PREFIX:-Regional distribution check. Reply with one short sentence.}"
+OBSERVE_IN_FLIGHT="${OBSERVE_IN_FLIGHT:-false}"
+IN_FLIGHT_SAMPLE_DELAY="${IN_FLIGHT_SAMPLE_DELAY:-2}"
 
 tmp_dir="$(mktemp -d)"
 before_file="$tmp_dir/before.psv"
+inflight_file="$tmp_dir/inflight.psv"
 after_file="$tmp_dir/after.psv"
 
 cleanup() {
@@ -222,6 +225,14 @@ print_delta() {
   ' "$before_file" "$after_file"
 }
 
+print_inflight() {
+  awk -F'|' '
+    {
+      printf "%-17s %-42s %-36s counter=%10s kv=%s waiting=%s running=%s\n", $1, $2, $4, $5, $6, $7, $8
+    }
+  ' "$inflight_file"
+}
+
 echo "Preparing curl clients..."
 ensure_client "$CTX_ASIA"
 ensure_client "$CTX_EU"
@@ -239,6 +250,16 @@ post_requests "$CTX_ASIA" "asia-northeast1" "$GATEWAY_IP_ASIA" &
 pid_asia=$!
 post_requests "$CTX_EU" "europe-west4" "$GATEWAY_IP_EU" &
 pid_eu=$!
+
+if [[ "$OBSERVE_IN_FLIGHT" == "true" ]]; then
+  echo
+  echo "Waiting ${IN_FLIGHT_SAMPLE_DELAY}s, then sampling in-flight gauges while requests are still running..."
+  sleep "$IN_FLIGHT_SAMPLE_DELAY"
+  snapshot_all "$inflight_file"
+  echo
+  echo "=== In-flight gauge snapshot ==="
+  print_inflight
+fi
 
 failed=0
 wait "$pid_asia" || failed=1
@@ -262,6 +283,9 @@ fi
 
 echo
 echo "If deltas appear in both regions, requests reached both regional backend pools."
-echo "Reading the table: delta is the increase in successful vLLM requests per pod during this run."
-echo "A kv value of 0.000000 is OK for short prompts; this check is mainly for regional reachability."
+echo "Reading the table:"
+echo "  delta = counter_after - counter_before for each pod. It is a request-count difference, not latency."
+echo "  Cluster totals = sum of pod deltas per region. Across both regions, totals should roughly match successful requests."
+echo "  kv/waiting/running are gauges at snapshot time. They are often 0 after short requests have finished."
+echo "To make gauges more interesting without changing the default lab, rerun with OBSERVE_IN_FLIGHT=true, a longer prompt, and larger MAX_TOKENS."
 echo "For a stronger signal, rerun with REQUESTS_PER_REGION=10 MAX_TOKENS=16."
