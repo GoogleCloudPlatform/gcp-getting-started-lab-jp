@@ -252,7 +252,7 @@ gcloud container fleet memberships list --project=$PROJECT_ID
 ```
 
 `gke-europe-west4` と `gke-asia-northeast1` が表示されれば、マルチクラスタ構成の土台が整っています。
-`./verify-infra.sh` の Fleet feature 表示で `membershipStates` が `Lost connection` になっている場合は、Fleet からクラスタへ到達できていないため、Lab03 の `GatewayClass` や `qwen-pool` import が同期されません。`git pull` 後に `terraform apply -auto-approve` を再実行して、Multi Cluster Ingress service agent の IAM と Fleet membership を更新してください。必要に応じて `./repair-fleet-memberships.sh` を実行し、`externalId` 付きの Fleet membership と Connect agent を両クラスタに作成してください。
+表示されない場合、 `terraform apply -auto-approve` を再実行して、Multi Cluster Ingress service agent の IAM と Fleet membership を更新してください。
 
 ## **Lab02. モデルの重みをキャッシュし、vLLM ワークロードをデプロイする**
 
@@ -288,15 +288,7 @@ kubectl logs -f job/model-downloader --context=$CTX_ASIA --pod-running-timeout=1
 `cache-model.sh` はラボ用バケットの IAM を確認したうえで、両クラスタの kubeconfig を取得し、Kubernetes ServiceAccount を両クラスタに作成します。モデルのダウンロード Job は Asia クラスタで実行します。
 `SOURCE_MODEL_GCS_URI` が設定されている場合、Job は公開 GCS ミラーから `${PROJECT_ID}-qwen-weights` バケットへ直接コピーします。未設定の場合のみ Hugging Face から匿名ダウンロードしたあと、同じバケットへアップロードします。
 
-進捗を別タブで確認する場合は、ラボ用 GCS バケットを直接見ます。
-
-```bash
-gcloud storage ls "gs://${PROJECT_ID}-qwen-weights/model-00005-of-00005.safetensors"
-gcloud storage du "gs://${PROJECT_ID}-qwen-weights" --summarize
-kubectl get job model-downloader --context=$CTX_ASIA -o wide
-```
-
-`Download complete!` と表示されたら、`Ctrl+C` でログ表示を終了します。
+`Download complete! Safe to proceed.` と表示されたら完了です。
 
 公開 GCS ミラーを使った場合の出力例です。
 
@@ -307,8 +299,6 @@ Copying gs://.../model-00005-of-00005.safetensors to gs://${PROJECT_ID}-qwen-wei
 Average throughput: 59.6MiB/s
 Download complete! Safe to proceed.
 ```
-
-別タブの `gcloud storage du` は、コピー完了直前でも先に shard が見えることがあります。`model-00001-of-00005.safetensors` から `model-00005-of-00005.safetensors` までが見え、合計が約 16 GB になっていれば、ほぼ完了状態です。
 
 ### **4. vLLM ワークロードを両クラスタにデプロイする**
 
