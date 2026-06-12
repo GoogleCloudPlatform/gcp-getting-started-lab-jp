@@ -425,6 +425,7 @@ kubectl rollout status deployment/vllm-qwen --timeout=15m --context=$CTX_ASIA
 
 ### **4. リージョン分散をメトリクスで確認する**
 
+**本テストは asia 側が復旧後10分程度経ってから実施ください**
 通常時に Gateway がどのリージョン、どの Pod にリクエストを流したかはレスポンスだけでは見えません。次のスクリプトは、Gateway にリクエストを送る前後で各 vLLM Pod の Prometheus メトリクスを読み、リクエストカウンタの差分を表示します。
 
 この確認は、Asia と Europe の両方に vLLM Pod がある状態で実行してください。`./failover-test.sh` の実行後は既定で Asia が `replicas=0` のままなので、リージョン分散を見る場合は failover test より前に実行するか、上の復旧コマンドで Asia を戻してから実行します。
