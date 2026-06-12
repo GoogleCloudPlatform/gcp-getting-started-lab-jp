@@ -246,14 +246,13 @@ export CTX_ASIA="gke_${PROJECT_ID}_asia-northeast1-b_gke-asia-northeast1"
 ```
 
 `Qwen/Qwen3-8B` はゲートされていないため、Hugging Face トークンの設定は不要です。ただし、多人数ラボでは Hugging Face の匿名ダウンロードが遅くなることがあります。
-ハンズオンでは講師側で公開 Cloud Storage ミラーを用意しているため、その GCS URI を指定してください。
+ハンズオンでは講師側で公開 Cloud Storage ミラーを用意しているため、その GCS URI を指定します。
 
 ### **2. モデル取得元を指定する**
 
-**こちらは講義中にミラーの URL を聞いて差し替えてください**
 ```bash
 cd "$LAB_DIR/lab-02"
-export SOURCE_MODEL_GCS_URI="gs://YOUR_PUBLIC_BUCKET/qwen3-8b"
+export SOURCE_MODEL_GCS_URI="gs://taro-demo-public-models-696526553493/qwen3-8b"
 ```
 
 ### **3. モデル重みを Cloud Storage バケットに保存する**
