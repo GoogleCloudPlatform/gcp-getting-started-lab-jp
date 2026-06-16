@@ -28,7 +28,7 @@
     "encoding": "^0.1.13",
     "eslint": "8.49.0",
     "eslint-config-next": "^14.0.1",
-    "firebase": "^10.4.0",
+    "firebase": "^10.9.0",
     "firebase-admin": "^11.10.1",
     "google-auth-library": "^9.0.0",
     "lucide-react": "^0.279.0",
