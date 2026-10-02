@@ -1,0 +1,417 @@
+[
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-rg/providers/Microsoft.Web/serverfarms/cpi-plan",
+    "name": "cpi-plan",
+    "type": "Microsoft.Web/serverfarms",
+    "location": "westus3",
+    "resourceGroup": "cpi-rg",
+    "kind": "linux",
+    "sku": {
+      "name": "B1",
+      "tier": "Basic",
+      "size": "B1",
+      "family": "B",
+      "capacity": 1
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-09-30",
+      "Journey": "azure/j8-clickops-partial-iac"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-rg/providers/Microsoft.Web/sites/cpi-portal-w4n7q2xkm5cdb",
+    "name": "cpi-portal-w4n7q2xkm5cdb",
+    "type": "Microsoft.Web/sites",
+    "location": "westus3",
+    "resourceGroup": "cpi-rg",
+    "kind": "app,linux",
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-09-30",
+      "Journey": "azure/j8-clickops-partial-iac"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-rg/providers/Microsoft.Sql/servers/cpi-sql-w4n7q2xkm5cdb",
+    "name": "cpi-sql-w4n7q2xkm5cdb",
+    "type": "Microsoft.Sql/servers",
+    "location": "westus3",
+    "resourceGroup": "cpi-rg",
+    "kind": "v12.0",
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-09-30",
+      "Journey": "azure/j8-clickops-partial-iac"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-rg/providers/Microsoft.Sql/servers/cpi-sql-w4n7q2xkm5cdb/databases/cpiportal",
+    "name": "cpi-sql-w4n7q2xkm5cdb/cpiportal",
+    "type": "Microsoft.Sql/servers/databases",
+    "location": "westus3",
+    "resourceGroup": "cpi-rg",
+    "kind": "v12.0,user",
+    "sku": {
+      "name": "Basic",
+      "tier": "Basic",
+      "capacity": 5
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-09-30",
+      "Journey": "azure/j8-clickops-partial-iac"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-rg/providers/Microsoft.Storage/storageAccounts/cpiportalw4n7q2xkm5cdb",
+    "name": "cpiportalw4n7q2xkm5cdb",
+    "type": "Microsoft.Storage/storageAccounts",
+    "location": "westus3",
+    "resourceGroup": "cpi-rg",
+    "kind": "StorageV2",
+    "sku": {
+      "name": "Standard_LRS",
+      "tier": "Standard"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-09-30",
+      "Journey": "azure/j8-clickops-partial-iac"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/virtualMachines/cpi-dc01",
+    "name": "cpi-dc01",
+    "type": "Microsoft.Compute/virtualMachines",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/virtualMachines/cpi-admin01",
+    "name": "cpi-admin01",
+    "type": "Microsoft.Compute/virtualMachines",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/virtualMachines/cpi-admin02",
+    "name": "cpi-admin02",
+    "type": "Microsoft.Compute/virtualMachines",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/virtualMachines/cpi-admin01/extensions/joindomain",
+    "name": "cpi-admin01/joindomain",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/virtualMachines/cpi-admin02/extensions/joindomain",
+    "name": "cpi-admin02/joindomain",
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/disks/cpi-dc01_OsDisk",
+    "name": "cpi-dc01_OsDisk",
+    "type": "Microsoft.Compute/disks",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "Premium_LRS",
+      "tier": "Premium"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/disks/cpi-admin01_OsDisk",
+    "name": "cpi-admin01_OsDisk",
+    "type": "Microsoft.Compute/disks",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "Premium_LRS",
+      "tier": "Premium"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/disks/cpi-admin01_DataDisk_0",
+    "name": "cpi-admin01_DataDisk_0",
+    "type": "Microsoft.Compute/disks",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "Premium_LRS",
+      "tier": "Premium"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Compute/disks/cpi-admin02_OsDisk",
+    "name": "cpi-admin02_OsDisk",
+    "type": "Microsoft.Compute/disks",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "Premium_LRS",
+      "tier": "Premium"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Storage/storageAccounts/cpifiles2018",
+    "name": "cpifiles2018",
+    "type": "Microsoft.Storage/storageAccounts",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": "StorageV2",
+    "sku": {
+      "name": "Standard_LRS",
+      "tier": "Standard"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.RecoveryServices/vaults/cpi-backup-vault",
+    "name": "cpi-backup-vault",
+    "type": "Microsoft.RecoveryServices/vaults",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "RS0",
+      "tier": "Standard"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Storage/storageAccounts/cpibilling01",
+    "name": "cpibilling01",
+    "type": "Microsoft.Storage/storageAccounts",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": "StorageV2",
+    "sku": {
+      "name": "Standard_LRS",
+      "tier": "Standard"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/publicIPAddresses/cpi-admin-ip",
+    "name": "cpi-admin-ip",
+    "type": "Microsoft.Network/publicIPAddresses",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": {
+      "name": "Basic",
+      "tier": "Regional"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/virtualNetworks/cpi-vnet",
+    "name": "cpi-vnet",
+    "type": "Microsoft.Network/virtualNetworks",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/networkSecurityGroups/cpi-nsg-admin",
+    "name": "cpi-nsg-admin",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/networkInterfaces/cpi-dc01-nic",
+    "name": "cpi-dc01-nic",
+    "type": "Microsoft.Network/networkInterfaces",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/networkInterfaces/cpi-admin01-nic",
+    "name": "cpi-admin01-nic",
+    "type": "Microsoft.Network/networkInterfaces",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Network/networkInterfaces/cpi-admin02-nic",
+    "name": "cpi-admin02-nic",
+    "type": "Microsoft.Network/networkInterfaces",
+    "location": "westus3",
+    "resourceGroup": "cpi-admin-rg",
+    "kind": null,
+    "sku": null,
+    "identity": null,
+    "managedBy": null,
+    "tags": null,
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-data-rg/providers/Microsoft.Synapse/workspaces/cpi-analytics",
+    "name": "cpi-analytics",
+    "type": "Microsoft.Synapse/workspaces",
+    "location": "westus3",
+    "resourceGroup": "cpi-data-rg",
+    "kind": null,
+    "sku": null,
+    "identity": {
+      "type": "SystemAssigned"
+    },
+    "managedBy": null,
+    "tags": {
+      "owner": "data-office"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-data-rg/providers/Microsoft.Synapse/workspaces/cpi-analytics/sqlPools/cpipool01",
+    "name": "cpi-analytics/cpipool01",
+    "type": "Microsoft.Synapse/workspaces/sqlPools",
+    "location": "westus3",
+    "resourceGroup": "cpi-data-rg",
+    "kind": null,
+    "sku": {
+      "name": "DW100c",
+      "tier": "DataWarehouse",
+      "capacity": 0
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "owner": "data-office"
+    },
+    "plan": null
+  },
+  {
+    "id": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-data-rg/providers/Microsoft.Storage/storageAccounts/cpidatalake01",
+    "name": "cpidatalake01",
+    "type": "Microsoft.Storage/storageAccounts",
+    "location": "westus3",
+    "resourceGroup": "cpi-data-rg",
+    "kind": "StorageV2",
+    "sku": {
+      "name": "Standard_LRS",
+      "tier": "Standard"
+    },
+    "identity": null,
+    "managedBy": null,
+    "tags": {
+      "owner": "data-office"
+    },
+    "plan": null
+  }
+]

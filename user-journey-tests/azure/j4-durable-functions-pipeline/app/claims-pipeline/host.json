@@ -1,0 +1,32 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  },
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[4.*, 5.0.0)"
+  },
+  "extensions": {
+    "durableTask": {
+      "hubName": "dfpapproval"
+    },
+    "queues": {
+      "batchSize": 8,
+      "maxDequeueCount": 5,
+      "visibilityTimeout": "00:01:00",
+      "messageEncoding": "none"
+    },
+    "serviceBus": {
+      "prefetchCount": 0,
+      "autoCompleteMessages": true,
+      "maxConcurrentCalls": 8,
+      "maxAutoLockRenewalDuration": "00:05:00"
+    }
+  }
+}

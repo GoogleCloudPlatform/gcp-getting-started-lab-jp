@@ -1,0 +1,99 @@
+# tracking-api — public parcel-tracking edge (Go).
+#
+# Two replicas. Business hours put a steady few hundred lookups a minute
+# through this; both pods stay up from 08:00 to 20:00 and neither is doing much
+# at 03:00.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracking-api
+  namespace: tracking
+  labels:
+    app: tracking-api
+    app.kubernetes.io/part-of: parcel-tracking
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tracking-api
+  template:
+    metadata:
+      labels:
+        app: tracking-api
+        app.kubernetes.io/part-of: parcel-tracking
+        # Without this label the webhook leaves the pod alone and the SDK finds
+        # no credentials at all.
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: akm-workload
+      containers:
+        - name: tracking-api
+          image: "${ACR_LOGIN_SERVER}/akm-tracking-api:${IMAGE_TAG}"
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: COSMOS_ENDPOINT
+              value: "${COSMOS_ENDPOINT}"
+            - name: COSMOS_DATABASE
+              value: "tracking"
+            - name: COSMOS_CONTAINER
+              value: "parcels"
+            - name: SERVICEBUS_NAMESPACE
+              value: "${SERVICEBUS_NAMESPACE_FQDN}"
+            - name: SERVICEBUS_QUEUE
+              value: "parcel-events"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop: ["ALL"]
+---
+# Public edge. The cluster's cloud controller adds a frontend address to the
+# load balancer AKS owns, and the public IP behind it, from this object. None
+# of that appears in the Terraform layer, and none of it lands in akm-rg — it
+# is all in the node resource group AKS created.
+#
+# notifier also reaches tracking-api through this Service, over the cluster's
+# internal DNS name rather than the public address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: tracking-api
+  namespace: tracking
+  labels:
+    app: tracking-api
+    app.kubernetes.io/part-of: parcel-tracking
+spec:
+  type: LoadBalancer
+  selector:
+    app: tracking-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

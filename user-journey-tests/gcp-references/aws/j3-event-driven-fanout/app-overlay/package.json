@@ -1,0 +1,13 @@
+{
+  "name": "photo-pipeline-gcp",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "description": "Photo pipeline functions — GCP port (GCS/Firestore/PubSub)",
+  "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@google-cloud/pubsub": "^4.7.0",
+    "@google-cloud/storage": "^7.13.0"
+  }
+}

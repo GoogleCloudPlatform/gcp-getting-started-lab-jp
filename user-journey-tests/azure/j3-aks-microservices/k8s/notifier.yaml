@@ -1,0 +1,79 @@
+# notifier — parcel scan-event consumer (Node).
+#
+# One replica. It locks one parcel's session at a time, so adding replicas
+# would let it work on more parcels at once; nobody has needed to yet.
+#
+# There is no Service in front of this. The port below is only reached by the
+# kubelet's probes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifier
+  namespace: tracking
+  labels:
+    app: notifier
+    app.kubernetes.io/part-of: parcel-tracking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notifier
+  template:
+    metadata:
+      labels:
+        app: notifier
+        app.kubernetes.io/part-of: parcel-tracking
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: akm-workload
+      containers:
+        - name: notifier
+          image: "${ACR_LOGIN_SERVER}/akm-notifier:${IMAGE_TAG}"
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: COSMOS_ENDPOINT
+              value: "${COSMOS_ENDPOINT}"
+            - name: COSMOS_DATABASE
+              value: "tracking"
+            - name: COSMOS_CONTAINER
+              value: "parcels"
+            - name: SERVICEBUS_NAMESPACE
+              value: "${SERVICEBUS_NAMESPACE_FQDN}"
+            - name: SERVICEBUS_QUEUE
+              value: "parcel-events"
+            # The other service, over the cluster's internal DNS. Read by
+            # /health, which reports whether the tracking page is up.
+            - name: TRACKING_API_URL
+              value: "http://tracking-api.tracking.svc.cluster.local"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              memory: 384Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: ["ALL"]

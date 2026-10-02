@@ -1,0 +1,12 @@
+# The workload layer. Applied as `kubectl apply -k` by scripts/deploy.sh
+# AFTER envsubst renders the five placeholders into a k8s-build/ copy. Do not
+# apply this directory raw — the placeholders are not valid image references or
+# endpoints.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-namespace.yaml
+  - 10-serviceaccount.yaml
+  - tracking-api.yaml
+  - notifier.yaml

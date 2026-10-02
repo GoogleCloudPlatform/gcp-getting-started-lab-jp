@@ -1,0 +1,38 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-case-conflict
+    -   id: check-json
+        # ARM/Bicep parameter files may carry JSONC comments (az strips them before parsing)
+        exclude: ^user-journey-tests/.*/(bicep|arm|infra)/.*parameters\.json$
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: detect-private-key
+    -   id: end-of-file-fixer
+    -   id: mixed-line-ending
+    -   id: no-commit-to-branch
+    -   id: pretty-format-json
+        args: [ --autofix ]
+        exclude: ^user-journey-tests/.*/(bicep|arm|infra)/.*parameters\.json$
+    -   id: trailing-whitespace
+
+-   repo: https://github.com/PyCQA/bandit
+    rev: 1.9.3
+    hooks:
+    -   id: bandit
+
+-   repo: https://github.com/semgrep/pre-commit
+    rev: v1.151.0
+    hooks:
+    -   id: semgrep
+        args: [ '--oss-only', '--verbose', '--metrics=off', '--baseline-commit', 'main', '--config=r/all', '--error' ]
+        stages: [pre-push]
+
+-   repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+    -   id: gitleaks

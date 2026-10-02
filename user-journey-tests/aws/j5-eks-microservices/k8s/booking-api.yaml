@@ -1,0 +1,97 @@
+# booking-api — public edge + booking persistence (Node 22 / Express).
+#
+# Pod identity: the ServiceAccount below is annotated with an IAM role ARN
+# (IRSA). The EKS pod identity webhook injects web-identity credentials into
+# pods that use this service account; ONLY these pods can reach the bookings
+# table. The role itself is defined in ../terraform/iam.tf — the binding
+# exists solely in this manifest.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: booking-api
+  namespace: ems
+  labels:
+    app: booking-api
+    app.kubernetes.io/part-of: ems-marketplace
+  annotations:
+    eks.amazonaws.com/role-arn: "${IRSA_ROLE_ARN}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-api
+  namespace: ems
+  labels:
+    app: booking-api
+    app.kubernetes.io/part-of: ems-marketplace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-api
+  template:
+    metadata:
+      labels:
+        app: booking-api
+        app.kubernetes.io/part-of: ems-marketplace
+    spec:
+      serviceAccountName: booking-api
+      containers:
+        - name: booking-api
+          image: "${ECR_REGISTRY}/ems-booking-api:${IMAGE_TAG}"
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: TABLE_NAME
+              value: "ems-bookings"
+            - name: CATALOG_URL
+              value: "http://catalog-api:8080"
+            - name: AWS_REGION
+              value: "ap-northeast-1"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+---
+# Public edge: a network load balancer provisioned by the cluster's built-in
+# cloud controller from this Service object. There is no Ingress and no
+# load balancer anywhere in the Terraform layer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-api
+  namespace: ems
+  labels:
+    app: booking-api
+    app.kubernetes.io/part-of: ems-marketplace
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  selector:
+    app: booking-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

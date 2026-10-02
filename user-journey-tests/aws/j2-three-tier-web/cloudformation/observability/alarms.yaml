@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Online shop web store - observability layer. Mirrors architecture.md
+  "Operations": the /ttw/app log group (the CloudWatch-agent rollout that was
+  supposed to fill it never got finished - app logs still sit in journald on
+  the instances) and two metric alarms the owner eyeballs on the console
+  after the 2021 TV-feature incident. No alarm actions: the shop has no
+  on-call, alarms are checked by a human. Depends on ttw-compute-stack.
+
+Parameters:
+  AutoTeardownDate:
+    Type: String
+    Default: '2026-07-31'
+    Description: ISO date - tag value so future-you can find these to clean up.
+
+Resources:
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ttw/app
+      RetentionInDays: 30
+      Tags:
+        - {Key: Name, Value: /ttw/app}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  Alb5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ttw-alb-5xx
+      AlarmDescription: More than 10 ALB-generated 5xx in 5 minutes - usually both app instances down or crash-looping.
+      Namespace: AWS/ApplicationELB
+      MetricName: HTTPCode_ELB_5XX_Count
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !ImportValue 'ttw-compute-stack-AlbFullName'
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  UnhealthyHostsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ttw-unhealthy-hosts
+      AlarmDescription: Any target unhealthy for 5 minutes - with only two instances this means capacity is halved.
+      Namespace: AWS/ApplicationELB
+      MetricName: UnHealthyHostCount
+      Dimensions:
+        - Name: TargetGroup
+          Value: !ImportValue 'ttw-compute-stack-TargetGroupFullName'
+        - Name: LoadBalancer
+          Value: !ImportValue 'ttw-compute-stack-AlbFullName'
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}

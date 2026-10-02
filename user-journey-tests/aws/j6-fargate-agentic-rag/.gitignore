@@ -1,0 +1,7 @@
+# terraform local state (test bed runs apply from the repo checkout)
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform.tfstate.lock.info
+__pycache__/
+*.pyc

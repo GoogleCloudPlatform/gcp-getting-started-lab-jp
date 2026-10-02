@@ -1,0 +1,29 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: iteration records live here
+
+# Secrets — never committed
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+
+# Terraform local state (state can contain resolved subscription details)
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+*.tfplan
+crash.log
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

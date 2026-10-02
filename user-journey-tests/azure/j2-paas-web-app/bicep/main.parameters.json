@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dbAdminLogin": {
+      "value": "pwaadmin"
+    },
+    "postgresVersion": {
+      "value": "16"
+    },
+    "appServicePlanSkuName": {
+      "value": "S1"
+    },
+    "appServicePlanSkuTier": {
+      "value": "Standard"
+    },
+    // Burstable Standard_B1ms is the default because it is what the lab subscription offers.
+    // Where the catalogue gates it, fall back to a GeneralPurpose D2s_v5-class SKU and set
+    // postgresSkuTier to GeneralPurpose to match.
+    "postgresSkuName": {
+      "value": "Standard_B1ms"
+    },
+    "postgresSkuTier": {
+      "value": "Burstable"
+    },
+    "deployRoleAssignments": {
+      "value": true
+    }
+  }
+}

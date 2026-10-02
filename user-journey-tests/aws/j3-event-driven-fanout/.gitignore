@@ -1,0 +1,19 @@
+# NOTE: .migration/ and .iteration-log/ are deliberately NOT ignored —
+# migration agents must be able to read their own outputs, and evaluation
+# logs live with the journey.
+
+# generated bundles + package output
+build/
+app/node_modules/
+app/package-lock.json
+
+# secrets & local env
+.env
+.env.*
+*.pem
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

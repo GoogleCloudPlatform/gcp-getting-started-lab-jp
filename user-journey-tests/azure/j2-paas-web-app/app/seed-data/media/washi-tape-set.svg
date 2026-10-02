@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Washi tape set">
+  <title>Washi tape set</title>
+  <rect width="320" height="200" fill="#7a9a4e" />
+  <rect x="16" y="16" width="288" height="168" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.7" />
+  <circle cx="60" cy="60" r="18" fill="#ffffff" opacity="0.85" />
+  <text x="160" y="108" font-family="serif" font-size="20" fill="#ffffff" text-anchor="middle">Washi tape set</text>
+  <text x="160" y="136" font-family="serif" font-size="14" fill="#ffffff" text-anchor="middle" opacity="0.85">The Stationery Shop (fictional)</text>
+</svg>

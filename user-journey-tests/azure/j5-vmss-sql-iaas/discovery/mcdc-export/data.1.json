@@ -1,0 +1,505 @@
+[
+  {
+    "reportTime": "2026-07-28T02:14:31Z",
+    "collectionType": "SOURCE_TYPE_DISCOVERY_CLIENT",
+    "labels": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-08-31",
+      "Journey": "azure/j5-vmss-sql-iaas"
+    },
+    "attributes": {
+      "azure.subscriptionId": "b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62",
+      "azure.resourceGroup": "vsi-rg",
+      "azure.resourceId": "/subscriptions/b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62/resourceGroups/vsi-rg/providers/Microsoft.Compute/virtualMachineScaleSets/vsi-mes-vmss/virtualMachines/0",
+      "azure.powerState": "PowerState/running"
+    },
+    "performanceSamples": [
+      {
+        "sampleTime": "2026-07-27T21:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 23.71
+        },
+        "memory": {
+          "utilizedPercentage": 48.2
+        },
+        "network": {
+          "averageIngressBps": 218985.4,
+          "averageEgressBps": 24151.4
+        },
+        "disk": {
+          "averageIops": 128.3,
+          "averageReadIops": 96.3,
+          "averageWriteIops": 32.0
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T22:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 24.0
+        },
+        "memory": {
+          "utilizedPercentage": 51.51
+        },
+        "network": {
+          "averageIngressBps": 70591.2,
+          "averageEgressBps": 96020.2
+        },
+        "disk": {
+          "averageIops": 125.5,
+          "averageReadIops": 104.1,
+          "averageWriteIops": 21.4
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T23:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 17.89
+        },
+        "memory": {
+          "utilizedPercentage": 43.77
+        },
+        "network": {
+          "averageIngressBps": 132336.6,
+          "averageEgressBps": 117279.7
+        },
+        "disk": {
+          "averageIops": 348.7,
+          "averageReadIops": 312.5,
+          "averageWriteIops": 36.2
+        }
+      }
+    ],
+    "machineDetails": {
+      "uuid": "6f2c1a54-8d33-4b70-9c18-2e4a7b0d5931",
+      "machineName": "vsi-mes000000",
+      "createTime": "2022-06-14T04:22:10Z",
+      "coreCount": 2,
+      "memoryMb": 8192,
+      "powerState": "ACTIVE",
+      "architecture": {
+        "cpuArchitecture": "x64-based PC",
+        "cpuName": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+        "cpuManufacturer": "Intel",
+        "cpuSocketCount": 1,
+        "firmwareType": "EFI",
+        "hyperthreading": "ENABLED"
+      },
+      "guestOs": {
+        "osName": "Microsoft Windows Server 2022 Datacenter",
+        "family": "OS_FAMILY_WINDOWS",
+        "version": "10.0.20348"
+      },
+      "network": {
+        "primaryIpAddress": "10.40.1.4",
+        "primaryMacAddress": "00-0D-3A-1C-4E-71",
+        "adapters": {
+          "entries": [
+            {
+              "adapterType": "Microsoft Hyper-V Network Adapter",
+              "macAddress": "00-0D-3A-1C-4E-71",
+              "addresses": {
+                "entries": [
+                  {
+                    "ipAddress": "10.40.1.4",
+                    "subnetMask": "255.255.255.0",
+                    "assignment": "ADDRESS_ASSIGNMENT_DHCP"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "disks": {
+        "totalCapacityBytes": "136365211648",
+        "disks": {
+          "entries": [
+            {
+              "capacityBytes": "136365211648",
+              "diskLabel": "C:",
+              "diskLabelType": "GPT",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:0"
+            }
+          ]
+        }
+      },
+      "platform": {
+        "azureVmDetails": {
+          "machineTypeLabel": "Standard_D2s_v5",
+          "location": "westus3",
+          "provisioningState": "Succeeded",
+          "hyperthreading": "HYPERTHREADING_STATUS_ENABLED"
+        }
+      }
+    }
+  },
+  {
+    "reportTime": "2026-07-28T02:14:31Z",
+    "collectionType": "SOURCE_TYPE_DISCOVERY_CLIENT",
+    "labels": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-08-31",
+      "Journey": "azure/j5-vmss-sql-iaas"
+    },
+    "attributes": {
+      "azure.subscriptionId": "b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62",
+      "azure.resourceGroup": "vsi-rg",
+      "azure.resourceId": "/subscriptions/b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62/resourceGroups/vsi-rg/providers/Microsoft.Compute/virtualMachineScaleSets/vsi-mes-vmss/virtualMachines/1",
+      "azure.powerState": "PowerState/running"
+    },
+    "performanceSamples": [
+      {
+        "sampleTime": "2026-07-27T21:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 16.52
+        },
+        "memory": {
+          "utilizedPercentage": 44.96
+        },
+        "network": {
+          "averageIngressBps": 177729.3,
+          "averageEgressBps": 159930.7
+        },
+        "disk": {
+          "averageIops": 301.3,
+          "averageReadIops": 285.5,
+          "averageWriteIops": 15.8
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T22:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 26.7
+        },
+        "memory": {
+          "utilizedPercentage": 46.16
+        },
+        "network": {
+          "averageIngressBps": 159562.5,
+          "averageEgressBps": 69181.1
+        },
+        "disk": {
+          "averageIops": 265.0,
+          "averageReadIops": 235.5,
+          "averageWriteIops": 29.5
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T23:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 13.83
+        },
+        "memory": {
+          "utilizedPercentage": 39.72
+        },
+        "network": {
+          "averageIngressBps": 116713.4,
+          "averageEgressBps": 107218.1
+        },
+        "disk": {
+          "averageIops": 144.6,
+          "averageReadIops": 72.0,
+          "averageWriteIops": 72.6
+        }
+      }
+    ],
+    "machineDetails": {
+      "uuid": "0a95b7e2-4c61-4d8f-83a7-cc5f19b6e204",
+      "machineName": "vsi-mes000001",
+      "createTime": "2022-06-14T04:22:11Z",
+      "coreCount": 2,
+      "memoryMb": 8192,
+      "powerState": "ACTIVE",
+      "architecture": {
+        "cpuArchitecture": "x64-based PC",
+        "cpuName": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+        "cpuManufacturer": "Intel",
+        "cpuSocketCount": 1,
+        "firmwareType": "EFI",
+        "hyperthreading": "ENABLED"
+      },
+      "guestOs": {
+        "osName": "Microsoft Windows Server 2022 Datacenter",
+        "family": "OS_FAMILY_WINDOWS",
+        "version": "10.0.20348"
+      },
+      "network": {
+        "primaryIpAddress": "10.40.1.5",
+        "primaryMacAddress": "00-0D-3A-1C-4E-72",
+        "adapters": {
+          "entries": [
+            {
+              "adapterType": "Microsoft Hyper-V Network Adapter",
+              "macAddress": "00-0D-3A-1C-4E-72",
+              "addresses": {
+                "entries": [
+                  {
+                    "ipAddress": "10.40.1.5",
+                    "subnetMask": "255.255.255.0",
+                    "assignment": "ADDRESS_ASSIGNMENT_DHCP"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "disks": {
+        "totalCapacityBytes": "136365211648",
+        "disks": {
+          "entries": [
+            {
+              "capacityBytes": "136365211648",
+              "diskLabel": "C:",
+              "diskLabelType": "GPT",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:0"
+            }
+          ]
+        }
+      },
+      "platform": {
+        "azureVmDetails": {
+          "machineTypeLabel": "Standard_D2s_v5",
+          "location": "westus3",
+          "provisioningState": "Succeeded",
+          "hyperthreading": "HYPERTHREADING_STATUS_ENABLED"
+        }
+      }
+    }
+  },
+  {
+    "reportTime": "2026-07-28T02:14:31Z",
+    "collectionType": "SOURCE_TYPE_DISCOVERY_CLIENT",
+    "labels": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-08-31",
+      "Journey": "azure/j5-vmss-sql-iaas"
+    },
+    "attributes": {
+      "azure.subscriptionId": "b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62",
+      "azure.resourceGroup": "vsi-rg",
+      "azure.resourceId": "/subscriptions/b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62/resourceGroups/vsi-rg/providers/Microsoft.Compute/virtualMachines/vsi-sql01",
+      "azure.powerState": "PowerState/running"
+    },
+    "performanceSamples": [
+      {
+        "sampleTime": "2026-07-27T21:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 32.72
+        },
+        "memory": {
+          "utilizedPercentage": 73.5
+        },
+        "network": {
+          "averageIngressBps": 55271.0,
+          "averageEgressBps": 141823.3
+        },
+        "disk": {
+          "averageIops": 318.0,
+          "averageReadIops": 260.0,
+          "averageWriteIops": 58.0
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T22:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 55.61
+        },
+        "memory": {
+          "utilizedPercentage": 73.27
+        },
+        "network": {
+          "averageIngressBps": 171285.4,
+          "averageEgressBps": 154071.1
+        },
+        "disk": {
+          "averageIops": 327.6,
+          "averageReadIops": 212.4,
+          "averageWriteIops": 115.2
+        }
+      },
+      {
+        "sampleTime": "2026-07-27T23:00:00Z",
+        "cpu": {
+          "utilizedPercentage": 54.86
+        },
+        "memory": {
+          "utilizedPercentage": 72.65
+        },
+        "network": {
+          "averageIngressBps": 149341.9,
+          "averageEgressBps": 68806.6
+        },
+        "disk": {
+          "averageIops": 116.2,
+          "averageReadIops": 43.1,
+          "averageWriteIops": 73.1
+        }
+      }
+    ],
+    "machineDetails": {
+      "uuid": "e78d4310-5b92-4a06-bf51-9d3c2a8e6470",
+      "machineName": "vsi-sql01",
+      "createTime": "2022-06-14T03:58:44Z",
+      "coreCount": 2,
+      "memoryMb": 8192,
+      "powerState": "ACTIVE",
+      "architecture": {
+        "cpuArchitecture": "x64-based PC",
+        "cpuName": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+        "cpuManufacturer": "Intel",
+        "cpuSocketCount": 1,
+        "firmwareType": "EFI",
+        "hyperthreading": "ENABLED"
+      },
+      "guestOs": {
+        "osName": "Microsoft Windows Server 2022 Datacenter",
+        "family": "OS_FAMILY_WINDOWS",
+        "version": "10.0.20348"
+      },
+      "network": {
+        "primaryIpAddress": "10.40.2.4",
+        "primaryMacAddress": "00-0D-3A-2B-77-05",
+        "adapters": {
+          "entries": [
+            {
+              "adapterType": "Microsoft Hyper-V Network Adapter",
+              "macAddress": "00-0D-3A-2B-77-05",
+              "addresses": {
+                "entries": [
+                  {
+                    "ipAddress": "10.40.2.4",
+                    "subnetMask": "255.255.255.0",
+                    "assignment": "ADDRESS_ASSIGNMENT_STATIC"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "disks": {
+        "totalCapacityBytes": "273804165120",
+        "disks": {
+          "entries": [
+            {
+              "capacityBytes": "136365211648",
+              "diskLabel": "C:",
+              "diskLabelType": "GPT",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:0"
+            },
+            {
+              "capacityBytes": "137438953472",
+              "diskLabel": "F:",
+              "diskLabelType": "GPT",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:1"
+            }
+          ]
+        }
+      },
+      "platform": {
+        "azureVmDetails": {
+          "machineTypeLabel": "Standard_D2s_v5",
+          "location": "westus3",
+          "provisioningState": "Succeeded",
+          "hyperthreading": "HYPERTHREADING_STATUS_ENABLED"
+        }
+      }
+    }
+  },
+  {
+    "reportTime": "2026-07-28T02:14:31Z",
+    "collectionType": "SOURCE_TYPE_DISCOVERY_CLIENT",
+    "labels": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "2026-08-31",
+      "Journey": "azure/j5-vmss-sql-iaas"
+    },
+    "attributes": {
+      "azure.subscriptionId": "b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62",
+      "azure.resourceGroup": "vsi-rg",
+      "azure.resourceId": "/subscriptions/b41d8a97-2ce6-4f05-9a3b-71e0c5d8fa62/resourceGroups/vsi-rg/providers/Microsoft.Compute/virtualMachines/vsi-hist01",
+      "azure.powerState": "PowerState/stopped"
+    },
+    "performanceSamples": [],
+    "machineDetails": {
+      "uuid": "3c60f8b1-a274-4e19-8d05-46b7ce921f38",
+      "machineName": "vsi-hist01",
+      "createTime": "2021-11-02T07:41:09Z",
+      "coreCount": 4,
+      "memoryMb": 16384,
+      "powerState": "SUSPENDED",
+      "architecture": {
+        "cpuArchitecture": "x64-based PC",
+        "cpuName": "Intel(R) Xeon(R) Platinum 8272CL CPU @ 2.60GHz",
+        "cpuManufacturer": "Intel",
+        "cpuSocketCount": 1,
+        "firmwareType": "BIOS",
+        "hyperthreading": "ENABLED"
+      },
+      "guestOs": {
+        "osName": "Microsoft Windows Server 2022 Datacenter",
+        "family": "OS_FAMILY_WINDOWS",
+        "version": "10.0.20348"
+      },
+      "network": {
+        "primaryIpAddress": "10.40.2.10",
+        "primaryMacAddress": "00-0D-3A-2B-77-1C",
+        "adapters": {
+          "entries": [
+            {
+              "adapterType": "Microsoft Hyper-V Network Adapter",
+              "macAddress": "00-0D-3A-2B-77-1C",
+              "addresses": {
+                "entries": [
+                  {
+                    "ipAddress": "10.40.2.10",
+                    "subnetMask": "255.255.255.0",
+                    "assignment": "ADDRESS_ASSIGNMENT_DHCP"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "disks": {
+        "totalCapacityBytes": "686121025536",
+        "disks": {
+          "entries": [
+            {
+              "capacityBytes": "136365211648",
+              "diskLabel": "C:",
+              "diskLabelType": "MBR",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:0"
+            },
+            {
+              "capacityBytes": "549755813888",
+              "diskLabel": "E:",
+              "diskLabelType": "MBR",
+              "interfaceType": "SCSI",
+              "hwAddress": "0:1"
+            }
+          ]
+        }
+      },
+      "platform": {
+        "azureVmDetails": {
+          "machineTypeLabel": "Standard_D4s_v3",
+          "location": "westus3",
+          "provisioningState": "Succeeded",
+          "hyperthreading": "HYPERTHREADING_STATUS_ENABLED"
+        }
+      }
+    }
+  }
+]

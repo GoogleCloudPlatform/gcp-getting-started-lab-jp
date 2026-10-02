@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Online Shop{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <h1><a href="{{ url_for('book_list') }}">Online Shop</a></h1>
+    <p class="tagline">Used &amp; antiquarian books — Osu, Nagoya — since 1998</p>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <p>Online Shop — ttw.example — no returns on items graded C.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "dfp-claims-pipeline",
+  "version": "1.4.0",
+  "description": "Claims intake and review pipeline (fictional operator).",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start": "func start",
+    "check": "node --check src/index.js"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.2",
+    "@azure/functions": "^4.16.2",
+    "@azure/service-bus": "^7.9.5",
+    "durable-functions": "^3.5.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

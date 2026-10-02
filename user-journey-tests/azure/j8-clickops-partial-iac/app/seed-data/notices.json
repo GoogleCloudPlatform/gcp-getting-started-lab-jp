@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "posted_on": "2026-04-06",
+    "category": "Registration",
+    "title": "Course registration for the first semester closes 17 April",
+    "body": "Registration for first-semester courses closes at 17:00 on Friday 17 April. Students who have not completed registration by that time must apply in person at the student office in Building 1 and will be charged the late registration fee. Seminar courses with a capacity limit are allocated by ballot on 20 April and the results are posted here."
+  },
+  {
+    "id": 2,
+    "posted_on": "2026-04-28",
+    "category": "Campus",
+    "title": "Building 3 lift out of service until 12 May",
+    "body": "The lift in Building 3 is out of service for its statutory inspection and replacement of the control panel. Classes scheduled in rooms 3-401 through 3-408 have been moved to Building 2 for the duration; check the timetable for your room. Students who need step-free access to a relocated class should contact the student office."
+  },
+  {
+    "id": 3,
+    "posted_on": "2026-05-18",
+    "category": "Scholarships",
+    "title": "Applications open for the Campus Foundation bursary",
+    "body": "The Campus Foundation bursary is open to second-year and third-year students in any faculty. Twelve awards of 200,000 yen are made each year. Download the application form from the documents page, and return it with your academic transcript to the student office by 30 June. Interviews are held in the second week of July."
+  },
+  {
+    "id": 4,
+    "posted_on": "2026-06-22",
+    "category": "Examinations",
+    "title": "First-semester examination timetable published",
+    "body": "The examination timetable for the first semester is now published. Examinations run from 20 July to 31 July. Check the room and start time for every one of your papers: rooms have changed since the provisional timetable circulated in May. Clashes must be reported to the examinations office within one week of this notice."
+  },
+  {
+    "id": 5,
+    "posted_on": "2026-07-13",
+    "category": "Library",
+    "title": "Summer opening hours for the Central Library",
+    "body": "From 1 August to 20 September the Central Library opens 10:00 to 18:00 on weekdays and closes at weekends. The group study rooms on the third floor stay open until 20:00 during the examination period. Books borrowed before 20 July are due back on 25 September."
+  }
+]

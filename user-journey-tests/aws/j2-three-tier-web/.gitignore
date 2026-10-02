@@ -1,0 +1,28 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: harness iteration records live here
+
+# Secrets — never committed
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+
+# Build artifacts (deploy.sh assembles the bundle under /tmp, but keep the
+# patterns anyway for local experiments)
+app.tar.gz
+covers-out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

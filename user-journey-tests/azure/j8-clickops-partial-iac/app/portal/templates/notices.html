@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Notice board &middot; {{ university }}{% endblock %}
+
+{% block content %}
+  <h2>Notice board</h2>
+
+  {% if not board_reachable %}
+    <p class="unavailable">
+      The notice board is unavailable. Notices are also posted on the boards
+      outside the student office.
+    </p>
+  {% elif not notices %}
+    <p>Nothing has been posted yet this term.</p>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th>Posted</th>
+          <th>Category</th>
+          <th>Notice</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for notice in notices %}
+          <tr>
+            <td class="posted">{{ notice.posted_on }}</td>
+            <td><span class="category">{{ notice.category }}</span></td>
+            <td>
+              <a href="/notices/{{ notice.id }}">{{ notice.title }}</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "storefront/base.html" %}
+
+{% block title %}{{ product.name }} — The Stationery Shop (fictional){% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'product-list' %}">&larr; Back to the catalogue</a></p>
+  <h2>{{ product.name }}</h2>
+  <p>{{ product.name_ja }}</p>
+  {% if image_url %}
+    <img src="{{ image_url }}" alt="{{ product.name }}" style="max-width: 20rem" />
+  {% endif %}
+  <p>{{ product.description }}</p>
+  <p class="price">
+    &yen;{{ product.price_with_tax_jpy }} incl. tax
+    (&yen;{{ product.price_jpy }} before tax)
+  </p>
+  <p>Category: {{ product.category.name }} / {{ product.category.name_ja }}</p>
+  {% if product.in_stock %}
+    <p>{{ product.stock }} in stock</p>
+  {% else %}
+    <p class="out">Out of stock</p>
+  {% endif %}
+{% endblock %}

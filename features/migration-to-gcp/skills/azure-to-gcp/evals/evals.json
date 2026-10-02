@@ -1,0 +1,40 @@
+{
+  "_note": "Scenario skeletons; behavioral assertions land after the RED baseline runs (P3). Each `setup` names a fixture path that does not exist yet — the fixtures are built alongside the RED baseline. Keep future assertions behavioral (observable in $MIGRATION_DIR artifacts), not stylistic.",
+  "evals": [
+    {
+      "id": "iac-bicep-full",
+      "description": "Full 5-phase run against a Bicep-defined Azure estate. Exercises Bicep parsing (symbolic names, modules, loops, conditions, `existing` exclusion), the identity and licensing gates, the Key Vault app-setting reference, and rightsizing evidence that lives only in the cost fixture.",
+      "setup": "Fixture = user-journey-tests/azure/j2-paas-web-app as the user project root: infra/ (Bicep main + local modules + one unresolvable registry module reference), app/ (Python source with azure-identity, azure-storage-blob and azure-keyvault-secrets call sites), costs/ (FOCUS CSV export), README noting fixed IP allowlists.",
+      "prompt": "migrate this Azure estate to Google Cloud",
+      "expected_behavior": []
+    },
+    {
+      "id": "iac-arm-plus-drift",
+      "description": "ARM-template source where the templates disagree with the cost export. Exercises both ARM `resources` shapes, copy loops and child hoisting, linked-template handling, the two-IaC-dialect drift, and the reconciliation warnings ([IAC_DRIFT], [PARTIAL_IAC], [STOPPED_NOT_DEALLOCATED]).",
+      "setup": "Fixture = user-journey-tests/azure/j6-storage-media-pipeline: arm/ (a languageVersion 2.0 object-keyed template, a classic array template with a copy loop and a hoisted child resource, and a linked template referenced by absolute URI) plus a small terraform/ layer that disagrees with the ARM on one resource, and an actual-cost export that bills several resources absent from the templates and one stopped-but-allocated VM.",
+      "prompt": "we have some ARM templates and an Azure bill — plan a move to Google Cloud",
+      "expected_behavior": []
+    },
+    {
+      "id": "billing-only-focus",
+      "description": "Degraded-input path: a FOCUS 1.2-preview cost export is the only source. Historical risk: fabricating per-resource inventory, VM specs, and dollars from nothing. Also exercises the 1.2-preview column renames and the declared-but-null commitment columns.",
+      "setup": "Fixture = a staged copy of four data artifacts from user-journey-tests/azure/j8-clickops-partial-iac/costs/ and nothing else: focus/ (the partitioned FOCUS 1.2-preview run folder — _manifest.json plus gzipped partitions), cpi-actual-cost.csv, cpi-amortized-cost.csv, cpi-reservation-usage.csv. The generators, check-consistency.py, fixtures.sha256 and costs/README.md are NOT staged (they name the estate and point at the withheld layers); bicep/, app/ and discovery/ are not staged either.",
+      "prompt": "here is our Azure billing export — what would this cost on Google Cloud?",
+      "expected_behavior": []
+    },
+    {
+      "id": "ai-only",
+      "description": "Application-code-only source centred on Azure OpenAI. Exercises the app-code SDK scan with no IaC present, the Q_MAP.ai card, the OpenAI-compatible-endpoint auth-shape difference, and the [LEGACY_SDK] Service Bus flag.",
+      "setup": "Fixture = user-journey-tests/azure/j7-container-apps-rag: app/ only — a Python service using the AzureOpenAI client with a deployment name and api_version, azure-keyvault-secrets, DefaultAzureCredential, applicationinsights instrumentation, and a .NET worker still referencing Microsoft.Azure.ServiceBus. No IaC, no billing export.",
+      "prompt": "move our Azure OpenAI app to Vertex AI on Google Cloud",
+      "expected_behavior": []
+    },
+    {
+      "id": "headless-full-run",
+      "description": "Unattended end-to-end run (claude -p style) over the AKS estate. Exercises the SKILL.md interaction contract: zero stalls, documented dispositions only, no live-Azure read without consent, the mandatory Cosmos DB card resolved via its documented headless default, and live pricing provenance on every figure.",
+      "setup": "Fixture = user-journey-tests/azure/j3-aks-microservices as the user project root: terraform/ (azurerm AKS, ACR, Service Bus, Cosmos DB SQL API, workload identity federation), k8s/ manifests (workload layer invisible to IaC parsers), app/ (Go and Node services with SDK funnel modules), driven non-interactively (claude -p; no human available to answer any question).",
+      "prompt": "migrate this Azure estate to Google Cloud. Run unattended; do not wait for user input.",
+      "expected_behavior": []
+    }
+  ]
+}

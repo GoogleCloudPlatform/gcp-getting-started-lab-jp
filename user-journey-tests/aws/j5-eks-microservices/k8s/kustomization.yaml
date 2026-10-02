@@ -1,0 +1,11 @@
+# j5-eks-microservices workload layer. Applied as `kubectl apply -k` by
+# scripts/deploy.sh AFTER envsubst renders ${ECR_REGISTRY}, ${IMAGE_TAG} and
+# ${IRSA_ROLE_ARN} into a k8s-build/ copy. Do not apply this directory raw —
+# the placeholders are not valid image references.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-namespace.yaml
+  - catalog-api.yaml
+  - booking-api.yaml

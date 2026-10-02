@@ -1,0 +1,17 @@
+# .semgrepignore - Additional exclusions beyond .gitignore
+
+**/test_fixtures/
+**/fixtures/
+**/__mocks__/
+**/sample-agent-skills-for-aws-migration/
+
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+poetry.lock
+Pipfile.lock
+uv.lock
+
+.gitleaks-baseline.json
+.bandit-baseline.json
+.semgrepignore

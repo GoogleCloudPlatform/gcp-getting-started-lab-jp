@@ -1,0 +1,24 @@
+# NOTE: .migration/ and .iteration-log/ are deliberately NOT ignored —
+# migration agents must be able to read their own outputs, and evaluation
+# logs live with the journey.
+
+# generated Lambda bundles
+build/
+
+# terraform local state
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/tfplan
+
+# secrets & local env
+.env
+.env.*
+*.pem
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,7 @@
+# All equipment-marketplace (fictional) workloads live in one namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ems
+  labels:
+    app.kubernetes.io/part-of: ems-marketplace

@@ -1,0 +1,12 @@
+{
+  "name": "photo-pipeline",
+  "private": true,
+  "type": "module",
+  "description": "Photo upload post-processing functions (worker + digest)",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/client-sns": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0"
+  }
+}

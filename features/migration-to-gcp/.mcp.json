@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "awsknowledge": {
+      "type": "http",
+      "url": "https://knowledge-mcp.global.api.aws"
+    },
+    "google-developer-knowledge": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/dk-mcp-proxy.mjs"],
+      "env": {
+        "DK_API_KEY": "${user_config.google_dev_knowledge_api_key}",
+        "GOOGLE_CLOUD_PROJECT": "${user_config.google_cloud_project}"
+      }
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+/* Online shop — the 2016 contractor's stylesheet, lightly dusted. */
+:root {
+  --green: #2e6e4e;
+  --paper: #f6f2e8;
+  --ink: #2b2b2b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Georgia, "Yu Mincho", serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+.site-header {
+  background: var(--green);
+  color: #fff;
+  padding: 1rem 1.5rem;
+}
+.site-header h1 { margin: 0; font-size: 1.6rem; }
+.site-header a { color: #fff; text-decoration: none; }
+.tagline { margin: 0.2rem 0 0; font-size: 0.85rem; opacity: 0.85; }
+main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.book {
+  background: #fff;
+  border: 1px solid #ddd2b8;
+  border-radius: 4px;
+  padding: 0.8rem;
+}
+.book img, .book-detail img {
+  display: block;
+  border: 1px solid #c9bd9c;
+  background: #eee;
+}
+.book h3 { font-size: 1rem; margin: 0.5rem 0 0.2rem; }
+.book a { color: var(--ink); text-decoration: none; }
+.author { margin: 0; font-size: 0.85rem; color: #666; }
+.price { font-weight: bold; color: var(--green); }
+.grade { font-weight: normal; font-size: 0.8rem; color: #8a7f5c; }
+.book-detail { display: flex; gap: 1.5rem; background: #fff; border: 1px solid #ddd2b8; padding: 1.2rem; }
+.book-detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1rem; }
+.book-detail dt { color: #8a7f5c; }
+.book-detail dd { margin: 0; }
+.crumbs { margin-bottom: 1rem; }
+.note { font-size: 0.85rem; color: #666; }
+.site-footer { text-align: center; font-size: 0.8rem; color: #8a7f5c; padding: 1.5rem; }

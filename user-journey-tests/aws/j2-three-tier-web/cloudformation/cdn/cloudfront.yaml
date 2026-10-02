@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Online shop web store - CDN layer. Mirrors architecture.md "Main services":
+  one CloudFront distribution added in 2021 after a local-TV feature melted
+  the two app instances. Origin is the ALB over plain HTTP (the shop never
+  bought a certificate for the origin hop); viewers get the default
+  *.cloudfront.net certificate with redirect-to-https. Dynamic pages bypass
+  the cache (managed CachingDisabled policy); only /static/* is cached
+  (managed CachingOptimized policy). CloudFront is a global service but the
+  stack lives in the Tokyo stack set with everything else. Depends on
+  ttw-compute-stack.
+
+Parameters:
+  AutoTeardownDate:
+    Type: String
+    Default: '2026-07-31'
+    Description: ISO date - tag value so future-you can find these to clean up.
+
+Resources:
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Online shop storefront (ttw) - ALB origin, cache /static/* only.
+        Enabled: true
+        HttpVersion: http2
+        # Tokyo shoppers + default-cert edge; PriceClass_200 covers Asia.
+        PriceClass: PriceClass_200
+        Origins:
+          - Id: ttw-alb-origin
+            DomainName: !ImportValue 'ttw-compute-stack-AlbDnsName'
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              HTTPPort: 80
+        DefaultCacheBehavior:
+          TargetOriginId: ttw-alb-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          # Managed policy "CachingDisabled" (verified 2026-07): dynamic pages
+          # (/books, /health, /admin/aws-check) always hit the origin.
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+        CacheBehaviors:
+          - PathPattern: '/static/*'
+            TargetOriginId: ttw-alb-origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            # Managed policy "CachingOptimized" (verified 2026-07): css only -
+            # the 2021 contractor never got around to adding /covers/*.
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+      Tags:
+        - {Key: Name, Value: ttw-cdn}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+Outputs:
+  DistributionId:
+    Value: !Ref Distribution
+    Export: {Name: !Sub '${AWS::StackName}-DistributionId'}
+  DistributionDomainName:
+    Value: !GetAtt Distribution.DomainName
+    Export: {Name: !Sub '${AWS::StackName}-DistributionDomainName'}

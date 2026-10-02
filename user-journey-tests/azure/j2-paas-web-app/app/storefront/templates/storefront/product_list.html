@@ -1,0 +1,27 @@
+{% extends "storefront/base.html" %}
+
+{% block title %}The Stationery Shop (fictional) — catalogue{% endblock %}
+
+{% block content %}
+  <p>{{ products|length }} items in the catalogue.</p>
+  <div class="grid">
+    {% for entry in products %}
+      <div class="card">
+        {% if entry.image_url %}
+          <img src="{{ entry.image_url }}" alt="{{ entry.product.name }}" />
+        {% endif %}
+        <h2><a href="{% url 'product-detail' entry.product.slug %}">{{ entry.product.name }}</a></h2>
+        <p>{{ entry.product.name_ja }}</p>
+        <p class="price">&yen;{{ entry.product.price_with_tax_jpy }} incl. tax</p>
+        <p>{{ entry.product.category.name }}</p>
+        {% if entry.product.in_stock %}
+          <p>{{ entry.product.stock }} in stock</p>
+        {% else %}
+          <p class="out">Out of stock</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>The catalogue is empty. Run scripts/seed.sh.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

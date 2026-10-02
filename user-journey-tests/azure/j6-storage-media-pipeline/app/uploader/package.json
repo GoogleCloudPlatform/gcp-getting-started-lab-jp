@@ -1,0 +1,22 @@
+{
+  "name": "smp-uploader",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Shoot uploader for the media-licensing operator (fictional) — pushes a card dump into the intake container from the ingest workstation.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "smp-upload": "./uploader.mjs"
+  },
+  "scripts": {
+    "health": "node uploader.mjs health",
+    "azure-check": "node uploader.mjs azure-check"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@azure/storage-blob": "^12.26.0",
+    "@azure/storage-queue": "^12.25.0"
+  }
+}

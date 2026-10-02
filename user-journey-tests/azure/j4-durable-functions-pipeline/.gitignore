@@ -1,0 +1,38 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: per-run observation records live here
+
+# Secrets — never committed. This estate holds no passwords; the function app's
+# connection strings are built by infra/main.bicep from listKeys() at deployment
+# time and exist nowhere on disk.
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+*.publishsettings
+secrets/
+local.settings.json
+
+# Azure CLI / deployment scratch
+.azure/
+*.deployment.json.tmp
+*.zip
+
+# Node — deploy.sh installs these locally and ships them inside the package
+node_modules/
+npm-debug.log*
+.npm/
+
+# Local Functions host scratch
+__azurite_db*__.json
+__blobstorage__
+__queuestorage__
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

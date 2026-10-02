@@ -1,0 +1,16 @@
+# Robo-advisory portfolio explainer — pinned so the image the desk tested
+# against is the image that ships.
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+pydantic==2.13.4
+
+# Azure SDKs. Every call site funnels through azure_clients.py.
+azure-identity==1.25.3
+azure-search-documents==12.0.0
+azure-cosmos==4.16.3
+azure-storage-blob==12.30.0
+
+# The model client. Azure OpenAI is reached through the openai package's
+# AzureOpenAI class, which is a different constructor from the plain OpenAI one
+# — see the note in azure_clients.openai_client().
+openai==2.53.0

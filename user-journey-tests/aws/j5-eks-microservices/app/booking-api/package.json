@@ -1,0 +1,19 @@
+{
+  "name": "ems-booking-api",
+  "version": "1.4.2",
+  "private": true,
+  "description": "Booking service + public API gateway for the equipment marketplace (fictional)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.821.0",
+    "@aws-sdk/client-sts": "^3.821.0",
+    "@aws-sdk/lib-dynamodb": "^3.821.0",
+    "express": "^4.21.2"
+  }
+}

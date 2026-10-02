@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}The Stationery Shop (fictional){% endblock %}</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0 auto;
+        max-width: 60rem;
+        padding: 2rem 1rem;
+        color: #1b2b34;
+      }
+      header {
+        border-bottom: 2px solid #2a7f9e;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0;
+      }
+      .tagline {
+        color: #57707d;
+        font-size: 0.9rem;
+      }
+      .grid {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+      }
+      .card {
+        border: 1px solid #d6e2e8;
+        border-radius: 6px;
+        padding: 1rem;
+      }
+      .card img {
+        display: block;
+        height: 7rem;
+        width: 100%;
+        object-fit: contain;
+      }
+      .price {
+        font-weight: 600;
+      }
+      .out {
+        color: #a33;
+      }
+      a {
+        color: #2a7f9e;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>The Stationery Shop (fictional) — pens and paper</h1>
+      <p class="tagline">Stationery from our little shop, posted anywhere in Japan.</p>
+    </header>
+    {% block content %}{% endblock %}
+  </body>
+</html>

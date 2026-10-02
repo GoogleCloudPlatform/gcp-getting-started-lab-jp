@@ -1,0 +1,696 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "comments": [
+      "Fictional clinic group (wil- prefix) — Windows LOB estate lifted to Azure IaaS in 2021.",
+      "Single resource group wil-rg. Deploy with scripts/deploy.sh, which generates both",
+      "securestring passwords at deploy time.",
+      "SIZE COUPLING: the local-disk OS on wil-app01 requires imageSku (30 GiB) <= the temp disk of",
+      "ephemeralVmSize (75 GiB on Standard_D2ds_v5). Changing either parameter without the other breaks the deploy."
+    ]
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region for every resource. Follows the resource group the deployment targets."
+      }
+    },
+    "autoTeardownDate": {
+      "type": "string",
+      "metadata": {
+        "description": "YYYY-MM-DD written to the AutoTeardown tag on every taggable resource. Supplied by deploy.sh from ~/.azure/journeys.env."
+      }
+    },
+    "appVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2ms",
+      "metadata": {
+        "description": "Size for wil-app02 — burstable B-series, the smallest size the portal has ever run on. 2 vCPU / 8 GiB."
+      }
+    },
+    "ephemeralVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2ds_v5",
+      "metadata": {
+        "description": "Size for wil-app01 ONLY. It must be a d-suffixed size whose series supports a local-disk OS: the B-series wil-app02 runs on has no local temp or cache disk at all. SIZE MATH: Standard_D2ds_v5 = 2 vCPU / 8 GiB with a 75 GiB temp (resource) disk; the 2019-datacenter-smalldisk image is ~30 GiB; 30 <= 75, so ResourceDisk placement fits with 45 GiB of temp left over. This is the cheapest Ddsv5 size and the smallest supported host for this image. Check the series feature table before substituting anything else — support is per size family, and a size that lacks it fails at create time."
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "2019-datacenter-smalldisk",
+      "allowedValues": [
+        "2019-datacenter-smalldisk",
+        "2019-datacenter-core-smalldisk"
+      ],
+      "metadata": {
+        "description": "Windows Server 2019 marketplace SKU, Generation 1. Both allowed values ship a ~30 GiB OS disk, which keeps the size math above valid whichever is chosen. The full-size 2019-datacenter SKU (~127 GiB) is NOT allowed: it exceeds the 75 GiB temp disk of ephemeralVmSize and would fail to deploy."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "wilopsadmin",
+      "metadata": {
+        "description": "Local Windows administrator on both app VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Local Windows administrator password. Generated per deploy by scripts/deploy.sh and never stored in this repo."
+      }
+    },
+    "sqlAdminLogin": {
+      "type": "string",
+      "defaultValue": "wilsqladmin",
+      "metadata": {
+        "description": "Azure SQL logical server administrator login. Not 'admin'/'sa' — Azure rejects reserved logins."
+      }
+    },
+    "sqlAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure SQL administrator password. Generated per deploy by scripts/deploy.sh and never stored in this repo."
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[concat('wil-sql-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Azure SQL logical server name. The name becomes <name>.database.windows.net, which is globally unique across all of Azure, so a bare 'wil-sql' is unsafe — the same constraint that applies to storage accounts and Key Vaults."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('wilscans', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Scanned-document storage account. Storage account names are 3-24 lowercase alphanumerics with no hyphens and are globally unique, hence the wilscans<suffix> form. Confirm availability with: az storage account check-name --name <n>"
+      }
+    }
+  },
+  "variables": {
+    "commonTags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "[parameters('autoTeardownDate')]",
+      "Journey": "azure/j1-windows-iaas-lift"
+    },
+    "hubVnetName": "wil-hub-vnet",
+    "appVnetName": "wil-app-vnet",
+    "hubSubnetName": "wil-mgmt-subnet",
+    "appSubnetName": "wil-app-subnet",
+    "hubNsgName": "wil-hub-nsg",
+    "appNsgName": "wil-app-nsg",
+    "hubAddressPrefix": "10.10.0.0/16",
+    "hubSubnetPrefix": "10.10.1.0/24",
+    "appAddressPrefix": "10.20.0.0/16",
+    "appSubnetPrefix": "10.20.1.0/24",
+    "lbName": "wil-lb",
+    "lbPublicIpName": "wil-lb-pip",
+    "lbFrontendName": "wil-lb-frontend",
+    "lbBackendPoolName": "wil-app-pool",
+    "lbProbeName": "wil-http-probe",
+    "avSetName": "wil-app-avset",
+    "vaultName": "wil-vault",
+    "orphanDiskName": "wil-app03-osdisk-old",
+    "databaseName": "wil-clinicdb",
+    "fileShareName": "scans",
+    "blobContainerName": "backups",
+    "appVmNames": [
+      "wil-app01",
+      "wil-app02"
+    ],
+    "appSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('appVnetName'), variables('appSubnetName'))]",
+    "lbFrontendId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('lbFrontendName'))]",
+    "lbBackendPoolId": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]",
+    "lbProbeId": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('lbProbeName'))]",
+    "osDiskEphemeral": {
+      "createOption": "FromImage",
+      "caching": "ReadOnly",
+      "diffDiskSettings": {
+        "option": "Local",
+        "placement": "ResourceDisk"
+      }
+    },
+    "osDiskManaged": {
+      "createOption": "FromImage",
+      "caching": "ReadWrite",
+      "managedDisk": {
+        "storageAccountType": "StandardSSD_LRS"
+      }
+    }
+  },
+  "resources": [
+    {
+      "comments": "Hub NSG. Management-only: RDP is reachable from inside the peered address space, never from the internet.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('hubNsgName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowRdpFromVnet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "App NSG. Port 80 from the internet (the load balancer frontend is public); RDP only from the hub management subnet. Azure's default AllowAzureLoadBalancerInBound rule (priority 65001) carries the health probes, so no explicit probe rule is needed.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('appNsgName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHttpInbound",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowRdpFromHub",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "[variables('hubSubnetPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Hub VNet. No custom DNS servers anywhere in this estate — the clinic never deployed domain controllers in Azure, so nothing here resolves or joins the on-premises domain.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('hubVnetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('hubNsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('hubAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('hubSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('hubSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('hubNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "App (spoke) VNet. Every Microsoft.Network resource here is pinned to api-version 2024-05-01: versions released after 2026-03-31 make new subnets private by default, which would cut the VM agent off from the CustomScriptExtension package. Egress does not rely on that default either way — the load balancer outbound rule below is the explicit path out.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('appVnetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('appNsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('appAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('appSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('appSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('appNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Hub-to-spoke peering. Hoisted child resource: the slash in both type and name is what marks it as a child of wil-hub-vnet rather than a top-level resource.",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2024-05-01",
+      "name": "[concat(variables('hubVnetName'), '/hub-to-app')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('appVnetName'))]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('appVnetName'))]"
+        }
+      }
+    },
+    {
+      "comments": "Spoke-to-hub peering, the return leg. It depends on the hub-to-app peering as well as both VNets, which serializes the two directions: creating them in parallel intermittently fails with a conflict on the same VNet.",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2024-05-01",
+      "name": "[concat(variables('appVnetName'), '/app-to-hub')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('appVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', variables('hubVnetName'), 'hub-to-app')]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('hubVnetName'))]"
+        }
+      }
+    },
+    {
+      "comments": "Standard SKU public IP. Basic SKU public IPs were retired 2025-09-30 and are never created here. Standard SKU requires Static allocation.",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('lbPublicIpName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "comments": "Standard load balancer. Two things are load-bearing. (1) disableOutboundSnat is true on the HTTP rule because an outbound rule reuses the same frontend IP, and Azure rejects an outbound rule that redefines an address already used for inbound SNAT. (2) The outbound rule is the estate's only egress path, so both VMs must be in the backend pool for the CustomScriptExtension to install. allocatedOutboundPorts 1024 x 2 VMs = 2048, well under the 64,000 ports one frontend IP provides, and is a multiple of 8 as Azure requires.",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2024-05-01",
+      "name": "[variables('lbName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFrontendName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBackendPoolName')]"
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('lbProbeName')]",
+            "properties": {
+              "protocol": "Http",
+              "port": 80,
+              "requestPath": "/",
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "wil-http-rule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('lbFrontendId')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbBackendPoolId')]"
+              },
+              "probe": {
+                "id": "[variables('lbProbeId')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "disableOutboundSnat": true
+            }
+          }
+        ],
+        "outboundRules": [
+          {
+            "name": "wil-outbound-rule",
+            "properties": {
+              "frontendIPConfigurations": [
+                {
+                  "id": "[variables('lbFrontendId')]"
+                }
+              ],
+              "backendAddressPool": {
+                "id": "[variables('lbBackendPoolId')]"
+              },
+              "protocol": "All",
+              "allocatedOutboundPorts": 1024,
+              "idleTimeoutInMinutes": 4,
+              "enableTcpReset": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "Availability set for the two app VMs. Aligned SKU (managed disks). platformFaultDomainCount 2 is the value every Azure region supports; some support 3.",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2024-11-01",
+      "name": "[variables('avSetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    {
+      "comments": "App VM NICs, one per VM via copy loop. Accelerated networking is enabled only on the wil-app01 NIC: the Ddsv5 series lists it as Required, while the B-series does not support it at all.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-05-01",
+      "name": "[concat(variables('appVmNames')[copyIndex()], '-nic')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "copy": {
+        "name": "appNicCopy",
+        "count": "[length(variables('appVmNames'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('appVnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+      ],
+      "properties": {
+        "enableAcceleratedNetworking": "[equals(copyIndex(), 0)]",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('appSubnetId')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('lbBackendPoolId')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "The two LOB app servers, created by copy loop. The pair is not symmetrical: wil-app01 (copyIndex 0) was rebuilt in 2023 onto variables('osDiskEphemeral') and the larger ephemeralVmSize, while wil-app02 is the 2021 original and keeps a persistent StandardSSD managed disk on B-series.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-11-01",
+      "name": "[variables('appVmNames')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "copy": {
+        "name": "appVmCopy",
+        "count": "[length(variables('appVmNames'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('appVmNames')[copyIndex()], '-nic'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[if(equals(copyIndex(), 0), parameters('ephemeralVmSize'), parameters('appVmSize'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": "[if(equals(copyIndex(), 0), variables('osDiskEphemeral'), variables('osDiskManaged'))]"
+        },
+        "osProfile": {
+          "computerName": "[variables('appVmNames')[copyIndex()]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true,
+            "patchSettings": {
+              "patchMode": "AutomaticByOS",
+              "assessmentMode": "ImageDefault"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('appVmNames')[copyIndex()], '-nic'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "comments": "CustomScriptExtension installs IIS and writes a static status page, so the load balancer probe has an HTTP 200 to see. commandToExecute is a plain JSON string, not an ARM expression, so single quotes inside the PowerShell are literal and need no doubling.",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2024-11-01",
+      "name": "[concat(variables('appVmNames')[copyIndex()], '/InstallIIS')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "copy": {
+        "name": "appVmExtensionCopy",
+        "count": "[length(variables('appVmNames'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('appVmNames')[copyIndex()])]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -NoProfile -Command \"Install-WindowsFeature -Name Web-Server -IncludeManagementTools; $html = '<html><head><title>The clinic group (fictional)</title></head><body><h1>The clinic group (fictional)</h1><p>Reservation and records portal</p><p>status: ok</p><p>host: ' + $env:COMPUTERNAME + '</p></body></html>'; Set-Content -Path C:\\inetpub\\wwwroot\\index.html -Value $html -Encoding UTF8; Remove-Item -Path C:\\inetpub\\wwwroot\\iisstart.htm -Force -ErrorAction SilentlyContinue\""
+        }
+      }
+    },
+    {
+      "comments": "Left over from wil-app03, which was decommissioned in the 2023 consolidation. The VM was deleted; its OS disk was not. 4 GiB is the smallest Premium SSD (P1). Attached to nothing.",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2025-01-02",
+      "name": "[variables('orphanDiskName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "properties": {
+        "diskSizeGB": 4,
+        "creationData": {
+          "createOption": "Empty"
+        }
+      }
+    },
+    {
+      "comments": "Azure SQL logical server. SQL authentication only — no Microsoft Entra administrator was ever configured for this server. The administrator password arrives as a securestring generated by deploy.sh.",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
+        "version": "12.0",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "comments": "The clinic database. Basic DTU tier (5 DTU, 2 GB cap) is the smallest Azure SQL purchasing option, chosen in 2021 and never revisited.",
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[concat(parameters('sqlServerName'), '/', variables('databaseName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic",
+        "capacity": 5
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ],
+      "properties": {
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "maxSizeBytes": 2147483648
+      }
+    },
+    {
+      "comments": "The 0.0.0.0-0.0.0.0 rule is Azure's 'Allow Azure services and resources to access this server' switch, not an allow-the-internet rule. It is how the app VMs reach the database, because they egress through the load balancer frontend rather than a fixed known address.",
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2023-08-01",
+      "name": "[concat(parameters('sqlServerName'), '/AllowAllWindowsAzureIps')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ],
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      }
+    },
+    {
+      "comments": "Scanned-document storage. minimumTlsVersion is set EXPLICITLY to TLS1_2. That is not redundant: ARM, CLI and PowerShell all leave the property unset by default, and an account with it unset permits TLS 1.0 and later.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        }
+      }
+    },
+    {
+      "comments": "SMB file share the reception PCs map as S:. Authentication is whatever the storage account provides; no directory-service configuration was ever applied to this share.",
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(parameters('storageAccountName'), '/default/', variables('fileShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "shareQuota": 100,
+        "enabledProtocols": "SMB"
+      }
+    },
+    {
+      "comments": "Blob container the nightly SQL export script writes to. Private access only.",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(parameters('storageAccountName'), '/default/', variables('blobContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "comments": "Recovery Services vault. It holds the default policy and protects nothing — the clinic created it during the 2021 move and nothing was ever successfully enrolled into it. An empty vault deletes cleanly with the resource group.",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2024-10-01",
+      "name": "[variables('vaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": {
+        "publicNetworkAccess": "Enabled"
+      }
+    }
+  ],
+  "outputs": {
+    "lbPublicIpAddress": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpName'))).ipAddress]"
+    },
+    "baseUrl": {
+      "type": "string",
+      "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpName'))).ipAddress)]"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "value": "[parameters('sqlServerName')]"
+    },
+    "sqlServerFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))).fullyQualifiedDomainName]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[parameters('storageAccountName')]"
+    },
+    "databaseName": {
+      "type": "string",
+      "value": "[variables('databaseName')]"
+    }
+  }
+}

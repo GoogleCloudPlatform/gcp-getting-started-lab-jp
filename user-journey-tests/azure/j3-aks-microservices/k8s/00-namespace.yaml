@@ -1,0 +1,7 @@
+# Both workload services live in one namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tracking
+  labels:
+    app.kubernetes.io/part-of: parcel-tracking

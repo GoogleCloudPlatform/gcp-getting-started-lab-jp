@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Basic is the floor for a search service that has to sit behind a private
+    // endpoint. The free tier is one per subscription and supports no private
+    // endpoint at all, so it is not a fallback. Move up to "standard" only if
+    // Basic's 15 GB per partition stops being enough.
+    "searchSku": {
+      "value": "basic"
+    },
+    // gpt-4o-mini is what the explainer was written and tuned against. Azure
+    // lists it as deprecated rather than retired: a subscription that has
+    // already deployed this exact model and version can keep creating
+    // deployments of it, but one that never has cannot start now. On a
+    // subscription in that position, set openAiModelName to "gpt-5-mini" and
+    // openAiModelVersion to "2025-08-07" — the prompt and the SDK call shape
+    // are unchanged, only the wording of the output moves.
+    "openAiModelName": {
+      "value": "gpt-4o-mini"
+    },
+    "openAiModelVersion": {
+      "value": "2024-07-18"
+    },
+    // GlobalStandard rather than Standard: both bill per token with no hourly
+    // commitment, but GlobalStandard carries the higher default quota and is
+    // offered in more regions, which is what keeps openAiLocation equal to the
+    // estate region on most subscriptions. Regional Standard for gpt-4o-mini is
+    // available in a much shorter list.
+    "openAiDeploymentSku": {
+      "value": "GlobalStandard"
+    },
+    // 1 unit is 1,000 tokens per minute — the smallest increment Azure meters.
+    // Enough for one person clicking through explanations; not enough for a
+    // load test.
+    "openAiDeploymentCapacity": {
+      "value": 1
+    },
+    // "stub" returns a deterministic analysis over the same retrieval and
+    // persistence path, so the estate stands up and passes its acceptance
+    // checks on a subscription with no model quota. Switch to "live" once
+    // `az cognitiveservices usage list` shows headroom for the deployment.
+    "llmMode": {
+      "value": "stub"
+    },
+    "deployRoleAssignments": {
+      "value": true
+    }
+  }
+}

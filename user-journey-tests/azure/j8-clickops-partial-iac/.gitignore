@@ -1,0 +1,32 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: per-run observation records live here
+
+# Secrets — never committed. deploy.sh generates the SQL administrator password
+# at deploy time and writes it to a 0600 temp file that it removes on exit.
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+*.publishsettings
+secrets/
+main.secrets.json
+
+# Azure CLI / deployment scratch
+.azure/
+*.deployment.json.tmp
+
+# Python — the venv seed.sh builds, and build leftovers
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} — Online Shop{% endblock %}
+{% block content %}
+<nav class="crumbs"><a href="{{ url_for('book_list') }}">&larr; back to catalog</a></nav>
+<article class="book-detail" data-book-id="{{ book.id }}">
+  <img src="/covers/{{ book.id }}.png" alt="Cover of {{ book.title }}" width="144" height="192">
+  <div class="facts">
+    <h2>{{ book.title }}</h2>
+    <dl>
+      <dt>Author</dt><dd>{{ book.author }}</dd>
+      <dt>First published</dt><dd>{{ book.published_year }}</dd>
+      <dt>Condition</dt><dd>grade {{ book.condition_grade }}</dd>
+      <dt>In stock since</dt><dd>{{ book.added_on }}</dd>
+      <dt>Price</dt><dd class="price">&yen;{{ "{:,}".format(book.price_yen) }}</dd>
+    </dl>
+    <p class="note">Visit the shop in Osu or call to reserve. Online checkout
+    never made it off the 2016 wishlist.</p>
+  </div>
+</article>
+{% endblock %}

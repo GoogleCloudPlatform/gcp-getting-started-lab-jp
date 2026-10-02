@@ -1,0 +1,12 @@
+# .semgrep.yaml - Semgrep configuration
+# https://semgrep.dev/docs/writing-rules/rule-syntax
+
+# Excluded rules (documented here, applied via --exclude-rule flags in CI):
+#
+# ai.generic.detect-generic-ai-anthprop.detect-generic-ai-anthprop
+#   Reason: AI agent plugin repository - Anthropic references are expected
+#
+# ai.generic.detect-generic-ai-oai.detect-generic-ai-oai
+#   Reason: OpenAI references may appear in migration/comparison contexts
+
+rules: []

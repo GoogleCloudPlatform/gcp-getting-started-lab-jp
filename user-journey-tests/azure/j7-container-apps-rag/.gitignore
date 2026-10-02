@@ -1,0 +1,36 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: per-run observation records live here
+#
+# costs/*.csv is also NOT ignored: the cost export is committed source material,
+# regenerated deterministically by costs/make-usage-export.py.
+
+# Secrets — never committed. The registry credentials the container app pulls
+# with are read from the registry at deploy time and are never written here.
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+*.publishsettings
+secrets/
+main.secrets.json
+
+# Azure CLI / deployment scratch
+.azure/
+*.deployment.json.tmp
+
+# Python — local venvs and build leftovers
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

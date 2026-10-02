@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Online shop web store - data layer. Mirrors architecture.md "Main services":
+    * RDS PostgreSQL 16.14 single-AZ db.t3.micro (online_shop) - the catalog
+      DB, master password resolved from the ttw-db-password secret created by
+      ttw-security-stack.
+    * S3 assets bucket ttw-assets-<account> - private; holds the deployable
+      app bundle (app/app.tar.gz) and the scanned cover images (covers/*.png)
+      that the app streams to shoppers.
+  Depends on ttw-security-stack (DB security group + secret must exist first).
+
+Parameters:
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Default-VPC subnet ids (>=2 AZs) - resolved by scripts/deploy.sh; this stack never creates subnets.
+  AutoTeardownDate:
+    Type: String
+    Default: '2026-07-31'
+    Description: ISO date - tag value so future-you can find these to clean up.
+
+Resources:
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: ttw-db-subnets
+      DBSubnetGroupDescription: Default-VPC subnets for the online shop DB (references existing subnets only).
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - {Key: Name, Value: ttw-db-subnets}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    # Default policy for a standalone DBInstance is Snapshot; this is a test
+    # bed, so tear down clean with no orphaned snapshots.
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceIdentifier: ttw-postgres
+      Engine: postgres
+      EngineVersion: '16.14'  # (verified 2026-07) available in ap-northeast-1
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: '20'
+      StorageType: gp3
+      DBName: online_shop
+      MasterUsername: shop
+      MasterUserPassword: '{{resolve:secretsmanager:ttw-db-password:SecretString:password}}'
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !ImportValue 'ttw-security-stack-DbSgId'
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 1
+      DeletionProtection: false
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+      Tags:
+        - {Key: Name, Value: ttw-postgres}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'ttw-assets-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - {Key: Name, Value: !Sub 'ttw-assets-${AWS::AccountId}'}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+Outputs:
+  DbEndpointAddress:
+    Value: !GetAtt Database.Endpoint.Address
+    Export: {Name: !Sub '${AWS::StackName}-DbEndpointAddress'}
+  DbEndpointPort:
+    Value: !GetAtt Database.Endpoint.Port
+    Export: {Name: !Sub '${AWS::StackName}-DbEndpointPort'}
+  AssetsBucketName:
+    Value: !Ref AssetsBucket
+    Export: {Name: !Sub '${AWS::StackName}-AssetsBucketName'}

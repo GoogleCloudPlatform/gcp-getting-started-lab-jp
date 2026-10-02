@@ -1,0 +1,14 @@
+[
+  { "id": 1, "name": "Wireless Conference Phone X300", "category": "communications", "daily_rate_jpy": 1800 },
+  { "id": 2, "name": "Handheld UHF Transceiver Pair", "category": "communications", "daily_rate_jpy": 900 },
+  { "id": 3, "name": "Portable LTE Wi-Fi Router", "category": "communications", "daily_rate_jpy": 700 },
+  { "id": 4, "name": "4K Projector PJ-4100", "category": "av", "daily_rate_jpy": 5200 },
+  { "id": 5, "name": "120-inch Tripod Screen", "category": "av", "daily_rate_jpy": 1500 },
+  { "id": 6, "name": "PA Speaker Set 800W with Mixer", "category": "av", "daily_rate_jpy": 4800 },
+  { "id": 7, "name": "Wireless Microphone Duo", "category": "av", "daily_rate_jpy": 1200 },
+  { "id": 8, "name": "LED Stage Light Bar", "category": "av", "daily_rate_jpy": 1600 },
+  { "id": 9, "name": "Mirrorless Camera Kit A7", "category": "photography", "daily_rate_jpy": 3500 },
+  { "id": 10, "name": "Carbon Camera Tripod CT-2", "category": "photography", "daily_rate_jpy": 600 },
+  { "id": 11, "name": "Portable Power Station 1kWh", "category": "power", "daily_rate_jpy": 2400 },
+  { "id": 12, "name": "Silent Inverter Generator 1.8kVA", "category": "power", "daily_rate_jpy": 3900 }
+]

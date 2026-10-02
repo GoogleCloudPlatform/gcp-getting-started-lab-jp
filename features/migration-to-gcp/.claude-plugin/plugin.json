@@ -1,0 +1,36 @@
+{
+  "name": "migration-to-gcp",
+  "description": "AI-powered migration assistant with skills for migrating AWS and Azure workloads to Google Cloud Platform (`aws-to-gcp`, `azure-to-gcp`). Discovers existing infrastructure, maps services to GCP equivalents, estimates costs from live Cloud Billing Catalog data, and generates Terraform + migration artifacts. Designed to be used alongside google/skills (https://github.com/google/skills); install via `npx skills add google/skills` to unlock canonical GCP service guidance during the Design and Generate phases.",
+  "author": {
+    "name": "migration-skills-harness"
+  },
+  "keywords": [
+    "migration",
+    "gcp",
+    "google-cloud",
+    "aws",
+    "terraform",
+    "cloud-migration",
+    "infrastructure",
+    "azure",
+    "bicep",
+    "arm-templates",
+    "aks",
+    "azure-openai"
+  ],
+  "userConfig": {
+    "google_dev_knowledge_api_key": {
+      "type": "string",
+      "title": "Developer Knowledge API key (optional)",
+      "description": "Failover auth for the google-developer-knowledge MCP server when gcloud ADC is unavailable. Create one with: gcloud services api-keys create (restricted to developerknowledge.googleapis.com).",
+      "sensitive": true,
+      "default": ""
+    },
+    "google_cloud_project": {
+      "type": "string",
+      "title": "Google Cloud project ID (optional)",
+      "description": "Quota project sent as X-goog-user-project on ADC-authenticated Google API calls. Defaults to the active gcloud project when unset.",
+      "default": ""
+    }
+  }
+}

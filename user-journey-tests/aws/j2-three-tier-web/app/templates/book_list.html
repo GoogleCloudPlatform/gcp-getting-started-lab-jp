@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Catalog — Online Shop{% endblock %}
+{% block content %}
+<h2>Catalog ({{ books|length }} titles in stock)</h2>
+<div class="book-grid">
+  {% for book in books %}
+  <article class="book" data-book-id="{{ book.id }}">
+    <a href="{{ url_for('book_detail', book_id=book.id) }}">
+      <img src="/covers/{{ book.id }}.png" alt="Cover of {{ book.title }}" width="72" height="96">
+      <h3>{{ book.title }}</h3>
+    </a>
+    <p class="author">{{ book.author }}</p>
+    <p class="price">&yen;{{ "{:,}".format(book.price_yen) }} <span class="grade">grade {{ book.condition_grade }}</span></p>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

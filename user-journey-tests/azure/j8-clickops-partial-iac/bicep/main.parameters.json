@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlAdminLogin": {
+      "value": "cpiadmin"
+    },
+    // B1 Basic keeps the site warm between lectures, which a Free or Shared plan
+    // cannot do. Where a subscription's catalogue gates B1, move both values up
+    // together — S1 / Standard is the next step that still supports always-on.
+    "appServicePlanSkuName": {
+      "value": "B1"
+    },
+    "appServicePlanSkuTier": {
+      "value": "Basic"
+    },
+    // Basic is 5 DTU with a 2 GB ceiling. The notice board has never needed more.
+    // Where the catalogue gates it, S0 / Standard is the next objective up and
+    // both values move together.
+    "sqlDatabaseSkuName": {
+      "value": "Basic"
+    },
+    "sqlDatabaseSkuTier": {
+      "value": "Basic"
+    },
+    // The site runs on the account key and a SQL login rather than an identity,
+    // so this deployment creates no role assignments and needs no more than
+    // Contributor on the resource group.
+    "pythonVersion": {
+      "value": "3.12"
+    }
+  }
+}

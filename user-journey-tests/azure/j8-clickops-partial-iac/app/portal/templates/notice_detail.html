@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ notice.title }} &middot; {{ university }}{% endblock %}
+
+{% block content %}
+  <p><a href="/">&larr; Notice board</a></p>
+  <h2>{{ notice.title }}</h2>
+  <p>
+    <span class="category">{{ notice.category }}</span>
+    <span class="posted">Posted {{ notice.posted_on }}</span>
+  </p>
+  <p>{{ notice.body }}</p>
+{% endblock %}

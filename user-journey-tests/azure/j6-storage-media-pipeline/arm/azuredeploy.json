@@ -1,0 +1,419 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "comments": [
+      "The media-licensing operator (fictional; smp-) — photo and video licensing library. Everything below is the portal export",
+      "the studio took in 2022 and has hand-edited since; it is the record of the library estate.",
+      "Single resource group smp-rg. Deploy with scripts/deploy.sh.",
+      "NAME SUFFIX: storage accounts and the data factory are global DNS names, so every one of them",
+      "carries the nameSuffix parameter. scripts/deploy.sh derives that value from the subscription and",
+      "the resource group and passes the SAME value to the delivery templates under terraform/, which is",
+      "how both trees end up naming the same delivery account. Change it in one place only.",
+      "ORDERING: scripts/deploy.sh runs the terraform/ tree first and this template second, so where the",
+      "two describe the same property of smpdelivery<suffix> the value in this file is the one that",
+      "survives a deploy."
+    ]
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Region for every resource. Taken from the resource group, which scripts/deploy.sh creates from AZURE_LOCATION."
+      }
+    },
+    "autoTeardownDate": {
+      "type": "string",
+      "metadata": {
+        "description": "YYYY-MM-DD written to the AutoTeardown tag on every taggable resource. Supplied by deploy.sh from ~/.azure/journeys.env."
+      }
+    },
+    "nameSuffix": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 12,
+      "metadata": {
+        "description": "Lowercase alphanumeric suffix appended to every globally-unique name (three storage accounts and the data factory). No default: scripts/deploy.sh derives it from the subscription id and the resource group name and passes the same value to the terraform/ tree, so the two trees agree on what the delivery account is called. Storage account names are 3-24 lowercase alphanumerics with no hyphens; the longest stem here is 'smpdelivery' (11), which caps the suffix at 12."
+      }
+    },
+    "mastersRetentionDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "Retention interval for the masters container. One day is the shortest Azure accepts. The studio's counsel asked for 7 years; the value here is what the studio actually set while it was still evaluating the feature."
+      }
+    },
+    "wipShareQuotaGiB": {
+      "type": "int",
+      "defaultValue": 100,
+      "minValue": 100,
+      "metadata": {
+        "description": "Provisioned size of the wip-edit premium share, in GiB. 100 is the smallest a premium file share can be provisioned at, and premium shares bill on provisioned size rather than used size."
+      }
+    }
+  },
+  "variables": {
+    "commonTags": {
+      "Owner": "migration-test",
+      "CostCenter": "test-journeys",
+      "AutoTeardown": "[parameters('autoTeardownDate')]",
+      "Journey": "azure/j6-storage-media-pipeline"
+    },
+    "mediaAccountName": "[concat('smpmedia', parameters('nameSuffix'))]",
+    "wipAccountName": "[concat('smpwip', parameters('nameSuffix'))]",
+    "deliveryAccountName": "[concat('smpdelivery', parameters('nameSuffix'))]",
+    "dataFactoryName": "[concat('smp-adf-', parameters('nameSuffix'))]",
+    "mastersContainerName": "masters",
+    "proxiesContainerName": "proxies",
+    "intakeContainerName": "intake",
+    "proxyQueueName": "proxy-jobs",
+    "wipShareName": "wip-edit",
+    "syncServiceName": "smp-sync",
+    "syncGroupName": "smp-wip-edit-sync",
+    "systemTopicName": "smp-egt-media",
+    "proxySubscriptionName": "smp-egs-proxy",
+    "mediaAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('mediaAccountName'))]"
+  },
+  "resources": [
+    {
+      "comments": "The library. RA-GRS: the studio pays for the read-only secondary because a licensing customer in another region reads catalogue thumbnails straight off the secondary endpoint, and because the 2024 insurance review asked for an off-region copy of the masters. minimumTlsVersion is set EXPLICITLY to TLS1_2 — ARM, CLI and PowerShell all leave the property unset by default, and an account with it unset permits TLS 1.0 and later.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('mediaAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        }
+      }
+    },
+    {
+      "comments": "Camera-original stills and video, one folder per shoot. Read by the licensing site and by nothing else.",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default/', variables('mastersContainerName'))]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "comments": "Watermarked web-resolution renders of everything in masters. Regenerated on demand, so they are treated as disposable.",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default/', variables('proxiesContainerName'))]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "comments": "Landing area the photographers' uploader writes to. Emptied nightly by the copy the studio manager runs out of the data factory.",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default/', variables('intakeContainerName'))]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "comments": "Write-once retention on the masters container, added in 2025 after the studio lost a shoot to an overwrite. The policy resource has only ever been PUT, never locked, so it stays in the Unlocked state: it still blocks overwrites and deletes of blobs inside the retention window, but the policy itself can be shortened, extended or removed. Locking it is a separate operation and is what makes it SEC 17a-4(f) compliant.",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default/', variables('mastersContainerName'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('mediaAccountName'), 'default', variables('mastersContainerName'))]"
+      ],
+      "properties": {
+        "immutabilityPeriodSinceCreationInDays": "[parameters('mastersRetentionDays')]",
+        "allowProtectedAppendWrites": false
+      }
+    },
+    {
+      "comments": "Proxy jobs. A blob landing under the intake container becomes a message here; the proxy generator on the office NAS drains it.",
+      "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default/', variables('proxyQueueName'))]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {}
+    },
+    {
+      "comments": "Tiering for the library. Rules are evaluated once a day and act on blobs whose last-modified time is older than the threshold; a blob that no rule prefix matches is left where it is. All three rules were written against the container layout of the day they were added.",
+      "type": "Microsoft.Storage/storageAccounts/managementPolicies",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('mediaAccountName'), '/default')]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {
+        "policy": {
+          "rules": [
+            {
+              "name": "originalsToArchive",
+              "type": "Lifecycle",
+              "enabled": true,
+              "definition": {
+                "filters": {
+                  "blobTypes": [
+                    "blockBlob"
+                  ],
+                  "prefixMatch": [
+                    "originals/"
+                  ]
+                },
+                "actions": {
+                  "baseBlob": {
+                    "tierToArchive": {
+                      "daysAfterModificationGreaterThan": 90
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "mastersCoolThenArchive",
+              "type": "Lifecycle",
+              "enabled": true,
+              "definition": {
+                "filters": {
+                  "blobTypes": [
+                    "blockBlob"
+                  ],
+                  "prefixMatch": [
+                    "masters/"
+                  ]
+                },
+                "actions": {
+                  "baseBlob": {
+                    "tierToCool": {
+                      "daysAfterModificationGreaterThan": 30
+                    },
+                    "tierToArchive": {
+                      "daysAfterModificationGreaterThan": 180
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "proxiesToCool",
+              "type": "Lifecycle",
+              "enabled": true,
+              "definition": {
+                "filters": {
+                  "blobTypes": [
+                    "blockBlob"
+                  ],
+                  "prefixMatch": [
+                    "proxies/"
+                  ]
+                },
+                "actions": {
+                  "baseBlob": {
+                    "tierToCool": {
+                      "daysAfterModificationGreaterThan": 60
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "comments": "Scratch space for the edit bay. Premium file shares live on their own FileStorage account — the kind cannot be mixed with blob containers, and premium is LRS or ZRS only, so this account is not geo-replicated the way the library account is. accessTier is not a property of a FileStorage account; premium is the tier.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('wipAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "kind": "FileStorage",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowSharedKeyAccess": true,
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        }
+      }
+    },
+    {
+      "comments": "The share the two edit workstations map as W:. Premium shares bill on provisioned size, not on what is in them.",
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2024-01-01",
+      "name": "[concat(variables('wipAccountName'), '/default/', variables('wipShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('wipAccountName'))]"
+      ],
+      "properties": {
+        "shareQuota": "[parameters('wipShareQuotaGiB')]",
+        "enabledProtocols": "SMB"
+      }
+    },
+    {
+      "comments": "Stood up in 2024 to give the edit bay a local cache of the W: share over its slow line. The service and its group exist; registering the edit-bay NAS needs the agent installed on the box itself, which is still on the studio manager's list.",
+      "type": "Microsoft.StorageSync/storageSyncServices",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('syncServiceName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "incomingTrafficPolicy": "AllowAllTraffic"
+      }
+    },
+    {
+      "comments": "The topology that would pair the edit-bay NAS with the wip-edit share. No server has been registered against it.",
+      "type": "Microsoft.StorageSync/storageSyncServices/syncGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[concat(variables('syncServiceName'), '/', variables('syncGroupName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.StorageSync/storageSyncServices', variables('syncServiceName'))]"
+      ],
+      "properties": {}
+    },
+    {
+      "comments": "The factory the intake-to-masters move runs in. Its pipelines and linked services are authored in the ADF studio by the studio manager and live in the service, not in this file — the 2022 portal export captured the factory and nothing inside it, and nobody has exported it since.",
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[variables('dataFactoryName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "comments": "Blob events for the library account. A system topic is the storage account's own event source; it needs no endpoint validation handshake when it delivers to a storage queue in the same account.",
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2025-02-15",
+      "name": "[variables('systemTopicName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "dependsOn": [
+        "[variables('mediaAccountId')]"
+      ],
+      "properties": {
+        "source": "[variables('mediaAccountId')]",
+        "topicType": "Microsoft.Storage.StorageAccounts"
+      }
+    },
+    {
+      "comments": "Anything landing in intake becomes a proxy job. The generator is a scheduled task on the edit-bay NAS that drains proxy-jobs, renders the watermarked web copy and writes it to the proxies container.",
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2025-02-15",
+      "name": "[concat(variables('systemTopicName'), '/', variables('proxySubscriptionName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', variables('systemTopicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/queueServices/queues', variables('mediaAccountName'), 'default', variables('proxyQueueName'))]"
+      ],
+      "properties": {
+        "eventDeliverySchema": "EventGridSchema",
+        "filter": {
+          "includedEventTypes": [
+            "Microsoft.Storage.BlobCreated"
+          ],
+          "subjectBeginsWith": "[concat('/blobServices/default/containers/', variables('intakeContainerName'), '/')]",
+          "isSubjectCaseSensitive": false
+        },
+        "destination": {
+          "endpointType": "StorageQueue",
+          "properties": {
+            "resourceId": "[variables('mediaAccountId')]",
+            "queueName": "[variables('proxyQueueName')]"
+          }
+        },
+        "retryPolicy": {
+          "maxDeliveryAttempts": 10,
+          "eventTimeToLiveInMinutes": 1440
+        }
+      }
+    },
+    {
+      "comments": "Public delivery origin for the licensing site's preview renders. Added to this file in 2025 so the estate export would list it — the edge contractor builds and owns it out of terraform/, and the containers on it are hers. accessTier Hot is what the studio wants: previews are served on every catalogue page view and a cool read is billed per gigabyte.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('deliveryAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('commonTags')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": true,
+        "allowSharedKeyAccess": true,
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "mediaAccountName": {
+      "type": "string",
+      "value": "[variables('mediaAccountName')]"
+    },
+    "wipAccountName": {
+      "type": "string",
+      "value": "[variables('wipAccountName')]"
+    },
+    "deliveryAccountName": {
+      "type": "string",
+      "value": "[variables('deliveryAccountName')]"
+    },
+    "dataFactoryName": {
+      "type": "string",
+      "value": "[variables('dataFactoryName')]"
+    },
+    "syncServiceName": {
+      "type": "string",
+      "value": "[variables('syncServiceName')]"
+    },
+    "systemTopicName": {
+      "type": "string",
+      "value": "[variables('systemTopicName')]"
+    },
+    "proxyQueueName": {
+      "type": "string",
+      "value": "[variables('proxyQueueName')]"
+    }
+  }
+}

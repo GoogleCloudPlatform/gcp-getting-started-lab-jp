@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+CLAUDE.md
+# Build outputs
+dist/
+build/
+
+
+# Tool caches
+.dprint/
+.ruff_cache/
+.mise/
+
+# Migration working directory
+.migration/
+
+# Temporary files
+.tmp/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Claude
+.claude/settings.local.json
+
+# Python bytecode (journey/reference run residue)
+__pycache__/
+*.pyc
+
+# local-only material (never published): anything under git-exclude stays on this box
+user-journey-tests/git-exclude/

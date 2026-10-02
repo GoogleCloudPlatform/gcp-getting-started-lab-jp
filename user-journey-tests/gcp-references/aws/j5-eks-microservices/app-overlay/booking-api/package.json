@@ -1,0 +1,13 @@
+{
+  "name": "booking-api",
+  "private": true,
+  "type": "module",
+  "description": "Booking service for the equipment marketplace (fictional) — GCP port (Firestore via Workload Identity)",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
+    "express": "^4.19.0"
+  }
+}

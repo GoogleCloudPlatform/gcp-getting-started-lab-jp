@@ -1,0 +1,12 @@
+# Student portal — pinned so the App Service build
+# produces the same environment the web team tested against.
+Flask==3.1.3
+gunicorn==26.0.0
+
+# SQL driver. pymssql ships a self-contained wheel, which is why it was picked
+# over an ODBC binding — the App Service build image has no ODBC driver
+# installed and cannot be given one from a plain zip deploy.
+pymssql==2.3.13
+
+# Azure SDKs. Every call site funnels through portal/azure_clients.py.
+azure-storage-blob==12.30.0

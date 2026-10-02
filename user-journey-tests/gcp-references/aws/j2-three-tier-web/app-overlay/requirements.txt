@@ -1,0 +1,9 @@
+# Runtime deps — GCP port. Installed into /opt/shop/venv by the instance
+# template's startup script (Debian 12 is PEP 668 externally-managed, hence
+# the venv instead of the AL2023 build's system pip).
+flask
+gunicorn
+psycopg[binary]
+google-cloud-storage
+google-cloud-secret-manager
+google-cloud-monitoring

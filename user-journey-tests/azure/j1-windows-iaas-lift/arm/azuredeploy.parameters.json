@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appVmSize": {
+      "value": "Standard_B2ms"
+    },
+    "ephemeralVmSize": {
+      "value": "Standard_D2ds_v5"
+    },
+    "imageSku": {
+      "value": "2019-datacenter-smalldisk"
+    },
+    "adminUsername": {
+      "value": "wilopsadmin"
+    },
+    "sqlAdminLogin": {
+      "value": "wilsqladmin"
+    }
+  }
+}

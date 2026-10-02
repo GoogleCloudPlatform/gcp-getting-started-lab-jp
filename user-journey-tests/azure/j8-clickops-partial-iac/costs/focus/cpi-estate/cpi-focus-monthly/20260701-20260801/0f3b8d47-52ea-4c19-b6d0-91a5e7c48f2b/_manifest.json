@@ -1,0 +1,43 @@
+{
+  "manifestVersion": "2024-04-01",
+  "byteCount": 82513,
+  "blobCount": 2,
+  "dataRowCount": 776,
+  "exportConfig": {
+    "exportName": "cpi-focus-monthly",
+    "resourceId": "/providers/Microsoft.Billing/billingAccounts/4410297/providers/Microsoft.CostManagement/exports/cpi-focus-monthly",
+    "dataVersion": "1.2-preview",
+    "apiVersion": "2023-07-01-preview",
+    "type": "FocusCost",
+    "timeFrame": "TheLastMonth",
+    "granularity": "Daily"
+  },
+  "deliveryConfig": {
+    "partitionData": true,
+    "dataOverwriteBehavior": "OverwritePreviousReport",
+    "fileFormat": "Csv",
+    "compressionMode": "gzip",
+    "containerUri": "/subscriptions/7d4e2a91-6c38-4b55-9f0a-3e81d5c72b64/resourceGroups/cpi-admin-rg/providers/Microsoft.Storage/storageAccounts/cpibilling01",
+    "containerName": "cost-exports",
+    "rootFolderPath": "cpi-estate"
+  },
+  "runInfo": {
+    "executionType": "Scheduled",
+    "submittedTime": "2026-08-01T03:15:22Z",
+    "runId": "0f3b8d47-52ea-4c19-b6d0-91a5e7c48f2b",
+    "startDate": "2026-07-01T00:00:00Z",
+    "endDate": "2026-08-01T00:00:00Z"
+  },
+  "blobs": [
+    {
+      "blobName": "cpi-estate/cpi-focus-monthly/20260701-20260801/0f3b8d47-52ea-4c19-b6d0-91a5e7c48f2b/part_0_0001.csv.gz",
+      "byteCount": 41018,
+      "dataRowCount": 388
+    },
+    {
+      "blobName": "cpi-estate/cpi-focus-monthly/20260701-20260801/0f3b8d47-52ea-4c19-b6d0-91a5e7c48f2b/part_1_0001.csv.gz",
+      "byteCount": 41495,
+      "dataRowCount": 388
+    }
+  ]
+}

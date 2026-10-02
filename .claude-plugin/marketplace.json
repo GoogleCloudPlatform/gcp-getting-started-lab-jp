@@ -1,0 +1,15 @@
+{
+  "name": "migration-skills",
+  "owner": {
+    "name": "cloud-gtm"
+  },
+  "plugins": [
+    {
+      "name": "migration-to-gcp",
+      "source": "./features/migration-to-gcp",
+      "description": "AI-driven AWS and Azure to GCP migration (`aws-to-gcp`, `azure-to-gcp` skills): 5-phase gated workflow (Discover, Clarify, Design, Estimate, Generate) with bundled AWS/Microsoft/Google knowledge MCP servers and a live gcp-pricing CLI.",
+      "category": "productivity",
+      "tags": ["migration", "gcp", "aws", "terraform", "cloud", "azure", "bicep"]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Documents &middot; {{ university }}{% endblock %}
+
+{% block content %}
+  <h2>Documents</h2>
+  <p>Forms and handbooks published by the registrar's office.</p>
+
+  {% if not library_reachable %}
+    <p class="unavailable">
+      The document library is unavailable. Paper copies are held at the student
+      office counter.
+    </p>
+  {% elif not documents %}
+    <p>Nothing has been published yet.</p>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Size</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for document in documents %}
+          <tr>
+            <td><a href="/documents/{{ document.name }}">{{ document.name }}</a></td>
+            <td class="posted">{{ document.size }} bytes</td>
+            <td class="posted">{{ document.last_modified }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}

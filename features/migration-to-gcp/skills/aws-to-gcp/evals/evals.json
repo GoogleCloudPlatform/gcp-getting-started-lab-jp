@@ -1,0 +1,71 @@
+{
+  "_note": "Regression scenarios for the aws-to-gcp skill, distilled from the harness iteration history (sample-project/.iteration-log/ iterations 0-22). Run each prompt headless against a fixture repo matching setup, then grade the expected_behavior assertions. Keep assertions behavioral (observable in outputs), not stylistic.",
+  "evals": [
+    {
+      "id": "iac-full-stack",
+      "description": "Full 5-phase run against a Rails+Sidekiq-on-ECS-Fargate estate (CloudFormation IaC, Aurora MySQL, ElastiCache Redis, S3, ALB, Secrets Manager, Kinesis Firehose, Glue) - the harness sample-project shape. Exercises every recurring historical failure mode.",
+      "setup": "Fixture repo containing CloudFormation templates for: 2 ECS Fargate clusters with N services (mix of ALB-fronted web services and a Sidekiq worker with no target group), Aurora MySQL 8.x cluster, ElastiCache Redis replication group, S3 buckets, Secrets Manager secrets, Kinesis Firehose (S3 destination), Glue job/catalog; plus Rails app source using aws-sdk-{s3,sns,secretsmanager,firehose,cloudwatch} through a wrapper module.",
+      "prompt": "migrate from AWS to GCP",
+      "expected_behavior": [
+        "All 5 phases (discover, clarify, design, estimate, generate) reach status completed without stalling on any interactive prompt; every applied headless disposition is recorded with chosen_by=headless-default and echoed in a Headless assumptions block",
+        "Every generated file lives under .migration/<run-id>/; the post-phase write audit reports zero writes outside $MIGRATION_DIR; no helper parser scripts (*.py other than a deleted _extract_billing.*) exist anywhere",
+        "compute.tf contains one google_cloud_run_v2_service per ALB-fronted ECS service AND one google_cloud_run_v2_worker_pool for the Sidekiq worker (no dummy HTTP service for it); no forbidden hello/sample images; every image derives from the source task definition; log-router (fluent-bit/FireLens) sidecars are dropped with a warning, other sidecars carried over",
+        "database.tf preserves the engine family and major: aurora-mysql source yields MYSQL_<source-major> (never POSTGRES_*); redis_version matches the source per database.md's single derivation table (REDIS_7_X never appears); gcp_config.engine_fidelity blocks exist in gcp-design.json",
+        "analytics.tf exists (Firehose+Glue present) with one block per analytics source per the Step 2.5 analytics row; terraform validate passes on the whole directory; resource-type verification used terraform providers schema -json or the GitHub docs tree (never a registry.terraform.io 200/404 check)",
+        "Every dollar figure in estimation-infra.json carries pricing.attempts[] with live-call evidence (gcp-pricing CLI primary); no model-recalled prices; validation-ledger.json contains an entry for every blocking gate across all phases",
+        "02-migrate-data.sh leads with Database Migration Service (source + cloudsql destination connection profiles, continuous job, promote-at-cutover) and Storage Transfer Service with roleArn federated identity; dump/import and gcloud storage cp appear only as documented fallbacks; no aws-creds key file, no gsutil, no hard-coded region literal"
+      ]
+    },
+    {
+      "id": "billing-only",
+      "description": "Billing-only path: no IaC, no source code - just an AWS Cost and Usage Report export. Historical risk: fabricated service IDs and confident numbers without provenance.",
+      "setup": "Fixture repo containing only a CUR-style billing CSV (top services: ECS/Fargate, RDS, ElastiCache, S3, data transfer).",
+      "prompt": "migrate from AWS to GCP",
+      "expected_behavior": [
+        "Discover routes to the billing-only path (discover-billing.md — full processing, no helper script required); no helper scripts exist outside $MIGRATION_DIR, and if an _extract_billing.* was written it was deleted after producing billing-profile.json",
+        "Design produces gcp-design-billing.json with billing_inferred confidence; no invented per-resource sizing",
+        "Estimate uses the documented billing multipliers with the stated accuracy band and live-verified GCP rates for anchor services; every rate has pricing.attempts[] evidence; nothing cites a cached or recalled price",
+        "Generate emits skeleton Terraform with TODO markers (not deploy-ready resources), the conservative billing-only timeline, and a MIGRATION_GUIDE that plainly states the confidence limits of billing-only analysis",
+        "Run completes headless; unanswered clarify questions resolve to documented defaults with chosen_by recorded"
+      ]
+    },
+    {
+      "id": "ai-only",
+      "description": "AI-only path: a repo whose only AWS-relevant surface is OpenAI SDK usage in app code. Historical risk: stale/fabricated model names, prices, and tiers (Gemini Ultra, retired models, Flex-vs-Standard rate mixups).",
+      "setup": "Fixture repo with Python source calling the openai SDK (chat completions + embeddings), no IaC, no billing files.",
+      "prompt": "migrate from AWS to GCP",
+      "expected_behavior": [
+        "Discover produces ai-workload-profile.json only; Clarify runs the standalone AI-only flow from clarify-ai-only.md (never fabricates questions from summaries)",
+        "Every recommended Gemini model is enumerated from a live lookup during the run: no model with a published retirement date is recommended for new workloads, no nonexistent tier (e.g. a Gemini 'Ultra' text model) appears, and the embeddings recommendation is the current live-documented model rather than a hard-coded legacy name",
+        "estimation-ai.json prices every candidate from live sources (Vertex pricing page or gcp-pricing CLI; OpenAI prices from the developer-docs pricing page, never openai.com/api/pricing which 403s) with pricing.attempts[] evidence; Standard-tier rates are never mixed with Batch/Flex rates in comparisons; the >200K long-context tier is applied when ultra_long_context is set",
+        "Generated adapter code uses current SDK surfaces from gcp-design-ai.json model IDs, includes the AI_PROVIDER rollback flag, and ai-migration/ artifacts stay under $MIGRATION_DIR"
+      ]
+    },
+    {
+      "id": "adk-agent-on-fargate",
+      "description": "Agent-workload prioritization: a Python ADK agent on ECS Fargate (Gemini models, DynamoDB session table) plus an ordinary Fargate web service. The agent service must land on Agent Runtime; non-agent services must still land on Cloud Run.",
+      "setup": "Fixture repo with Terraform for: 1 ECS Fargate service running a Python ADK agent (google-adk in requirements.txt, from google.adk imports, DynamoDB sessions table, ECR image, API GW -> VPC Link -> NLB in front), 1 ALB-fronted non-agent Fargate web service, CloudFront+S3 frontend, Cognito user pool, RDS PostgreSQL; plus the agent app source.",
+      "prompt": "migrate from AWS to GCP",
+      "expected_behavior": [
+        "ai-workload-profile.json has summary.agent_workloads_detected=true and one agent_workloads[] entry with framework=adk linked to the agent's aws_ecs_service address (aws_host), with session_state.store=dynamodb",
+        "gcp-design.json maps the agent ECS service to gcp_service Agent Runtime with gcp_config.deployment_tool=agents-cli and gcp_config.no_terraform_emit=true (design-infra Pass 2 agent gate); the non-agent Fargate service still maps to Cloud Run; Cognito stays on the existing provider (keep-auth rule)",
+        "compute.tf contains a google_cloud_run_v2_service for the non-agent service and NO Terraform block for the agent service — only the comment header referencing ai-migration/agent-runtime-migration.md",
+        "ai-migration/agent-runtime-migration.md exists with an agents-cli deploy --deployment-target agent_runtime command using the run's real project/region/sizing values, a managed-Sessions migration section, and a rollback plan citing runtime revisions plus the previous-engine fallback (never a 'no rollback on Agent Runtime' claim)",
+        "No output recommends the retired names Vertex AI Agent Builder or Agentspace; the platform is referred to as Gemini Enterprise Agent Platform / Agent Platform, and models already on Gemini are marked already_on_target with no fabricated migration pricing"
+      ]
+    },
+    {
+      "id": "adk-agent-bedrock-model",
+      "description": "Agent placement is model-agnostic: a Python ADK agent on ECS Fargate whose LLM binding is Bedrock Claude via LiteLLM must still land on Agent Runtime, with the model rebinding carried through design and the runbook — and no AWS credentials ported to GCP.",
+      "setup": "Fixture repo with Terraform for 1 ECS Fargate service running a Python ADK agent (google-adk + litellm in requirements.txt, agent model=LiteLlm(model=\"bedrock/anthropic.claude-sonnet-4-6\"), DynamoDB sessions table, Secrets Manager secret holding AWS credentials for Bedrock, ECR image, ALB in front); plus the agent app source.",
+      "prompt": "migrate from AWS to GCP",
+      "expected_behavior": [
+        "ai-workload-profile.json has one agent_workloads[] entry with framework=adk and model_binding {model_id: anthropic.claude-sonnet-4-6, via: litellm}; the Claude model also appears in models[]",
+        "The agent service still maps to gcp_service Agent Runtime — placement is framework-based, and a non-Google model binding is never treated as an eliminator",
+        "gcp-design-ai.json agent_placement[] carries a non-null model_rebinding consistent with its vertex_models[] mapping (LiteLLM route bedrock/anthropic.claude-sonnet-4-6 -> vertex_ai/<mapped model>; the partner-Claude zero-model-risk path is offered), and the Claude entry is NOT marked already_on_target",
+        "ai-migration/agent-runtime-migration.md contains the model-rebinding step before the deploy command, and its --secrets list does NOT port the AWS/Bedrock credentials (porting them would re-create the cross-cloud model dependency)",
+        "Estimate prices the mapped Agent Platform model from live sources with provenance; no model-recalled rates"
+      ]
+    }
+  ]
+}

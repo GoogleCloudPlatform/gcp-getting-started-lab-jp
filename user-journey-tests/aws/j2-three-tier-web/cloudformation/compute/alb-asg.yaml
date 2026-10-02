@@ -1,0 +1,251 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Online shop web store - compute layer. Mirrors architecture.md "Main
+  services": internet-facing ALB (HTTP :80) in front of an Auto Scaling group
+  of exactly two t3.micro Amazon Linux 2023 instances running the Flask store
+  under gunicorn on :8000. Instances bootstrap themselves in UserData: pull
+  the app bundle from the assets bucket, pip-install the runtime, write
+  /etc/shop.env, start a systemd unit. The 2016 contractor sized the ASG
+  min=max=2 and nobody has revisited it. Depends on ttw-security-stack and
+  ttw-data-stack.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Default VPC id - resolved by scripts/deploy.sh.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Default-VPC subnet ids for both the ALB and the ASG - resolved by scripts/deploy.sh.
+  AutoTeardownDate:
+    Type: String
+    Default: '2026-07-31'
+    Description: ISO date - tag value so future-you can find these to clean up.
+
+Resources:
+  # ---- IAM ----------------------------------------------------------------
+  AppInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ttw-app-role
+      Description: Online shop app instances - read assets, read both secrets, push the HealthPing metric, SSM session access.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: ttw-app-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ReadAssetsBucket
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub
+                    - 'arn:aws:s3:::${Bucket}'
+                    - {Bucket: !ImportValue 'ttw-data-stack-AssetsBucketName'}
+                  - !Sub
+                    - 'arn:aws:s3:::${Bucket}/*'
+                    - {Bucket: !ImportValue 'ttw-data-stack-AssetsBucketName'}
+              - Sid: ReadSecrets
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource:
+                  - !ImportValue 'ttw-security-stack-DbPasswordSecretArn'
+                  - !ImportValue 'ttw-security-stack-LegacyApiKeySecretArn'
+              - Sid: PushHealthPing
+                Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: OnlineShop
+      Tags:
+        - {Key: Name, Value: ttw-app-role}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: ttw-app-profile
+      Roles: [!Ref AppInstanceRole]
+
+  # ---- Load balancer --------------------------------------------------------
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: ttw-alb
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
+      Subnets: !Ref SubnetIds
+      SecurityGroups:
+        - !ImportValue 'ttw-security-stack-AlbSgId'
+      Tags:
+        - {Key: Name, Value: ttw-alb}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ttw-app-tg
+      VpcId: !Ref VpcId
+      Protocol: HTTP
+      Port: 8000
+      TargetType: instance
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Matcher: {HttpCode: '200'}
+      Tags:
+        - {Key: Name, Value: ttw-app-tg}
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j2-three-tier-web}
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  # ---- Launch template + ASG -------------------------------------------------
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: ttw-app-lt
+      LaunchTemplateData:
+        # Latest AL2023 kernel-default AMI via the public SSM parameter
+        # (verified 2026-07) - the shop re-baked onto AL2023 during the 2024
+        # PostgreSQL-EOL refresh and has tracked "latest" ever since.
+        ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+        InstanceType: t3.micro
+        IamInstanceProfile:
+          Arn: !GetAtt AppInstanceProfile.Arn
+        SecurityGroupIds:
+          - !ImportValue 'ttw-security-stack-AppSgId'
+        MetadataOptions:
+          HttpTokens: required
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - {Key: Name, Value: ttw-app}
+              - {Key: Owner, Value: migration-test}
+              - {Key: CostCenter, Value: test-journeys}
+              - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+              - {Key: Journey, Value: j2-three-tier-web}
+          - ResourceType: volume
+            Tags:
+              - {Key: Name, Value: ttw-app}
+              - {Key: Owner, Value: migration-test}
+              - {Key: CostCenter, Value: test-journeys}
+              - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+              - {Key: Journey, Value: j2-three-tier-web}
+        UserData:
+          Fn::Base64: !Sub
+            - |
+              #!/bin/bash
+              set -euxo pipefail
+              exec > /var/log/shop-boot.log 2>&1
+
+              dnf install -y python3.11 python3.11-pip
+
+              useradd -r -s /sbin/nologin shop || true
+              mkdir -p /opt/shop/app
+              aws s3 cp "s3://${AssetsBucket}/app/app.tar.gz" /opt/shop/app.tar.gz --region ${AWS::Region}
+              tar xzf /opt/shop/app.tar.gz -C /opt/shop/app
+              chown -R shop:shop /opt/shop
+
+              pip3.11 install flask gunicorn boto3 "psycopg[binary]"
+
+              cat > /etc/shop.env <<ENV
+              DB_HOST=${DbHost}
+              DB_PORT=5432
+              DB_NAME=online_shop
+              SECRET_ID_DB=ttw-db-password
+              SECRET_ID_LEGACY=ttw-legacy-api-key
+              ASSETS_BUCKET=${AssetsBucket}
+              AWS_REGION=${AWS::Region}
+              ENV
+
+              cat > /etc/systemd/system/shop.service <<UNIT
+              [Unit]
+              Description=Online shop web store (gunicorn)
+              After=network-online.target
+              Wants=network-online.target
+
+              [Service]
+              User=shop
+              WorkingDirectory=/opt/shop/app
+              EnvironmentFile=/etc/shop.env
+              ExecStart=/usr/bin/python3.11 -m gunicorn --workers 2 --bind 0.0.0.0:8000 app:app
+              Restart=always
+              RestartSec=5
+
+              [Install]
+              WantedBy=multi-user.target
+              UNIT
+
+              systemctl daemon-reload
+              systemctl enable --now shop.service
+            - DbHost: !ImportValue 'ttw-data-stack-DbEndpointAddress'
+              AssetsBucket: !ImportValue 'ttw-data-stack-AssetsBucketName'
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: ttw-asg
+      MinSize: '2'
+      MaxSize: '2'
+      DesiredCapacity: '2'
+      VPCZoneIdentifier: !Ref SubnetIds
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      TargetGroupARNs:
+        - !Ref TargetGroup
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      Tags:
+        - {Key: Name, Value: ttw-app, PropagateAtLaunch: true}
+        - {Key: Owner, Value: migration-test, PropagateAtLaunch: true}
+        - {Key: CostCenter, Value: test-journeys, PropagateAtLaunch: true}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate, PropagateAtLaunch: true}
+        - {Key: Journey, Value: j2-three-tier-web, PropagateAtLaunch: true}
+
+Outputs:
+  AlbDnsName:
+    Value: !GetAtt LoadBalancer.DNSName
+    Export: {Name: !Sub '${AWS::StackName}-AlbDnsName'}
+  AlbFullName:
+    Description: app/ttw-alb/... form used as the CloudWatch LoadBalancer dimension.
+    Value: !GetAtt LoadBalancer.LoadBalancerFullName
+    Export: {Name: !Sub '${AWS::StackName}-AlbFullName'}
+  TargetGroupFullName:
+    Description: targetgroup/ttw-app-tg/... form used as the CloudWatch TargetGroup dimension.
+    Value: !GetAtt TargetGroup.TargetGroupFullName
+    Export: {Name: !Sub '${AWS::StackName}-TargetGroupFullName'}
+  AsgName:
+    Value: !Ref AutoScalingGroup
+    Export: {Name: !Sub '${AWS::StackName}-AsgName'}

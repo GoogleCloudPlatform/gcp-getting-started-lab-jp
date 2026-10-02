@@ -1,0 +1,7 @@
+# fac-api runtime dependencies.
+# Ranges keep patch updates flowing; upper bounds guard against majors.
+# Latest on PyPI as of 2026-07 (verified): fastapi 0.139.0, uvicorn 0.51.0,
+# boto3 1.43.42. boto3 >= 1.34 is required for the Converse API.
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+boto3>=1.34,<2.0

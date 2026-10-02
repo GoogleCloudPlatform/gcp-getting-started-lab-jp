@@ -1,0 +1,70 @@
+# catalog-api — read-only inventory service (Go, stdlib only).
+# Cluster-internal: reached exclusively through its ClusterIP service by
+# booking-api. It calls no cloud APIs and has no service account of its own.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+  namespace: ems
+  labels:
+    app: catalog-api
+    app.kubernetes.io/part-of: ems-marketplace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog-api
+  template:
+    metadata:
+      labels:
+        app: catalog-api
+        app.kubernetes.io/part-of: ems-marketplace
+    spec:
+      containers:
+        - name: catalog-api
+          image: "${ECR_REGISTRY}/ems-catalog-api:${IMAGE_TAG}"
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65532
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+  namespace: ems
+  labels:
+    app: catalog-api
+    app.kubernetes.io/part-of: ems-marketplace
+spec:
+  type: ClusterIP
+  selector:
+    app: catalog-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

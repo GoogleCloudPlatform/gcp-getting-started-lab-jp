@@ -1,0 +1,6 @@
+# Runtime deps — kept in lockstep with the launch template's UserData line:
+#   pip3.11 install flask gunicorn boto3 "psycopg[binary]"
+flask
+gunicorn
+boto3
+psycopg[binary]

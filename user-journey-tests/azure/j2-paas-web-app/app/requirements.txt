@@ -1,0 +1,11 @@
+# Stationery-shop storefront — pinned so the App Service build produces the
+# same environment the studio tested against.
+Django==5.2.17
+psycopg[binary]==3.3.4
+gunicorn==26.0.0
+
+# Azure SDKs. Every call site funnels through webshop/azure_clients.py.
+azure-identity==1.25.3
+azure-storage-blob==12.30.0
+azure-keyvault-secrets==4.11.0
+azure-monitor-opentelemetry==1.8.9

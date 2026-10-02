@@ -1,0 +1,14 @@
+# Gitleaks Configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+    '''\.gitleaksignore$''',
+    '''\.gitleaks-baseline\.json$''',
+]

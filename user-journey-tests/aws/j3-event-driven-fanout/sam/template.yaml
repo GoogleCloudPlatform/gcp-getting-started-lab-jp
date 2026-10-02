@@ -1,0 +1,280 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Photo upload post-processing pipeline (see ../architecture.md).
+  Event-driven: S3 upload -> SNS fan-out -> SQS -> Lambda worker -> DynamoDB,
+  plus a nightly digest. Deployed via `aws cloudformation package/deploy`
+  (no sam CLI needed; CAPABILITY_AUTO_EXPAND expands the transform).
+
+Parameters:
+  ResourcePrefix:
+    Type: String
+    Default: edf-
+    Description: Prefix for every named resource so multiple stacks can coexist.
+  AutoTeardownDate:
+    Type: String
+    Default: 2026-08-08
+    Description: Review-marker tag value (YYYY-MM-DD).
+
+Globals:
+  Function:
+    Runtime: nodejs22.x   # (verified 2026-07: nodejs20.x is deprecated)
+    MemorySize: 256
+    Timeout: 60
+    Tags:
+      Owner: migration-test
+      CostCenter: test-journeys
+      AutoTeardown: !Ref AutoTeardownDate
+      Journey: j3-event-driven-fanout
+
+Resources:
+  # ---- upload intake: S3 -> SNS ------------------------------------------------
+  UploadsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ResourcePrefix}uploads'
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  UploadsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics: [!Ref UploadsTopic]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3Publish
+            Effect: Allow
+            Principal: {Service: s3.amazonaws.com}
+            Action: sns:Publish
+            Resource: !Ref UploadsTopic
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:aws:s3:::${ResourcePrefix}uploads-${AWS::AccountId}'
+
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: UploadsTopicPolicy
+    Properties:
+      BucketName: !Sub '${ResourcePrefix}uploads-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Topic: !Ref UploadsTopic
+            Event: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - {Name: prefix, Value: incoming/}
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  # ---- fan-out: SNS -> SQS (+DLQ) ------------------------------------------------
+  ThumbnailsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${ResourcePrefix}thumbnails-dlq'
+      MessageRetentionPeriod: 1209600
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  ThumbnailsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${ResourcePrefix}thumbnails-q'
+      VisibilityTimeout: 120
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ThumbnailsDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  ThumbnailsQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues: [!Ref ThumbnailsQueue]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSnsDelivery
+            Effect: Allow
+            Principal: {Service: sns.amazonaws.com}
+            Action: sqs:SendMessage
+            Resource: !GetAtt ThumbnailsQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref UploadsTopic
+
+  UploadsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref UploadsTopic
+      Protocol: sqs
+      Endpoint: !GetAtt ThumbnailsQueue.Arn
+      RawMessageDelivery: true
+
+  # Moderation alerts: published by the worker for non-image uploads.
+  # NOTE(ops): nobody is subscribed — the on-call rotation that read these
+  # left in 2023 and the PagerDuty hook was never rebuilt.
+  ModerationAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ResourcePrefix}moderation-alerts'
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  # ---- metadata store ------------------------------------------------------------
+  PhotosTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ResourcePrefix}photos'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: object_key, AttributeType: S}
+      KeySchema:
+        - {AttributeName: object_key, KeyType: HASH}
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+  # ---- workers ---------------------------------------------------------------------
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ResourcePrefix}worker'
+      Description: Ingests uploaded objects — metadata to DynamoDB, copy to thumbnails/
+      CodeUri: ../build/worker
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref PhotosTable
+          BUCKET: !Ref UploadsBucket
+          MODERATION_TOPIC_ARN: !Ref ModerationAlertsTopic
+      Events:
+        Queue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ThumbnailsQueue.Arn
+            BatchSize: 5
+      Policies:
+        - Statement:
+            - Sid: ReadIncoming
+              Effect: Allow
+              Action: [s3:GetObject, s3:GetObjectTagging]
+              Resource: !Sub '${UploadsBucket.Arn}/incoming/*'
+            - Sid: WriteThumbnails
+              Effect: Allow
+              Action: [s3:PutObject]
+              Resource: !Sub '${UploadsBucket.Arn}/thumbnails/*'
+            - Sid: StoreMetadata
+              Effect: Allow
+              Action: [dynamodb:PutItem, dynamodb:DescribeTable]
+              Resource: !GetAtt PhotosTable.Arn
+            - Sid: RaiseModerationAlert
+              Effect: Allow
+              Action: [sns:Publish]
+              Resource: !Ref ModerationAlertsTopic
+
+  DigestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ResourcePrefix}digest'
+      Description: Nightly ingest report to reports/ in the uploads bucket
+      CodeUri: ../build/digest
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref PhotosTable
+          BUCKET: !Ref UploadsBucket
+      Events:
+        Nightly:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+      Policies:
+        - Statement:
+            - Sid: ScanPhotos
+              Effect: Allow
+              Action: [dynamodb:Scan, dynamodb:DescribeTable]
+              Resource: !GetAtt PhotosTable.Arn
+            - Sid: WriteReports
+              Effect: Allow
+              Action: [s3:PutObject]
+              Resource: !Sub '${UploadsBucket.Arn}/reports/*'
+
+  # ---- vendor access -----------------------------------------------------------------
+  # Read-only role for an external analytics vendor to pull ingest
+  # metrics into their dashboard. Their AWS account id is 999988887777.
+  # (Trust is expressed as Principal:* scoped by aws:PrincipalAccount — the
+  # vendor's account isn't linked to ours, so a direct-ARN principal would
+  # fail IAM's existence validation at deploy time.)
+  VendorAnalyticsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourcePrefix}vendor-analytics-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {AWS: '*'}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:PrincipalAccount: '999988887777'
+      Policies:
+        - PolicyName: photos-read-only
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ReadPhotosTable
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query, dynamodb:Scan, dynamodb:DescribeTable]
+                Resource: !GetAtt PhotosTable.Arn
+      Tags:
+        - {Key: Owner, Value: migration-test}
+        - {Key: CostCenter, Value: test-journeys}
+        - {Key: AutoTeardown, Value: !Ref AutoTeardownDate}
+        - {Key: Journey, Value: j3-event-driven-fanout}
+
+Outputs:
+  UploadsBucketName:
+    Value: !Ref UploadsBucket
+    Export: {Name: !Sub '${AWS::StackName}-UploadsBucket'}
+  PhotosTableName:
+    Value: !Ref PhotosTable
+    Export: {Name: !Sub '${AWS::StackName}-PhotosTable'}
+  ThumbnailsQueueUrl:
+    Value: !Ref ThumbnailsQueue
+    Export: {Name: !Sub '${AWS::StackName}-ThumbnailsQueueUrl'}
+  ThumbnailsDLQUrl:
+    Value: !Ref ThumbnailsDLQ
+    Export: {Name: !Sub '${AWS::StackName}-ThumbnailsDLQUrl'}
+  ModerationAlertsTopicArn:
+    Value: !Ref ModerationAlertsTopic
+    Export: {Name: !Sub '${AWS::StackName}-ModerationTopic'}

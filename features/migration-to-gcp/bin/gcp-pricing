@@ -1,0 +1,5 @@
+#!/bin/sh
+# Live GCP pricing lookup (Cloud Billing Catalog API). See: gcp-pricing --help
+# Wrapper so the ESM implementation is invokable as a bare command from the
+# plugin bin/ PATH (extensionless files cannot be Node ESM entry points).
+exec node "$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)/scripts/gcp-pricing.mjs" "$@"

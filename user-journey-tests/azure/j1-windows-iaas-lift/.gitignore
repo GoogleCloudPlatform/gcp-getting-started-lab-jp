@@ -1,0 +1,34 @@
+# Skill working dirs (created at runtime) — must stay visible to agents:
+# .migration/      -- NOT ignored: agents read their own phase outputs
+# .iteration-log/  -- NOT ignored: per-run observation records live here
+#
+# discovery/*.xlsx is also NOT ignored: the assessment fixture is committed
+# source material, regenerated deterministically by discovery/make-assessment.py.
+
+# Secrets — never committed. deploy.sh generates both passwords at deploy time
+# and writes them to a 0600 temp file that it removes on exit.
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+*.publishsettings
+secrets/
+azuredeploy.secrets.json
+
+# Azure CLI / deployment scratch
+.azure/
+*.deployment.json.tmp
+
+# Python (discovery/make-assessment.py)
+__pycache__/
+*.pyc
+.venv/
+
+# Local dev / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+tmp/

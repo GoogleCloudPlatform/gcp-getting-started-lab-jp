@@ -1,0 +1,116 @@
+[
+  {
+    "model": "storefront.category",
+    "pk": 1,
+    "fields": {
+      "slug": "pens",
+      "name": "Pens and ink",
+      "name_ja": "筆記具・インク",
+      "sort_order": 10
+    }
+  },
+  {
+    "model": "storefront.category",
+    "pk": 2,
+    "fields": {
+      "slug": "paper",
+      "name": "Paper",
+      "name_ja": "紙製品",
+      "sort_order": 20
+    }
+  },
+  {
+    "model": "storefront.category",
+    "pk": 3,
+    "fields": {
+      "slug": "desk",
+      "name": "Desk accessories",
+      "name_ja": "文房具小物",
+      "sort_order": 30
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 1,
+    "fields": {
+      "category": 1,
+      "slug": "pwa-sample-product",
+      "name": "Fountain pen, fine nib",
+      "name_ja": "万年筆 細字",
+      "description": "Resin barrel in teal, stainless fine nib, converter included. Filled and tested in the shop before it is posted.",
+      "price_jpy": 8800,
+      "stock": 12,
+      "image_blob": "pwa-sample-product.svg"
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 2,
+    "fields": {
+      "category": 1,
+      "slug": "sumi-ink-cartridges",
+      "name": "Sumi ink cartridges, box of ten",
+      "name_ja": "墨インクカートリッジ 10本入",
+      "description": "Carbon-pigment black in a standard international short cartridge. Waterproof once dry, so it survives a rainy commute.",
+      "price_jpy": 1200,
+      "stock": 48,
+      "image_blob": "sumi-ink-cartridges.svg"
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 3,
+    "fields": {
+      "category": 2,
+      "slug": "gold-leaf-notebook",
+      "name": "Gold-leaf cover notebook, A5",
+      "name_ja": "金箔ノート A5",
+      "description": "A5 notebook with a gold-leaf motif pressed into the cover. Ninety-six pages of 81.4 gsm cream paper, sewn flat.",
+      "price_jpy": 3400,
+      "stock": 7,
+      "image_blob": "gold-leaf-notebook.svg"
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 4,
+    "fields": {
+      "category": 2,
+      "slug": "kraft-letter-set",
+      "name": "Recycled kraft letter set",
+      "name_ja": "クラフト レターセット",
+      "description": "Twelve sheets and six envelopes in unbleached kraft. Takes fountain-pen ink without feathering, which is not true of most kraft paper.",
+      "price_jpy": 780,
+      "stock": 63,
+      "image_blob": "kraft-letter-set.svg"
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 5,
+    "fields": {
+      "category": 2,
+      "slug": "washi-tape-set",
+      "name": "Washi masking tape, set of four",
+      "name_ja": "和紙マスキングテープ 4巻セット",
+      "description": "Four 15 mm rolls in seasonal colours. Printed locally on mulberry-fibre washi.",
+      "price_jpy": 1450,
+      "stock": 0,
+      "image_blob": "washi-tape-set.svg"
+    }
+  },
+  {
+    "model": "storefront.product",
+    "pk": 6,
+    "fields": {
+      "category": 3,
+      "slug": "brass-pen-case",
+      "name": "Brass pen case, single",
+      "name_ja": "真鍮ペンケース 1本用",
+      "description": "Solid brass tube for one pen, with a cork liner. Ages to a dark patina; it is meant to.",
+      "price_jpy": 5200,
+      "stock": 4,
+      "image_blob": "brass-pen-case.svg"
+    }
+  }
+]
