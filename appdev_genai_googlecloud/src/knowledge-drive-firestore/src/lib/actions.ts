@@ -2,6 +2,7 @@
 
 import { GetSignedUrlConfig, Storage } from "@google-cloud/storage";
 import { DEFAULT_OWNER, ROOT_FOLDER_ID } from "@/lib/constants";
+import { verifyIapJwt } from "@/lib/iap";
 import { TItem, FolderForBreadcrumb } from "@/lib/types";
 import { logError, logInfo } from "@/lib/logging";
 import { nanoid } from "nanoid";
@@ -238,11 +239,11 @@ export const getItemsByParentAndOwner = async (
 };
 
 export const getOwner = async (headers: ReadonlyHeaders): Promise<string> => {
-  const userEmailHeaderValue = headers.get("x-goog-authenticated-user-email");
-  if (!userEmailHeaderValue) {
+  const iapJwt = headers.get("x-goog-iap-jwt-assertion");
+  if (!iapJwt) {
     return DEFAULT_OWNER;
   }
-  return userEmailHeaderValue.replace("accounts.google.com:", "");
+  return verifyIapJwt(iapJwt);
 };
 
 export const getSourceIP = async (
